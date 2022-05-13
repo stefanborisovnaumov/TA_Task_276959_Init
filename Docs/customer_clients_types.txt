@@ -1,0 +1,171 @@
+/************************************************************************/
+1. DT015_CUSTOMERS_ACTIONS_TA.[SECTOR]	- ([CUST_CND_SECTOR]) -> сектор в икономиката -> ОК
+	
+/************************************************************************/
+2. DT015_CUSTOMERS_ACTIONS_TA.[UNIFIED]	- ([CUST_CND_UNIFIED]) -> кл. с повече от един клиентски код -> ОК
+	- 0 -> не е обединяван
+	- 3 -> обединен, без значение дали е бил главен или подчинен
+
+/************************************************************************/
+3. DT015_CUSTOMERS_ACTIONS_TA.[IS_SERVICE]	- ([CUST_CND_IS_SERVICE])
+	 0 - Не е служебен или свързан със служебен
+	11 - Клиента има нормално ЕГН, но има друг клиент със същото EGFN, но с водещи 10000. Следва да запишем служебното ЕГН в колона SERVICE_GROUP_EGFN, а нормалното в UI_EGFN.
+	12 - Клиента има нормално ЕГН, но има друг клиент със същото EGFN, но с водещи 90000. Следва да запишем служебното ЕГН в колона SERVICE_GROUP_EGFN, а нормалното в UI_EGFN.
+	21 - служебен клиент, EGFN - то му започва с 10000. Следва да запишем служебното ЕГН в колона UI_EGFN, а нормалното в SERVICE_GROUP_EGFN.
+	22 - служебен клиент, EGFN - то му започва с 90000. Следва да запишем служебното ЕГН в колона UI_EGFN, а нормалното в SERVICE_GROUP_EGFN.
+	
+	NM612 - Вид клиент: [DT015_CUSTOMERS].[CUSTOMER_TYPE]
+	CODE	NAME	
+		1	Физическо лице
+		2	Юридическо лице
+
+	enum DetailedTypeOfIdentifier : [DT015_CUSTOMERS].[IDENTIFIER_TYPE]
+		DetailedTypeOfIdentifierUCN									= 1 /// ЕГН
+		DetailedTypeOfIdentifierEikBulstat							= 2 /// ЕИК/БУЛСТАТ
+		DetailedTypeOfIdentifierBAE									= 3	/// БАЕ
+		DetailedTypeOfIdentifierLNC									= 4	/// ЛНЧ
+		DetailedTypeOfIdentifierFunctionalUCN						= 5	/// Функцоинално ЕГН
+		DetailedTypeOfIdentifierFunctionalLNC						= 6	/// Функционално ЛНЧ (ЧФЛ)
+		DetailedTypeOfIdentifierFunctionalLocalLegalEntityEIK		= 7	/// Функционално ЕИК (МЮЛ)
+		DetailedTypeOfIdentifierFunctionalForeignLegalEntityEIK		= 8	/// Функционално ЕИК (ЧЮЛ)
+		DetailedTypeOfIdentifierZZKI								= 9	/// Идентификатор за клиенти по ЗЗКИ
+
+	DT300 - Тип клиент: [DT015_CUSTOMERS].[CLIENT_TYPE]
+	CODE	NAME
+		0	0-Служебен
+		1	L-ГОЛЕМИ
+		2	M-СРЕДНИ
+		3	S-МАЛКИ
+		4	C-ГРАЖДАНИ
+		5	G-БЮДЖЕТ
+		6	E-СЛУЖИТЕЛИ
+		7	F-адвок,Нотар,л.лекари,част.зем.пр.художн и брокери
+		8	T – НТООД- та
+		9	C-РПС
+		11	Z-ЗАСТРАХОВАТЕЛИ
+		12	P-ПЕНСИОННИ ФОНДОВЕ
+		13	I-ИНВЕСТИЦИОННИ
+		14	N-ЛИЗИНГОВИ
+		15	O-ДРУГИ ФИ
+		16	X - Глобални клиенти
+		17	B Банки
+		18	A - Аffiliate
+		19	Treasury
+		99	Трансфер АББ - ПБ
+		
+	enum CustomerCharacteristics : [DT015_CUSTOMERS].[CUSTOMER_CHARACTERISTIC]
+		CustomerCharacteristicBankClient				= 0,	/// Банков клиент
+		CustomerCharacteristicWalkinCustomer			= 1,	/// Външен клиент
+		CustomerCharacteristicProspectClient			= 2,	/// Prospect клиент
+		CustomerCharacteristicRealOwner					= 3,	/// Действителен собственик
+		CustomerCharacteristicClientWithoutProducts		= 4,	/// Клиент без активни продукти
+
+	NM622 - Видове клиентски роли: [PROXY_SPEC].[CUSTOMER_ROLE_TYPE]
+	CODE	NAME	
+		1	Титуляр
+		2	Пълномощник
+		3	Законен представител
+		4	Действителен собственик
+		5	Трето лице
+		6	Картодържател
+		100	Наследник
+		101	Трето лице-представляващ
+		
+/************************************************************************/
+4. DT015_CUSTOMERS_ACTIONS_TA.[EGFN_TYPE] ([CUST_CND_EGFN_TYPE])
+	- ЕГН
+	- ЛНЧ
+	- ЕИК/БУЛСТАТ
+	- Функционално ЕГН
+	
+	enum DetailedTypeOfIdentifier : [DT015_CUSTOMERS].[IDENTIFIER_TYPE]
+		DetailedTypeOfIdentifierUCN									= 1 /// ЕГН
+		DetailedTypeOfIdentifierEikBulstat							= 2 /// ЕИК/БУЛСТАТ
+		DetailedTypeOfIdentifierBAE									= 3	/// БАЕ
+		DetailedTypeOfIdentifierLNC									= 4	/// ЛНЧ
+		DetailedTypeOfIdentifierFunctionalUCN						= 5	/// Функцоинално ЕГН
+		DetailedTypeOfIdentifierFunctionalLNC						= 6	/// Функционално ЛНЧ (ЧФЛ)
+		DetailedTypeOfIdentifierFunctionalLocalLegalEntityEIK		= 7	/// Функционално ЕИК (МЮЛ)
+		DetailedTypeOfIdentifierFunctionalForeignLegalEntityEIK		= 8	/// Функционално ЕИК (ЧЮЛ)
+		DetailedTypeOfIdentifierZZKI								= 9	/// Идентификатор за клиенти по ЗЗКИ	
+	
+/************************************************************************/	
+5. DT015_CUSTOMERS_ACTIONS_TA.[VALID_ID] (CUST_CND_VALID_ID)
+	- 1 - валидни документи
+
+/************************************************************************/
+6. DT015_CUSTOMERS_ACTIONS_TA.[CLIENT_SUBTYPE] (CUST_CND_CLIENT_SUBTYPE)
+	- (-1)
+	- Външен клиент
+	- Пълнолетно лице (над 18г.)
+
+	///<summary> Подвид клиент </summary>
+	enum CustomerSubtypes : short	
+		CustomerSubtypeAdult	= 1,	///<summary> Пълнолетно физическо лице (над 18г.) </summary>
+		CustomerSubtypeMinor	= 2,	///<summary> Непълнолетно физическо лице (от 14г. до 18г.) </summary>
+		CustomerSubtypeInfant	= 3,	///<summary> Малолетно физическо лице (до 14г.) </summary>
+		CustomerSubtypeExternal = 4,	///<summary> Външен клиент </summary>
+};	
+
+/************************************************************************/	
+7. DT015_CUSTOMERS_ACTIONS_TA.[PROXY_COUNT]
+	- Желан брой пълномощници, 0 - няма пълномощникили брой
+
+	CUSTOMERS_RIGHTS_AND_LIMITS.CHANNEL
+	CUSTOMERS_RIGHTS_AND_LIMITS.CUSTOMER_ROLE_TYPE
+	
+select TOP(110)  * from dbo.[CUSTOMERS_RIGHTS_AND_LIMITS]
+GO
+select TOP(110)  * from dbo.[REPRESENTATIVE_DOCUMENT_TO_RIGHTS_AND_LIMITS] -- Реферира bo.[REPRESENTATIVE_DOCUMENTS]
+GO --
+select TOP(110)  * from dbo.[REPRESENTATIVE_DOCUMENTS] -- Реферира dbo.[PROXY_SPEC]
+GO --
+select TOP(110)  * from dbo.[PROXY_SPEC]
+GO
+
+
+--DEAL_TYPE	DEAL_NUM
+--1			1466357
+
+-- Законен представител с БУЛСТАТ: 203338183
+-- Пъномощник с ЕГН: 6211078518
+
+
+--DEAL_TYPE	DEAL_NUM	BULSTAT
+--1			9533932		119673702
+
+-- Законен представител (1) с ЕГН: 5101085828
+-- Законен представител (2) с ЕГН: 7801295762
+
+/************************************************************************/	
+8. DT015_CUSTOMERS_ACTIONS_TA.[IS_PROXY] - не е условия ?!?
+	- Желан брой пълномощници, 0 - няма пълномощникили брой
+		
+/************************************************************************/	
+9. DT015_CUSTOMERS_ACTIONS_TA.[IS_UNIQUE]
+	- Желан брой пълномощници, 0 - няма пълномощникили брой
+				
+/************************************************************************/	
+10. .[PROXY_ACC_TA]
+	Има ли клиента достъп за работа с партидата:
+
+	#define			STS_ACCESS_CHK_OUT	1			// дебит
+	#define			STS_ACCESS_CHK_IN	2			// кредит		
+	#define			STS_ACCESS_INFO		3			// извлечение
+	#define			STS_ACCESS_VIEW		4			// преглед
+	#define			STS_ACCESS_PREVOD	5			// превод
+	#define			STS_ACCESS_INKASO	6			// инкасо
+	#define			STS_ACCESS_WORKID	7			// Право за работа с партидата
+	#define			STS_ACCESS_EBANK    8			// интернет банкиране
+
+	lRepresentativeCustomerID	-> [CST_PROXY_ACC_PROXY_CUSTOMER_ID] [PROXY_ACC].[CUSTOMER_ID]
+	lRepresentedCustomerID		-> [CST_PROXY_ACC_CLCODE] -> [PROXY_ACC].[CLCODE]			
+
+/*****************************************************************************/
+11.	Запори:
+NM136
+/// <summary>Флаг определящ тип на блокировка като запор</summary> 
+#define STS_BLOCK_REASON_DISTRAINT		11
+
+
+Join Deal - client codes : 940535040, 
