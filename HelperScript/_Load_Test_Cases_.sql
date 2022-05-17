@@ -1,6 +1,6 @@
 /********************************************************************************************/
 /*  Load One Test Case */
-declare @TestCaseID int = 400002, @Ret int = 0
+declare @TestCaseID int = 400003, @Ret int = 0
 select * from dbo.VIEW_CASH_PAYMENT_TEST_CASE_DATA with(nolock)
 where row_id = @TestCaseID
 ;
@@ -19,6 +19,9 @@ go
 declare curTestCase cursor for
 select [ROW_ID] from dbo.[VIEW_CASH_PAYMENTS_CONDITIONS]
 order by [ROW_ID]
+;
+
+truncate table dbo.[AGR_CASH_PAYMENTS_SQL_CONDITIONS]
 ;
 
 declare @TestCaseID int, @Ret int = 0 

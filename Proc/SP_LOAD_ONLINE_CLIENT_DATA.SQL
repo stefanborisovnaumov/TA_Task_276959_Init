@@ -70,14 +70,14 @@ begin
 	) [XF]
 	outer apply (
 		select top(1) count(distinct [CRL].[REPRESENTATIVE_CUSTOMER_ID]) AS [PROXY_COUNT]
-		from '+@SqlFullDBName+'.dbo.CUSTOMERS_RIGHTS_AND_LIMITS [CRL] WITH(NOLOCK)
+		from '+@SqlFullDBName+'.dbo.[CUSTOMERS_RIGHTS_AND_LIMITS] [CRL] WITH(NOLOCK)
 		inner join '+@SqlFullDBName+'.dbo.[PROXY_SPEC] [PS] WITH(NOLOCK)
 			on	[PS].[REPRESENTED_CUSTOMER_ID]	  = [CRL].REPRESENTED_CUSTOMER_ID
 			and [PS].[REPRESENTATIVE_CUSTOMER_ID] = [CRL].REPRESENTATIVE_CUSTOMER_ID
 		inner join '+@SqlFullDBName+'.dbo.[REPRESENTATIVE_DOCUMENTS] [D] WITH(NOLOCK)
 			on [D].[PROXY_SPEC_ID] = [PS].[ID]
 			and ( [D].[INDEFINITELY] = 1 OR [D].[VALIDITY_DATE] >= '+@AccountData+')
-		where [CRL].REPRESENTED_CUSTOMER_ID = [CUST].[CUSTOMER_ID]
+		where [CRL].[REPRESENTED_CUSTOMER_ID] = [CUST].[CUSTOMER_ID]
 			and [CRL].[CHANNEL] = 1	
 	) [PR]
 	outer apply (																					

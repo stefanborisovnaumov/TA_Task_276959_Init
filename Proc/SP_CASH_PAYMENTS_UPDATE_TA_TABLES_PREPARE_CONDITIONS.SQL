@@ -8,14 +8,15 @@ CREATE PROCEDURE dbo.[SP_CASH_PAYMENTS_UPDATE_TA_TABLES_PREPARE_CONDITIONS]
 (
 	@TestCaseRowID nvarchar(16)
 ,	@CurrAccDate datetime
+,	@Save_TA_Cinditions tinyint = 0
 )
 AS 
 begin
 
-	declare @LogTraceInfo int = 0, @LogBegEndProc int = 1, @TimeBeg datetime = GetDate()
+	declare @LogTraceInfo int = 1, @LogBegEndProc int = 1, @TimeBeg datetime = GetDate()
 	;
 
-	declare @Msg nvarchar(max) = N'', @Rows int = 0, @Err int = 0
+	declare @Msg nvarchar(max) = N'', @Rows int = 0, @Err int = 0, @Ret int = 0
 		,	@Sql nvarchar(max) = N'', @Sql2 nvarchar(4000) = N'', @CrLf nvarchar(4) = nchar(13) + nchar(10)
 	;
 	/************************************************************************************************************/
@@ -637,6 +638,26 @@ begin
 			return 1
 		end catch 
 	end
+
+	select @Rows = (select count(*) from dbo.[#TBL_RESULT] with(nolock) ), @Err = @@ERROR;
+	if @LogTraceInfo = 1
+	begin 
+		select @Rows = IsNull(@Rows,0);
+		select @Msg = N'After: insert into dbo.[#TBL_RESULT], Rows affected : ' + str(@Rows,len(@Rows),0) + ', TA ID :'+ @TestCaseRowID;
+	 	exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql, @Msg;
+	end
+
+	if @Rows <= 0 and @Save_TA_Cinditions = 1
+	begin
+		insert into dbo.[AGR_CASH_PAYMENTS_SQL_CONDITIONS]
+		( [TEST_ID], [SQL_COND], [DESCR], [IS_BASE_SELECT], [IS_SELECT_COUNT] )
+		SELECT	@TestCaseRowID	 AS [TEST_ID]
+			,	[S].[SQL_COND]
+			,	[S].[DESCR]
+			,	[S].[IS_BASE_SELECT]
+			,	[S].[IS_SELECT_COUNT]
+		FROM dbo.[#TBL_SQL_CONDITIONS] [S] WITH(NOLOCK)
+	end
 		
 	/************************************************************************************************************/
 	/* Log End Of Procedure */
@@ -646,8 +667,8 @@ begin
 			 + ', TA Row ID: ' + @TestCaseRowID
 		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Msg, '*** End Execute Proc ***: dbo.[SP_CASH_PAYMENTS_UPDATE_TA_TABLES_PREPARE_CONDITIONS]'
 	end
-	;
 
 	return 0;
 end 
 go
+

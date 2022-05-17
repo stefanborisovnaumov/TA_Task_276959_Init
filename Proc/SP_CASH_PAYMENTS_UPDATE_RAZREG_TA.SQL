@@ -99,13 +99,19 @@ begin
 		UPDATE [D]
 		SET		[UI_DEAL_NUM]			= [S].[DEAL_NUM]				-- RAZPREG_TA	UI_DEAL_NUM	
 			,	[DB_ACCOUNT]			= [S].[ACCOUNT]					-- RAZPREG_TA	DB_ACCOUNT	
-			,	[UI_ACCOUNT]			= [S].[ACCOUNT]					/* TODO: new function + date in TA TABLE */ -- RAZPREG_TA	UI_ACCOUNT 
+			,	[UI_ACCOUNT]			= [xa].[ACC_WITH_SPACE]			/* TODO: new function + date in TA TABLE */ -- RAZPREG_TA	UI_ACCOUNT 
 			,	[ZAPOR_SUM]				= STR([S].[DISTRAINT_SUM],14,2)	-- RAZPREG_TA	ZAPOR_SUM	Сума на запор по сметката (за целите на плащания по запор)
 			,	[IBAN]					= [S].[IBAN]					-- RAZPREG_TA	IBAN	
 			,	[TAX_UNCOLLECTED_SUM]	= [S].[TAX_UNCOLLECTED]			-- RAZPREG_TA	TAX_UNCOLLECTED_SUM	Сума на неплатените такси. Ако няма да се записва 0.00
 		FROM dbo.[RAZPREG_TA] [D]
 		INNER JOIN  dbo.[#TBL_ONLINE_DEAL_INFO] [S] WITH(NOLOCK)
 			ON [S].[DEAL_NUM] = @DEAL_NUM
+		cross apply (
+			select case when left([S].[ACCOUNT], 2) = '17' 
+				then left([S].[ACCOUNT],4)+' '+substring([S].[ACCOUNT],5,9)+' '+substring([S].[ACCOUNT],14,2)+' '+RIGHT([S].[ACCOUNT],1)
+				else left([S].[ACCOUNT],4)+' '+substring([S].[ACCOUNT],5,3)+' '+substring([S].[ACCOUNT],8,9) +' '+substring([S].[ACCOUNT],17,2)+' '+RIGHT([S].[ACCOUNT],1)
+				end AS  [ACC_WITH_SPACE]
+		) [xa]
 		WHERE [D].[ROW_ID] = @TBL_ROW_ID
 		;
 	end

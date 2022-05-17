@@ -95,7 +95,7 @@ begin
 	) [TAX]
 	outer apply (
 		SELECT SUM( [B].[SUMA] ) as [DISTRAINT_SUM]
-		FROM '+@SqlFullDBName+'.dbo.BLOCKSUM [B] with(nolock)
+		FROM '+@SqlFullDBName+'.dbo.[BLOCKSUM] [B] with(nolock)
 		INNER JOIN '+@SqlFullDBName+'.dbo.[NOMS] [N] with(nolock)
 			ON	[N].[NOMID] = 136 
 			AND [N].[CODE]	= [B].[WHYFREEZED] 

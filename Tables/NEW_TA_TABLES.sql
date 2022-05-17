@@ -41,3 +41,22 @@ left outer join dbo.[TEST_AUTOMATION_TA_TYPE] [d] with(nolock)
 	and [d].[DB_TYPE] = @DB_TYPE
 where [d].[ID] is null
 go
+
+/*****************************************************************************/
+-- Create table dbo.[AGR_CASH_PAYMENTS_SQL_CONDITIONS]
+drop table if exists dbo.[AGR_CASH_PAYMENTS_SQL_CONDITIONS]
+go
+
+create table dbo.[AGR_CASH_PAYMENTS_SQL_CONDITIONS]
+(
+	[ID]				int identity(1,1)
+,	[TEST_ID]			nvarchar(512) 
+,	[SQL_COND]			nvarchar(1000)
+,	[DESCR]				nvarchar(2000)
+,	[IS_BASE_SELECT]	bit constraint _DF_AGR_CASH_PAYMENTS_SQL_CONDITIONS_IS_BASE_SELECT DEFAULT(0)
+,	[IS_SELECT_COUNT]	bit constraint _DF_AGR_CASH_PAYMENTS_SQL_CONDITIONS_IS_SELECT_COUNT DEFAULT(0)
+	
+	CONSTRAINT [PK_AGR_AGR_CASH_PAYMENTS_SQL_CONDITIONS]
+		PRIMARY KEY CLUSTERED ( [ID] )
+)
+go

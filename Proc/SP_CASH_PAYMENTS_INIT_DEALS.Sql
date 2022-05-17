@@ -709,7 +709,7 @@ begin
 			,	CAST ( 0 AS BIT )				AS [IS_PROXY]
 			,	CAST ( 0 AS BIT )				AS [HAS_LOAN]
 			,	CAST ( 0 AS BIT )				AS [HAS_VALID_DOCUMENT]
-			,	CAST ( 0 AS BIT )				AS [IS_ORIGINAL_EGFN]
+			,	CAST ( 1 AS BIT )				AS [IS_ORIGINAL_EGFN]
 	) [EX_BITS]
 	'
 	;
@@ -951,11 +951,11 @@ begin
 	;
 
 	update [D]
-	set [IS_ORIGINAL_EGFN] = 1
+	set [IS_ORIGINAL_EGFN] = 0
 	from dbo.[AGR_CASH_PAYMENTS_CUSTOMERS] [D]
 	inner join dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_DUBL_EGFN] [S] with(nolock)
 		on  [S].[CUSTOMER_ID] = [D].[CUSTOMER_ID]
-		and [S].[IS_ORIGINAL_EGFN] = 1
+		and [S].[IS_ORIGINAL_EGFN] = 0
 	;
 
 	if @LogTraceInfo = 1
