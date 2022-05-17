@@ -1,3 +1,4 @@
+
 /********************************************************************************************************/
 /* Процедура за актуализация на Таблица dbo.[DT015_CUSTOMERS_ACTIONS_TA] */
 DROP PROCEDURE IF EXISTS dbo.[SP_CASH_PAYMENTS_UPDATE_DT015_CUSTOMERS_ACTIONS_TA]
@@ -16,7 +17,7 @@ CREATE PROCEDURE dbo.[SP_CASH_PAYMENTS_UPDATE_DT015_CUSTOMERS_ACTIONS_TA]
 AS 
 begin
 
-	declare @LogTraceInfo int = 1,	@LogBegEndProc int = 1,	@TimeBeg datetime = GetDate();
+	declare @LogTraceInfo int = 0, @LogResultTable int = 0,	@LogBegEndProc int = 1,	@TimeBeg datetime = GetDate();
 	;
 
 	declare @Msg nvarchar(max) = N'', @Rows int = 0, @Err int = 0, @Ret int = 0
@@ -30,22 +31,17 @@ begin
 	/************************************************************************************************************/
 	-- 	Get TA Customer Row ID:
 	declare @TBL_ROW_ID			int = 0	
-		,	@TBL_PROXY_ROW_ID	int = 0
-		,	@TBL_CLIENT_ROW_ID	int = 0
 	;
-	select	@TBL_CLIENT_ROW_ID	= [CUST_ROW_ID]
-		,	@TBL_PROXY_ROW_ID	= [PROXY_ROW_ID]
-		,	@TBL_ROW_ID			= case when @IsProxy = 0 
-									then [CUST_ROW_ID] else [PROXY_ROW_ID] end
+	select	@TBL_ROW_ID	= case when IsNull(@IsProxy,0) = 0 then [CUST_ROW_ID] else [PROXY_ROW_ID] end
 	from dbo.[VIEW_CASH_PAYMENTS_CONDITIONS] with(nolock)
 	where [ROW_ID] = @TA_RowID
 	;
 
 	if IsNull(@TBL_ROW_ID,0) <= 0
-	begin  
-		select @Msg = 'Not found Customer from TA ROW_ID : ' + @TestCaseRowID;
+	begin 
+		select @Msg = 'Not found Customer from TA ROW_ID : ' +@TestCaseRowID
+		+'; @OnlineDbCustomer_ID ='+str(@OnlineDbCustomer_ID,len(@OnlineDbCustomer_ID),0)+'; @IsProxy = '+str(@IsProxy,1,0)+' ';
 		exec dbo.SP_SYS_LOG_PROC @@PROCID, @TestCaseRowID, @Msg
-		return 0;
 	end 
 
 	/************************************************************************************************************/
@@ -86,7 +82,7 @@ begin
 	if @Ret <> 0 
 		return 3;
 
-	if @LogTraceInfo = 1 select * from dbo.[#TBL_ONLINE_DT015_INFO] with(nolock)
+	if @LogResultTable = 1 select * from dbo.[#TBL_ONLINE_DT015_INFO] with(nolock)
 	;
 
 	/* Тези данни ще ги заредим от вече 'кешираниет'  */
@@ -108,8 +104,6 @@ begin
 	from  dbo.[AGR_CASH_PAYMENTS_CUSTOMERS] [CUST] with(nolock)
 	where [CUST].[CUSTOMER_ID] = @OnlineDbCustomer_ID
 
-	select @ClientIdentifier, @HasDublClientIDs, @IsOrioginalID
-
 	if @HasDublClientIDs = 1
 	begin
 		set @SERVICE_GROUP_EGFN = @ClientIdentifier;
@@ -118,7 +112,7 @@ begin
 		begin
 			select top(1) @SERVICE_GROUP_EGFN = [EGFN]
 			from [AGR_CASH_PAYMENTS_CUSTOMERS_DUBL_EGFN] with(nolock)
-			where [EGFN] = CAST(RIGHT(RTRIM(@ClientIdentifier), 13) AS BIGINT)
+			where [EGFN] = CAST(RIGHT(RTRIM(@ClientIdentifier), 13) as bigint)
 		end
 	end 
 
@@ -140,7 +134,7 @@ begin
 		from dbo.[DT015_CUSTOMERS_ACTIONS_TA] [D]
 		inner join dbo.[#TBL_ONLINE_DT015_INFO] [S] with(nolock)
 			on [S].[CUSTOMR_ID] = @OnlineDbCustomer_ID
-		where [D].[ROW_ID] = @TBL_CLIENT_ROW_ID
+		where [D].[ROW_ID] = @TBL_ROW_ID
 		;
 	end
 

@@ -1,3 +1,4 @@
+
 /********************************************************************************************************/
 /* Процедура формираща SQL заявката за търсене на подходяща сделка по ID на тестови случай */
 DROP PROCEDURE IF EXISTS dbo.[SP_CASH_PAYMENTS_UPDATE_TA_TABLES_PREPARE_CONDITIONS]
@@ -11,7 +12,7 @@ CREATE PROCEDURE dbo.[SP_CASH_PAYMENTS_UPDATE_TA_TABLES_PREPARE_CONDITIONS]
 AS 
 begin
 
-	declare @LogTraceInfo int = 1,	@LogBegEndProc int = 1,	@TimeBeg datetime = GetDate()
+	declare @LogTraceInfo int = 0, @LogBegEndProc int = 1, @TimeBeg datetime = GetDate()
 	;
 
 	declare @Msg nvarchar(max) = N'', @Rows int = 0, @Err int = 0
@@ -78,6 +79,13 @@ begin
 
 	/**********************************************************************************************/
 
+	drop table if EXISTS dbo.[#TBL_TA_CONDITIONS]
+	;
+	select [V].*
+	into dbo.[#TBL_TA_CONDITIONS] 
+	from dbo.[VIEW_CASH_PAYMENTS_CONDITIONS] [V] with(nolock) where [V].[ROW_ID] = IsNull(@TestCaseRowID, -1)
+	;
+
 	select top(1) /* Client conditions: */
 			@TA_TYPE					= ''''+ [TA_TYPE] + ''''
 		,	@SECTOR						= [SECTOR]
@@ -135,65 +143,76 @@ begin
 
 	select @Sql2 = N'select DISTINCT TOP (50) ''ID_'+@TestCaseRowID+'_'+REPLACE(@TA_TYPE,'''','')+ ''''
 		+ N' AS [TEST_ID], [DEAL].[DEAL_TYPE], [DEAL].[DEAL_NUM], [CUST].[CUSTOMER_ID], [PROXY].[CUSTOMER_ID] AS [REPRESENTATIVE_CUSTOMER_ID] ' + @CrLf
-	insert into dbo.[#TBL_SQL_CNDITIONS] ( [SQL_COND], [DESCR], [IS_BASE_select] )
-	select	@Sql2,	N'select ...', 1
+	insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR], [IS_BASE_select] )
+	select	@Sql2,	N'SELECT ...', 1
 	;
 	select @Sql += @Sql2
 	;
 
 	--select @Sql2 = N'select COUNT(*) AS [CNT] '+ @CrLf
-	--insert into dbo.[#TBL_SQL_CNDITIONS] ( [SQL_COND], [DESCR], [IS_select_COUNT] )
+	--insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR], [IS_select_COUNT] )
 	--select	@Sql2,	'select COUNT(*) ...', 1
 	--;
 	--select @Sql += @Sql2
 	--;
 
-	if (@SECTOR in (5000, 9400) OR (@SECTOR in (7999) AND @DB_CLIENT_TYPE_DT300 IN (4, 6, 7))) /* 4 клиент 'C'; 6 клиент 'E' 7 клиент 'F' */
+	-- @SECTOR and @CCY_CODE_DEAL
+	select @Sql2 = N'
+	from dbo.[AGR_CASH_PAYMENTS_DEALS] [DEAL] with(nolock)
+	inner join dbo.[AGR_CASH_PAYMENTS_CUSTOMERS] [CUST] with(nolock)
+		on	[CUST].[CUSTOMER_ID] = [DEAL].[CUSTOMER_ID]
+		and [DEAL].[CLIENT_SECTOR] = '+str(@SECTOR,len(@SECTOR),0)+N'
+		and [DEAL].[DEAL_CURRENCY_CODE] = '+str(@CCY_CODE_DEAL,len(@CCY_CODE_DEAL),0)+' ';
+
+	-- [DT015_CUSTOMERS_ACTIONS_TA].[SECTOR] and [RAZPREG_TA].[UI_CURRENCY_CODE]
+	insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
+	select	(@Sql2 + @CrLf), N' BASE join: SECTOR = '+str(@SECTOR,len(@SECTOR),0)+' & [UI_CURRENCY_CODE] = '+str(@CCY_CODE_DEAL,len(@CCY_CODE_DEAL),0)+' '
+	select @Sql += @Sql2
+
+	-- Access Deal throwght with proxy customer
+	if @UI_RAZPOREDITEL IS NOT NULL
 	begin
-
-		select @Sql2 = N'
-		FROM dbo.[AGR_CASH_PAYMENTS_DEALS] [DEAL] WITH (NOLOCK)
-		INNER JOIN dbo.[AGR_CASH_PAYMENTS_CUSTOMERS] [CUST] WITH (NOLOCK)
-			ON	[CUST].[CUSTOMER_ID] = [DEAL].[CUSTOMER_ID]
-			AND [DEAL].[CLIENT_SECTOR] = '+str(@SECTOR,len(@SECTOR),0)+N'
-			AND [DEAL].[DEAL_CURRENCY_CODE] = '+str(@CCY_CODE_DEAL,len(@CCY_CODE_DEAL),0)+ ' ';
-
+		/* NM622 (client roles): 1 - Титуляр, 2- Пълномощник; 3 - Законен представител, ... */
+		declare @CUSTOMER_ROLE_TYPE varchar(8) = N''
+		;
 		-- 0 - Пълномощник; 1 - Законен представител
-		if IsNull(@UI_RAZPOREDITEL,-1) = 0
-			select @Sql2 += N'
-			INNER JOIN dbo.[AGR_CASH_PAYMENTS_DEALS_ACTIVE_PROXY_CUSTOMERS] [PROXY_ID] WITH (NOLOCK)
-				ON	[PROXY_ID].[DEAL_NUM] = [DEAL].[DEAL_NUM]
-				AND [PROXY_ID].[DEAL_TYPE] = 1
-			INNER JOIN dbo.[AGR_CASH_PAYMENTS_CUSTOMERS] [PROXY] WITH (NOLOCK)
-				ON	[PROXY].[CUSTOMER_ID] = [PROXY_ID].[REPRESENTATIVE_CUSTOMER_ID]
-			WHERE [CUST].[CLIENT_TYPE_DT300_CODE]		= '+str(@DB_CLIENT_TYPE_DT300,len(@DB_CLIENT_TYPE_DT300),0)+ ' ';
-		else 
-			select @Sql2 += N'
-			INNER JOIN dbo.[AGR_CASH_PAYMENTS_CUSTOMERS] [PROXY] WITH (NOLOCK)
-				ON	[PROXY].[CUSTOMER_ID] = [DEAL].[CUSTOMER_ID]
-			WHERE [CUST].[CLIENT_TYPE_DT300_CODE]		= '+str(@DB_CLIENT_TYPE_DT300,len(@DB_CLIENT_TYPE_DT300),0)+ ' ';
+		select @CUSTOMER_ROLE_TYPE = case IsNull(@UI_RAZPOREDITEL,-1)	
+											when  0 then ' = 2'				/* 2 - Пълномощник*/
+											when  1 then ' = 3'				/* 3 - Законен представител */
+											when -1 then ' in (2,3)' end;	/* 2 & 3 */
+		select @Sql2 = N'
+		inner join dbo.[AGR_CASH_PAYMENTS_DEALS_ACTIVE_PROXY_CUSTOMERS] [PROXY_ID] with(nolock)
+			on	[PROXY_ID].[DEAL_TYPE] = 1
+			and [PROXY_ID].[DEAL_NUM]  = [DEAL].[DEAL_NUM]
+			and [PROXY_ID].[CUSTOMER_ROLE_TYPE] '+@CUSTOMER_ROLE_TYPE+'
+		inner join dbo.[AGR_CASH_PAYMENTS_CUSTOMERS] [PROXY] with(nolock)
+			on	[PROXY].[CUSTOMER_ID] = [PROXY_ID].[REPRESENTATIVE_CUSTOMER_ID]
+		';
+
+		-- [DT015_CUSTOMERS_ACTIONS_TA].[UI_RAZPOREDITEL] -- 0 - Пълномощник; 1 - Законен представител
+		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
+		select	(@Sql2 + @CrLf), N'@UI_RAZPOREDITEL: '+STR(@UI_RAZPOREDITEL,len(@UI_RAZPOREDITEL),0)+' '
+		select @Sql += @Sql2;
 	end
 	else 
 	begin
 
 		select @Sql2 = N'
-		FROM dbo.[AGR_CASH_PAYMENTS_DEALS] [DEAL] WITH (NOLOCK)
-		INNER JOIN dbo.[AGR_CASH_PAYMENTS_CUSTOMERS] [CUST] WITH (NOLOCK)
-			ON	[CUST].[CUSTOMER_ID] = [DEAL].[CUSTOMER_ID]
-			AND [DEAL].[CLIENT_SECTOR] = '+str(@SECTOR,len(@SECTOR),0)+N'
-			AND [DEAL].[DEAL_CURRENCY_CODE] = '+str(@CCY_CODE_DEAL,len(@CCY_CODE_DEAL),0)+N'
-		INNER JOIN dbo.[AGR_CASH_PAYMENTS_DEALS_ACTIVE_PROXY_CUSTOMERS] [PROXY_ID] WITH (NOLOCK)
-			ON	[PROXY_ID].[DEAL_NUM] = [DEAL].[DEAL_NUM]
-			AND [PROXY_ID].[DEAL_TYPE] = 1
-		INNER JOIN dbo.[AGR_CASH_PAYMENTS_CUSTOMERS] [PROXY] WITH (NOLOCK)
-			ON	[PROXY].[CUSTOMER_ID] = [PROXY_ID].[REPRESENTATIVE_CUSTOMER_ID]
-		WHERE [CUST].[CLIENT_TYPE_DT300_CODE]		= '+str(@DB_CLIENT_TYPE_DT300,len(@DB_CLIENT_TYPE_DT300),0);
+		inner join dbo.[AGR_CASH_PAYMENTS_CUSTOMERS] [PROXY] with(nolock)
+			ON	[PROXY].[CUSTOMER_ID] = [DEAL].[CUSTOMER_ID]
+		';
 
+		-- Base join clause: 
+		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
+		select	(@Sql2 + @CrLf), N' WITHOUT PROXY: [PROXY].[CUSTOMER_ID] = [DEAL].[CUSTOMER_ID]'
+		select @Sql += @Sql2;
 	end
 
-	insert into dbo.[#TBL_SQL_CNDITIONS] ( [SQL_COND], [DESCR] )
-	select	(@Sql2 + @CrLf), ' BASE WHERE : ' + @Sql2
-
+	-- [DT015_CUSTOMERS_ACTIONS_TA].[DB_CLIENT_TYPE] => @DB_CLIENT_TYPE_DT300:
+	select @Sql2 = N'
+	where [CUST].[CLIENT_TYPE_DT300_CODE] = '+str(@DB_CLIENT_TYPE_DT300,len(@DB_CLIENT_TYPE_DT300),0);
+	insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
+	select	(@Sql2 + @CrLf), ' BASE @DB_CLIENT_TYPE_DT300 : ' + @Sql2
 	select @Sql += @Sql2
 
 	-- enum CustomerSubtypes: (-1) - Без значение; 1 - (над 18г.); 2 - (от 14г. до 18г.); 3 - (до 14г.)
@@ -203,12 +222,12 @@ begin
 				+ STR(@CUSTOMER_BIRTH_DATE_MIN,LEN(@CUSTOMER_BIRTH_DATE_MIN),0)+' AND ' 
 				+ STR(@CUSTOMER_BIRTH_DATE_MAX,LEN(@CUSTOMER_BIRTH_DATE_MAX),0)+' ' + @CrLf;
 
-		insert into dbo.[#TBL_SQL_CNDITIONS] ( [SQL_COND], [DESCR] )
+		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 		select	@Sql2, '[CUSTOMER_AGE] '+@CUSTOMER_AGE+' - between YEAR : ' 
 				+ STR(@CUSTOMER_BIRTH_DATE_MIN,LEN(@CUSTOMER_BIRTH_DATE_MIN),0) + ' AND '
 				+ STR(@CUSTOMER_BIRTH_DATE_MAX,LEN(@CUSTOMER_BIRTH_DATE_MAX),0) + @CrLf;
 
-		select @Sql += @Sql2
+		select @Sql += @Sql2;
 	end
 
 	/*****************************************************/
@@ -216,7 +235,7 @@ begin
 	if @UNIFIED <> -1
 	begin 
 		select @Sql2 = ' AND [CUST].[HAS_MANY_CLIENT_CODES] = ' + case when @UNIFIED = 0 THEN '0' ELSE '1' END + @CrLf;
-		insert into dbo.[#TBL_SQL_CNDITIONS] ( [SQL_COND], [DESCR] )
+		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 		select	@Sql2
 			,	'[UNIFIED] : ' + str(@UNIFIED,len(@UNIFIED),0 )
 
@@ -227,7 +246,7 @@ begin
 	if @IS_SERVICE <> -1
 	begin 
 		select @Sql2 = ' AND [CUST].[HAS_DUBL_CLIENT_IDS] = ' + case when @IS_SERVICE = 0 then '0' else '1' end + @CrLf;
-		insert into dbo.[#TBL_SQL_CNDITIONS] ( [SQL_COND], [DESCR] )
+		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 		select	@Sql2
 			,	'[IS_SERVICE] : ' + str(@IS_SERVICE,len(@IS_SERVICE),0 )
 
@@ -237,7 +256,7 @@ begin
 		begin 
 			select @Sql2 = ' AND [CUST].[IS_ORIGINAL_EGFN] = ' + case when @IS_SERVICE = 1 then '1' else '0' end + @CrLf;
 
-			insert into dbo.[#TBL_SQL_CNDITIONS] ( [SQL_COND], [DESCR] )
+			insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 			select	@Sql2
 				,	'[IS_SERVICE] : ' + str(@IS_SERVICE,len(@IS_SERVICE),0 )
 
@@ -250,23 +269,19 @@ begin
 	begin 
 		select @Sql2 = ' AND [CUST].[CUSTOMER_CHARACTERISTIC] = ' + str(@CUSTOMER_CHARACTERISTIC,len(@CUSTOMER_CHARACTERISTIC),0) + @CrLf;
 
-		insert into dbo.[#TBL_SQL_CNDITIONS] ( [SQL_COND], [DESCR] )
+		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 		select	@Sql2
 			,	'[CODE_EGFN_TYPE] : ' + str(@CUSTOMER_CHARACTERISTIC,len(@CUSTOMER_CHARACTERISTIC),0 )
 
 		select @Sql += @Sql2
 	end 
 
-	-- DT300 
-	--if IsNull(@DB_CLIENT_TYPE_DT300,-1) <> -1
-	--	select @Sql += ' AND [CUST].[CLIENT_TYPE_DT300_CODE] = ' + str(@DB_CLIENT_TYPE_DT300,len(@DB_CLIENT_TYPE_DT300),0);
-
 	-- 1 - валидни документи
 	if IsNull(@VALID_ID,-1) = 1
 	begin
 		select @Sql2 = ' AND [PROXY].[HAS_VALID_DOCUMENT] = 1' + @CrLf;
 
-		insert into dbo.[#TBL_SQL_CNDITIONS] ( [SQL_COND], [DESCR] )
+		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 		select	@Sql2
 			,	'[VALID_ID] : ' + str(@VALID_ID,len(@VALID_ID),0 )
 
@@ -284,12 +299,12 @@ begin
 	begin 
 		select @Sql2 = ' AND NOT EXISTS 
 		(
-			select * FROM dbo.[DT015_CUSTOMERS_ACTIONS_TA] [TA_CUST] WITH(NOLOCK)
-			WHERE [TA_CUST].[UI_CUSTOMER_ID] = [CUST].[CUSTOMER_ID]
-				AND [TA_CUST].[TA_TYPE] = '+@TA_TYPE+' 
+			select * from dbo.[DT015_CUSTOMERS_ACTIONS_TA] [TA_CUST] with(nolock)
+			where [TA_CUST].[UI_CUSTOMER_ID] = [CUST].[CUSTOMER_ID]
+				and [TA_CUST].[TA_TYPE] = '+@TA_TYPE+' 
 		)' + @CrLf;
 
-		insert into dbo.[#TBL_SQL_CNDITIONS] ( [SQL_COND], [DESCR] )
+		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 		select	@Sql2
 			,	'[VALID_ID] : ' + str(@VALID_ID,len(@VALID_ID),0 )
 
@@ -301,9 +316,9 @@ begin
 	-- Дали клиента има активен кредит: ;Без допълнителни сметки - ;Всички разплащателни и влогове - 
 	-- ;Всички разплащателни - несвързани към друг кредит - ; Всички разплащателни, влогове и депозитни сметки -
 	if IsNull(@HAVE_CREDIT, -1) in ( 0, 1 )
-	begin 
+	begin
 		select @Sql2 = ' AND [CUST].[HAS_LOAN] = '+STR(@HAVE_CREDIT,LEN(@HAVE_CREDIT),0) + @CrLf;
-		insert into dbo.[#TBL_SQL_CNDITIONS] ( [SQL_COND], [DESCR] )
+		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 		select	@Sql2
 			,	'[HAS_LOAN] : ' + str(@VALID_ID,len(@VALID_ID),0 )
 
@@ -317,7 +332,7 @@ begin
 		begin
 			select @Sql2 = ' AND [DEAL].[PROXY_COUNT] > 0' + @CrLf;
 
-			insert into dbo.[#TBL_SQL_CNDITIONS] ( [SQL_COND], [DESCR] )
+			insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 			select	@Sql2
 				,	'[UI_RAZPOREDITEL] : ' + str(@UI_RAZPOREDITEL,len(@UI_RAZPOREDITEL),0 )
 
@@ -329,7 +344,7 @@ begin
 		--begin 
 		--	select @Sql2 = ' AND [CUST].[CUSTOMER_ID] = [DEAL].[CUSTOMER_ID] AND [DEAL].[CLIENT_SECTOR] IN ( 5000, 9400 ) ' + @CrLf;
 
-		--	insert into dbo.[#TBL_SQL_CNDITIONS] ( [SQL_COND], [DESCR] )
+		--	insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 		--	select	@Sql2
 		--		,	'[UI_RAZPOREDITEL] : ' + str(@UI_RAZPOREDITEL,len(@UI_RAZPOREDITEL),0 )
 
@@ -347,7 +362,7 @@ begin
 	begin 
 		select @Sql2 = ' AND [DEAL].[DEAL_STD_DOG_CODE] = '+STR(@UI_STD_DOG_CODE, LEN(@UI_STD_DOG_CODE),0) + @CrLf;
 
-		insert into dbo.[#TBL_SQL_CNDITIONS] ( [SQL_COND], [DESCR] )
+		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 		select	@Sql2
 			,	'[UI_STD_DOG_CODE] : ' + STR(@UI_STD_DOG_CODE, LEN(@UI_STD_DOG_CODE),0);
 
@@ -359,7 +374,7 @@ begin
 	begin 
 		select @Sql2 = ' AND [DEAL].[DEAL_IS_INDIVIDUAL_DEAL] = '+STR(@UI_INDIVIDUAL_DEAL, LEN(@UI_INDIVIDUAL_DEAL),0) + @CrLf;
 
-		insert into dbo.[#TBL_SQL_CNDITIONS] ( [SQL_COND], [DESCR] )
+		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 		select	@Sql2
 			,	'[UI_INDIVIDUAL_DEAL] : ' + STR(@UI_INDIVIDUAL_DEAL, LEN(@UI_INDIVIDUAL_DEAL),0);
 
@@ -371,7 +386,7 @@ begin
 	begin 
 		select @Sql2 = ' AND [DEAL].[DEAL_NM342_BUNDLE_PRODUCT_CODE] = '+ STR(@CODE_UI_NM342,LEN(@CODE_UI_NM342),0) + @CrLf;
 
-		insert into dbo.[#TBL_SQL_CNDITIONS] ( [SQL_COND], [DESCR] )
+		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 		select	@Sql2
 			,	'[CODE_UI_NM342] : ' + STR(@CODE_UI_NM342,LEN(@CODE_UI_NM342),0);
 
@@ -383,7 +398,7 @@ begin
 	begin 
 		select @Sql2 = ' AND [DEAL].[HAS_OTHER_TAX_ACCOUNT] = 1' + @CrLf;
 
-		insert into dbo.[#TBL_SQL_CNDITIONS] ( [SQL_COND], [DESCR] )
+		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 		select	@Sql2
 			,	'[UI_OTHER_ACCOUNT_FOR_TAX] : ' + str(@UI_OTHER_ACCOUNT_FOR_TAX,len(@UI_OTHER_ACCOUNT_FOR_TAX),0);
 
@@ -395,7 +410,7 @@ begin
 	begin 
 		select @Sql2 = ' AND [DEAL].[DEAL_NO_AUTO_PAY_TAX] = '+@UI_NOAUTOTAX + @CrLf;
 
-		insert into dbo.[#TBL_SQL_CNDITIONS] ( [SQL_COND], [DESCR] )
+		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 		select	@Sql2
 			,	'[UI_NOAUTOTAX] : ' + @UI_NOAUTOTAX
 
@@ -407,7 +422,7 @@ begin
 	begin 
 		select @Sql2 = ' AND [DEAL].[DEAL_IS_DENY_MANUAL_TAX_ASSIGN] = '+@UI_DENY_MANUAL_TAX_ASSIGN + @CrLf;
 
-		insert into dbo.[#TBL_SQL_CNDITIONS] ( [SQL_COND], [DESCR] )
+		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 		select	@Sql2
 			,	'[UI_DENY_MANUAL_TAX_ASSIGN] : ' + @UI_DENY_MANUAL_TAX_ASSIGN
 
@@ -419,7 +434,7 @@ begin
 	begin 
 		select @Sql2 = ' AND [DEAL].[DEAL_CAPIT_ON_BASE_DATE_OPEN] = '+@UI_CAPIT_ON_BASE_DATE_OPEN + @CrLf;
 
-		insert into dbo.[#TBL_SQL_CNDITIONS] ( [SQL_COND], [DESCR] )
+		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 		select	@Sql2
 			,	'[UI_CAPIT_ON_BASE_DATE_OPEN] : ' + @UI_CAPIT_ON_BASE_DATE_OPEN
 
@@ -431,7 +446,7 @@ begin
 	begin 
 		select @Sql2 = ' AND [DEAL].[DEAL_EXCLUDE_FROM_BANK_COLLECTIONS] = '+@UI_BANK_RECEIVABLES + @CrLf;
 		
-		insert into dbo.[#TBL_SQL_CNDITIONS] ( [SQL_COND], [DESCR] )
+		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 		select	@Sql2
 			,	'[UI_BANK_RECEIVABLES] : ' + @UI_BANK_RECEIVABLES
 
@@ -446,7 +461,7 @@ begin
 		begin 
 			select @Sql2 = ' AND [DEAL].[DEAL_IS_JOINT_DEAL] = 0' + @CrLf;
 
-			insert into dbo.[#TBL_SQL_CNDITIONS] ( [SQL_COND], [DESCR] )
+			insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 			select	@Sql2
 				,	'[UI_JOINT_TYPE] : ' + str(@UI_JOINT_TYPE,len(@UI_JOINT_TYPE),0);
 
@@ -457,7 +472,7 @@ begin
 		begin 
 			select @Sql2 = ' AND [DEAL].[DEAL_JOINT_ACCESS_TO_FUNDS_TYPE] = 0' + @CrLf;
 
-			insert into dbo.[#TBL_SQL_CNDITIONS] ( [SQL_COND], [DESCR] )
+			insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 			select	@Sql2
 				,	'[UI_JOINT_TYPE] : ' + str(@UI_JOINT_TYPE,len(@UI_JOINT_TYPE),0);
 
@@ -470,7 +485,7 @@ begin
 	begin 
 		select @Sql2 = ' AND ([DEAL].[ACCOUNT_BEG_DAY_BALANCE] - [DEAL].[BLK_SUMA_MIN]) '+@LIMIT_AVAILABILITY + @CrLf;
 
-		insert into dbo.[#TBL_SQL_CNDITIONS] ( [SQL_COND], [DESCR] )
+		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 		select	@Sql2
 			,	'[LIMIT_AVAILABILITY] : ' + @LIMIT_AVAILABILITY;
 
@@ -482,7 +497,7 @@ begin
 	begin 
 		select @Sql2 = ' AND [DEAL].[IS_DORMUNT_ACCOUNT] = 0' + @CrLf;
 
-		insert into dbo.[#TBL_SQL_CNDITIONS] ( [SQL_COND], [DESCR] )
+		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 		select	@Sql2
 			,	'[DEAL_STATUS] : ' +  str(@DEAL_STATUS,len(@DEAL_STATUS),0);
 
@@ -494,7 +509,7 @@ begin
 	begin 
 		select @Sql2 = ' AND [DEAL].[HAS_TAX_UNCOLECTED] = ' + str(@LIMIT_TAX_UNCOLLECTED,len(@LIMIT_TAX_UNCOLLECTED),0) + @CrLf;
 
-		insert into dbo.[#TBL_SQL_CNDITIONS] ( [SQL_COND], [DESCR] )
+		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 		select	@Sql2
 			,	'[LIMIT_TAX_UNCOLLECTED] : ' + str(@LIMIT_TAX_UNCOLLECTED,len(@LIMIT_TAX_UNCOLLECTED),0);
 
@@ -509,7 +524,7 @@ begin
 		begin 
 			select @Sql2 = ' AND [DEAL].[HAS_DISTRAINT] = 0' + @CrLf;
 
-			insert into dbo.[#TBL_SQL_CNDITIONS] ( [SQL_COND], [DESCR] )
+			insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 			select	@Sql2
 				,	'[LIMIT_ZAPOR] : ' + str(@LIMIT_ZAPOR,len(@LIMIT_ZAPOR),0);
 
@@ -520,7 +535,7 @@ begin
 		begin
 			select @Sql2 = ' AND [DEAL].[HAS_DISTRAINT] = 1 AND [DEAL].[BLK_SUMA_MIN] > '+ STR(@LIMIT_ZAPOR,len(@LIMIT_ZAPOR),0) + @CrLf;
 
-			insert into dbo.[#TBL_SQL_CNDITIONS] ( [SQL_COND], [DESCR] )
+			insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 			select	@Sql2
 				,	'[LIMIT_ZAPOR] : ' + str(@LIMIT_ZAPOR,len(@LIMIT_ZAPOR),0);
 
@@ -532,11 +547,11 @@ begin
 	if IsNull(@IS_CORR,-1) in ( 0, 1 )
 	begin 
 		select @Sql2 = ' AND '+CASE WHEN @IS_CORR = 0 THEN 'NOT' ELSE '' END+ ' EXISTS (
-			select * FROM dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_OTHER_TAX_ACCOUNT] [TAX] with(nolock)
-			WHERE  [TAX].[CORR_ACCOUNT] =  [DEAL].[DEAL_ACCOUNT]
+			select * from dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_OTHER_TAX_ACCOUNT] [TAX] with(nolock)
+			where  [TAX].[CORR_ACCOUNT] =  [DEAL].[DEAL_ACCOUNT]
 		)' + @CrLf;
 
-		insert into dbo.[#TBL_SQL_CNDITIONS] ( [SQL_COND], [DESCR] )
+		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 		select	@Sql2
 			,	'[IS_CORR] : ' + str(@IS_CORR,len(@IS_CORR),0);
 
@@ -548,11 +563,11 @@ begin
 	begin 
 		select @Sql2 = ' AND NOT EXISTS (
 			select * FROM dbo.[RAZPREG_TA] [TA] with(nolock)
-			WHERE  [TA].[UI_DEAL_NUM] = [DEAL].[DEAL_NUM]
-				AND [TA].[TA_TYPE] = '+@TA_TYPE+' 
+			where  [TA].[UI_DEAL_NUM] = [DEAL].[DEAL_NUM]
+				and [TA].[TA_TYPE] = '+@TA_TYPE+' 
 		)' + @CrLf;
 
-		insert into dbo.[#TBL_SQL_CNDITIONS] ( [SQL_COND], [DESCR] )
+		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 		select	@Sql2
 			,	'[IS_UNIQUE_DEAL] : ' + str(@IS_UNIQUE_DEAL,len(@IS_UNIQUE_DEAL),0)
 
@@ -565,14 +580,14 @@ begin
 	begin 
 		select @Sql2 = ' AND EXISTS (
 			select * FROM dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_GS_INDIVIDUAL_PROGRAMME] [GS] with(nolock)
-			WHERE	[GS].[DEAL_NUM]	 = [DEAL].[DEAL_NUM]
-				AND [GS].[DEAL_TYPE] = 1
-				AND [GS].[DEAL_GS_INDIVIDUAL_PROGRAM_CODE] = '+STR(@CODE_GS_PROGRAMME,LEN(@CODE_GS_PROGRAMME),0)+'
-				AND [GS].[DEAL_GS_INDIVIDUAL_CARDHOLDER_PREMIUM] = '+STR(@CODE_GS_CARD,LEN(@CODE_GS_CARD),0)+'
-				AND [GS].[DEAL_GS_INDIVIDUAL_PRODUCT_CODE] = '+STR(@GS_PRODUCT_CODE,LEN(@GS_PRODUCT_CODE),0)+'
+			where	[GS].[DEAL_NUM]	 = [DEAL].[DEAL_NUM]
+				and [GS].[DEAL_TYPE] = 1
+				and [GS].[DEAL_GS_INDIVIDUAL_PROGRAM_CODE] = '+STR(@CODE_GS_PROGRAMME,LEN(@CODE_GS_PROGRAMME),0)+'
+				and [GS].[DEAL_GS_INDIVIDUAL_CARDHOLDER_PREMIUM] = '+STR(@CODE_GS_CARD,LEN(@CODE_GS_CARD),0)+'
+				and [GS].[DEAL_GS_INDIVIDUAL_PRODUCT_CODE] = '+STR(@GS_PRODUCT_CODE,LEN(@GS_PRODUCT_CODE),0)+'
 		)' + @CrLf;
 
-		insert into dbo.[#TBL_SQL_CNDITIONS] ( [SQL_COND], [DESCR] )
+		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 		select	@Sql2
 			,	'[CODE_GS_PROGRAMME] : ' + str(@CODE_GS_PROGRAMME,len(@CODE_GS_PROGRAMME),0)
 				+', [CODE_GS_CARD] : ' + str(@CODE_GS_CARD,len(@CODE_GS_CARD),0)
@@ -585,7 +600,7 @@ begin
 	begin 
 		select @Sql2 = ' AND '+CASE WHEN @IS_CORR = 0 THEN 'NOT' ELSE '' END+ ' EXISTS (
 			select * FROM dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_OTHER_TAX_ACCOUNT] [TAX] with(nolock)
-			WHERE  [TAX].[CORR_ACCOUNT] =  [DEAL].[DEAL_ACCOUNT] ' + @CrLf;
+			where  [TAX].[CORR_ACCOUNT] =  [DEAL].[DEAL_ACCOUNT] ' + @CrLf;
 
 		-- Разполагаемост по сделката 
 		if IsNull(@LIMIT_AVAILABILITY_CORS, -1) not in ( '0' )
@@ -593,7 +608,7 @@ begin
 
 		select @Sql2 += ')' + @CrLf;
 
-		insert into dbo.[#TBL_SQL_CNDITIONS] ( [SQL_COND], [DESCR] )
+		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 		select	@Sql2
 			,	'[CCY_CODE_CORS] : ' + str(@CCY_CODE_CORS,len(@CCY_CODE_CORS),0)
 				+', [LIMIT_AVAILABILITY_CORS] : ' + @LIMIT_AVAILABILITY_CORS
@@ -612,15 +627,15 @@ begin
 		select @Msg = 'TA Row ID: ' + @TestCaseRowID + ', successful generated sql query: "'+@Sql+'"'
 		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Msg, @Sql
 
-		BEGIN TRY 
+		begin try
 			insert into dbo.[#TBL_RESULT] 
 			exec sp_executeSql  @Sql
-		END TRY 
-		BEGIN CATCH 
+		end try 
+		begin catch 
 			select  @Msg = dbo.FN_GET_EXCEPTION_INFO()
 			exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql, @Msg
 			return 1
-		END CATCH 
+		end catch 
 	end
 		
 	/************************************************************************************************************/
@@ -636,4 +651,3 @@ begin
 	return 0;
 end 
 go
-

@@ -1,3 +1,4 @@
+
 /********************************************************************************************************/
 /* Процедура за актуализация на Таблица dbo.[SP_CASH_PAYMENTS_UPDATE_RAZREG_TA] */
 DROP PROCEDURE IF EXISTS dbo.[SP_CASH_PAYMENTS_UPDATE_RAZREG_TA]
@@ -17,7 +18,7 @@ CREATE PROCEDURE dbo.[SP_CASH_PAYMENTS_UPDATE_RAZREG_TA]
 AS 
 begin
 
-	declare @LogTraceInfo int = 1,	@LogBegEndProc int = 1,	@TimeBeg datetime = GetDate();
+	declare @LogTraceInfo int = 0, @LogResultTable int = 0,	@LogBegEndProc int = 1,	@TimeBeg datetime = GetDate();
 	;
 
 	declare @Msg nvarchar(max) = N'', @Rows int = 0, @Err int = 0, @Ret int = 0, @Sql2 nvarchar(4000) = N''
@@ -89,7 +90,7 @@ begin
 	if @Ret <> 0
 		return 3;
 
-	if @LogTraceInfo = 1 select * from dbo.[#TBL_ONLINE_DEAL_INFO]  with(nolock)
+	if @LogResultTable = 1 select * from dbo.[#TBL_ONLINE_DEAL_INFO]  with(nolock)
 	;
 
 	/* Update data in [RAZPREG_TA] */

@@ -1,3 +1,4 @@
+
 /********************************************************************************************************/
 /* Процедура за актуализация на Таблица dbo.[DEALS_CORR_TA] */
 DROP PROCEDURE IF EXISTS dbo.[SP_CASH_PAYMENTS_UPDATE_DEALS_CORS_TA]
@@ -17,7 +18,7 @@ CREATE PROCEDURE dbo.[SP_CASH_PAYMENTS_UPDATE_DEALS_CORS_TA]
 AS 
 begin
 
-	declare @LogTraceInfo int = 1,	@LogBegEndProc int = 1,	@TimeBeg datetime = GetDate()
+	declare @LogTraceInfo int = 0,	@LogResultTable int = 0, @LogBegEndProc int = 1,	@TimeBeg datetime = GetDate()
 	;
 
 	declare @Msg nvarchar(max) = N'', @Rows int = 0, @Err int = 0
@@ -28,14 +29,6 @@ begin
 	if @LogBegEndProc = 1 exec dbo.SP_SYS_LOG_PROC @@PROCID, @TestCaseRowID, '*** Begin Execute Proc ***: dbo.[SP_CASH_PAYMENTS_UPDATE_DEALS_CORS_TA]'
 	;
 
-	IF LEN(@OnleneSqlServerName) > 1 AND LEFT(@OnleneSqlServerName,1) <> N'['
-		SELECT @OnleneSqlServerName = QUOTENAME(@OnleneSqlServerName)
-
-	IF LEN(@OnleneSqlDataBaseName) > 1 AND LEFT(@OnleneSqlDataBaseName,1) <> N'['
-		SELECT @OnleneSqlDataBaseName = QUOTENAME(@OnleneSqlDataBaseName)		
-
-	declare @SqlFullDBName sysname = @OnleneSqlServerName +'.'+@OnleneSqlDataBaseName
-	;
 	/************************************************************************************************************/
 	-- TODO: UPDATE [DEALS_CORS_TA] 
 	declare @TBL_ROW_ID int = 0, @DealRowID int = 0
@@ -73,11 +66,9 @@ begin
 	where [DEAL_TYPE] = 1 AND [DEAL_NUM] = @DEAL_NUM
 	;
 
-	select @DEAL_NUM as [DEAL_NUM], 0 as [TAX_UNCOLLECTED], @CorrAccCurrency as [CCY], @CorrAccount as [ACC], @DealRowID as [DEAL_ROW_ID]
+	if @LogResultTable = 1 select @DEAL_NUM as [DEAL_NUM], 0 as [TAX_UNCOLLECTED], @CorrAccCurrency as [CCY], @CorrAccount as [ACC], @DealRowID as [DEAL_ROW_ID]
 	;
-	SELECT [DEAL_NUM], [TAX_UNCOLLECTED_SUM], [CURRENCY], [UI_CORR_ACCOUNT], [ROW_ID]
-	FROM dbo.[DEALS_CORR_TA] [D]
-	WHERE [D].[ROW_ID] = @TBL_ROW_ID
+	if @LogResultTable = 1 select [DEAL_NUM], [TAX_UNCOLLECTED_SUM], [CURRENCY], [UI_CORR_ACCOUNT], [ROW_ID] from dbo.[DEALS_CORR_TA] [D] where [D].[ROW_ID] = @TBL_ROW_ID
 	;
 
 	/* Update data in table [DEALS_CORR_TA] */

@@ -375,7 +375,7 @@ BEGIN
 		,	@Sql1 nvarchar(4000) = N'', @Sql2 nvarchar(4000) = N'', @Sql3 nvarchar(4000) = N'', @TimeBeg datetime = GetDate()
 	;
 
-	if @LogBegEndProc = 1 exec dbo.SP_SYS_LOG_PROC @@PROCID, @SqlFullDBName, '*** Begin Execute Proc ***: dbo.[SP_CASH_PAYMENTS_PREPARE_DEALS_BETA]'
+	if @LogBegEndProc = 1 exec dbo.SP_SYS_LOG_PROC @@PROCID, @SqlFullDBName, '*** Begin Execute Proc ***: dbo.[SP_CASH_PAYMENTS_INIT_DEALS]'
 	;
 
 	/************************************************************************************************************/
@@ -1379,7 +1379,7 @@ BEGIN
 	begin
 		select @Msg = 'Duration: '+ dbo.FN_GET_TIME_DIFF(@TimeBeg, GetDate()) + 
 			 + ', AccData: ' + @AccountDate + ', Fileter: ' + @TestAutomationType;
-		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Msg, '*** End Execute Proc ***: dbo.[SP_CASH_PAYMENTS_PREPARE_DEALS_BETA]'
+		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Msg, '*** End Execute Proc ***: dbo.[SP_CASH_PAYMENTS_INIT_DEALS]'
 	end
 	;
 

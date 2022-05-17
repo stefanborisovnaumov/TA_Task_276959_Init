@@ -1,3 +1,4 @@
+
 /********************************************************************************************************/
 /* Процедура за определяне на критериите който ни пречат да намерим подходяща сделка за датен TestCase */
 DROP PROCEDURE IF EXISTS dbo.[SP_CASH_PAYMENTS_FIND_SUITABLE_DEAL]
@@ -5,8 +6,8 @@ GO
 
 CREATE PROCEDURE dbo.[SP_CASH_PAYMENTS_FIND_SUITABLE_DEAL]
 (
-	@TestCaseRowID NVARCHAR(16)
-,	@CurrAccDate DateTime
+	@TestCaseRowID nvarchar(16)
+,	@CurrAccDate datetime
 )
 AS 
 begin
@@ -37,3 +38,4 @@ begin
 	return 0;
 end 
 go
+

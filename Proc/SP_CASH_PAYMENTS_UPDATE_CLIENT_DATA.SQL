@@ -1,3 +1,4 @@
+
 /**********************************************************************************************************/
 /* Процедура за актуализация данните в на Таблица dbo.[DT015_CUSTOMERS_ACTIONS_TA] за титуляра и Proxy-то*/
 DROP PROCEDURE IF EXISTS dbo.[SP_CASH_PAYMENTS_UPDATE_CLIENT_DATA]
@@ -16,7 +17,7 @@ CREATE PROCEDURE dbo.[SP_CASH_PAYMENTS_UPDATE_CLIENT_DATA]
 AS 
 begin
 
-	declare @LogTraceInfo int = 1,	@LogBegEndProc int = 1,	@TimeBeg datetime = GetDate();
+	declare @LogTraceInfo int = 0,	@LogBegEndProc int = 1,	@TimeBeg datetime = GetDate();
 	;
 
 	declare @Sql2 nvarchar(4000) = N'', @Msg nvarchar(max) = N'', @Ret int = 0

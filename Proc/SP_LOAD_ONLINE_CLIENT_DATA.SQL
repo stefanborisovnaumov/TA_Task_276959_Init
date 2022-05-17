@@ -1,3 +1,4 @@
+
 /********************************************************************************************************/
 /* Процедура за зареждане на Клиентски данни от OnLineDB по CustomerID */
 DROP PROCEDURE IF EXISTS dbo.[SP_LOAD_ONLINE_CLIENT_DATA]
@@ -8,10 +9,10 @@ CREATE PROCEDURE dbo.[SP_LOAD_ONLINE_CLIENT_DATA]
 	@OnleneSqlServerName	sysname
 ,	@OnleneSqlDataBaseName	sysname
 ,	@CurrentAccountDate		datetime
-,	@CUSTOMER_ID			INT
+,	@CUSTOMER_ID			int
 )
 AS 
-BEGIN
+begin
 
 	declare @LogTraceInfo int = 0,	@LogBegEndProc int = 1,	@TimeBeg datetime = GetDate();
 	;
@@ -33,10 +34,10 @@ BEGIN
 	/************************************************************************************************************/
 	/* 2. Prepare Sql Server full database name */
 	IF LEN(@OnleneSqlServerName) > 1 AND LEFT(RTRIM(@OnleneSqlServerName),1) <> N'['
-		SELECT @OnleneSqlServerName = QUOTENAME(@OnleneSqlServerName)
+		select @OnleneSqlServerName = QUOTENAME(@OnleneSqlServerName)
 
 	IF LEN(@OnleneSqlDataBaseName) > 1 AND LEFT(RTRIM(@OnleneSqlDataBaseName),1) <> N'['
-		SELECT @OnleneSqlDataBaseName = QUOTENAME(@OnleneSqlDataBaseName)	
+		select @OnleneSqlDataBaseName = QUOTENAME(@OnleneSqlDataBaseName)	
 
 	declare @SqlFullDBName sysname = @OnleneSqlServerName +'.'+@OnleneSqlDataBaseName
 	;
@@ -100,7 +101,7 @@ BEGIN
 	begin try
 		exec sp_executeSql @Sql1
 	end try
-	begin CATCH 
+	begin catch 
 		select  @Msg = dbo.FN_GET_EXCEPTION_INFO()
 		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg
 		return 1;
@@ -126,5 +127,5 @@ BEGIN
 	;
 
 	return 0;
-END 
+end 
 GO

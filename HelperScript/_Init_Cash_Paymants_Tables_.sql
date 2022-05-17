@@ -1,7 +1,7 @@
 /************************************************************************************************************/
 /************************************************************************************************************/
 /* Test proc: */
---EXEC dbo.[SP_CASH_PAYMENTS_INIT_DEALS] 'YYANKOV\SQL2016', 'BPB_VCSBank_Online'
+-- EXEC dbo.[SP_CASH_PAYMENTS_INIT_DEALS] 'YYANKOV\SQL2016', 'BPB_VCSBank_Online'
 --GO
 
 --EXEC dbo.[SP_CASH_PAYMENTS_INIT_DEALS] 'TESTSERVER18\SQL2016', 'BPB_online_NEXT'
