@@ -155,15 +155,16 @@ begin
 	--	exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql, @Msg
 	--end
 
+	select @Rows = (select count(*) from dbo.[#TBL_RESULT] with(nolock))
+
 	declare @DealNum int = 0, @CustomerID int = 0, @ProxyID int = 0, @WithUpdate int = 1
 	;
 
-	select	@DealNum	= [DEAL_NUM]
+	select	Top(1)
+			@DealNum	= [DEAL_NUM]
 		,	@CustomerID	= [CUSTOMER_ID]
 		,	@ProxyID	= [REPRESENTATIVE_CUSTOMER_ID]
 	from dbo.[#TBL_RESULT] with(nolock);
-
-	select @Rows = (select count(*) from dbo.[#TBL_RESULT] with(nolock))
 
 	if @Rows <= 0 or IsNull(@DealNum,0) <= 0 or IsNull(@CustomerID,0) <= 0
 	begin

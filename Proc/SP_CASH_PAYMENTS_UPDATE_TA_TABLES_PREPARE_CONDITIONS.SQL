@@ -70,7 +70,7 @@ begin
 	;
 	declare @CCY_CODE_CORS				int = -1
 		,	@LIMIT_AVAILABILITY_CORS	sysname = '-1'
-		,	@LIMIT_TAX_UNCOLLECTED_CORS	sysname = '-1'
+
 		/* Conditions [PREV_COMMON_TA]: */
 		,	@TAX_CODE					int = -1
 		,	@PREF_CODE					sysname = '-1'
@@ -134,7 +134,6 @@ begin
 	select top(1) /* Conditions [DEALS_CORR_TA]: */
 			@CCY_CODE_CORS				= [CCY_CODE_CORS]
 		,	@LIMIT_AVAILABILITY_CORS	= [LIMIT_AVAILABILITY_CORS]
-		,	@LIMIT_TAX_UNCOLLECTED_CORS	= [LIMIT_TAX_UNCOLLECTED_CORS]
 		,	@TAX_CODE					= [TAX_CODE]
 		,	@PREF_CODE					= [PREF_CODE]
 		,	@DOC_SUM					= [DOC_SUM]
@@ -482,13 +481,12 @@ begin
 	end
 
 	-- 0 или долна граница на разполагаемостта ( '<0', '>0' )
-	if IsNull(@LIMIT_AVAILABILITY,'0') not in ('0')
+	if Left(ltrim(IsNull(@LIMIT_AVAILABILITY,'0')),1) in ('<', '>', '=')
 	begin 
 		select @Sql2 = ' AND ([DEAL].[ACCOUNT_BEG_DAY_BALANCE] - [DEAL].[BLK_SUMA_MIN]) '+@LIMIT_AVAILABILITY + @CrLf;
 
 		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
-		select	@Sql2
-			,	'[LIMIT_AVAILABILITY] : ' + @LIMIT_AVAILABILITY;
+		select	@Sql2, '[LIMIT_AVAILABILITY] : ' + @LIMIT_AVAILABILITY;
 
 		select @Sql += @Sql2
 	end 
@@ -499,8 +497,7 @@ begin
 		select @Sql2 = ' AND [DEAL].[IS_DORMUNT_ACCOUNT] = 0' + @CrLf;
 
 		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
-		select	@Sql2
-			,	'[DEAL_STATUS] : ' +  str(@DEAL_STATUS,len(@DEAL_STATUS),0);
+		select	@Sql2, '[DEAL_STATUS] : ' + str(@DEAL_STATUS,len(@DEAL_STATUS),0);
 
 		select @Sql += @Sql2
 	end 
@@ -604,23 +601,17 @@ begin
 			where  [TAX].[CORR_ACCOUNT] =  [DEAL].[DEAL_ACCOUNT] ' + @CrLf;
 
 		-- Разполагаемост по сделката 
-		if IsNull(@LIMIT_AVAILABILITY_CORS, -1) not in ( '0' )
+		if left(ltrim(IsNull(@LIMIT_AVAILABILITY_CORS, '0')),1) in ('<', '>', '=')
 				select @Sql2 += ' AND ([TAX].[ACCOUNT_BEG_DAY_BALANCE] - [DEAL].[BLK_SUMA_MIN]) '+@LIMIT_AVAILABILITY_CORS;
 
 		select @Sql2 += ')' + @CrLf;
 
 		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 		select	@Sql2
-			,	'[CCY_CODE_CORS] : ' + str(@CCY_CODE_CORS,len(@CCY_CODE_CORS),0)
-				+', [LIMIT_AVAILABILITY_CORS] : ' + @LIMIT_AVAILABILITY_CORS
+			,	'[CCY_CODE_CORS] : ' + str(@CCY_CODE_CORS,len(@CCY_CODE_CORS),0) + ', [LIMIT_AVAILABILITY_CORS] : ' + @LIMIT_AVAILABILITY_CORS
 
 		select @Sql += @Sql2
 	end 
-
-	-- @TODO: @LIMIT_TAX_UNCOLLECTED_CORS:
-	-- Несъбрана такса 
-	--if IsNull(@LIMIT_TAX_UNCOLLECTED_CORS, -1) not in ( '0' )
-	--		select @Sql += ' AND ([TAX].[ACCOUNT_BEG_DAY_BALANCE] - [DEAL].[BLK_SUMA_MIN]) '+@LIMIT_TAX_UNCOLLECTED_CORS;
 
 	if len(@Sql) > 10
 	begin 

@@ -128,7 +128,7 @@ AS
 		,	[CORS].[CURRENCY]								AS [CURRENCY_CORS]
 		,	[CCY_CORS].[CCY_CODE_CORS]						AS [CCY_CODE_CORS]
 		,	[CORS].[LIMIT_AVAILABILITY]						AS [LIMIT_AVAILABILITY_CORS]
-		,	[CORS].[LIMIT_TAX_UNCOLLECTED]					AS [LIMIT_TAX_UNCOLLECTED_CORS]
+/*		,	[CORS].[LIMIT_TAX_UNCOLLECTED]					AS [LIMIT_TAX_UNCOLLECTED_CORS] */
 
 			/* [PROXY_ACC_TA] */
 /*		,	[PROXY_ACC_TA]  Пълномощника, да има права за действието по избраната сметка */

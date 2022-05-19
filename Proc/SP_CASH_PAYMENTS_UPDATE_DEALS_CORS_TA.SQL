@@ -18,10 +18,10 @@ CREATE PROCEDURE dbo.[SP_CASH_PAYMENTS_UPDATE_DEALS_CORS_TA]
 AS 
 begin
 
-	declare @LogTraceInfo int = 0,	@LogResultTable int = 0, @LogBegEndProc int = 1,	@TimeBeg datetime = GetDate()
+	declare @LogTraceInfo int = 0,	@LogResultTable int = 0, @LogBegEndProc int = 1, @TimeBeg datetime = GetDate()
 	;
 
-	declare @Msg nvarchar(max) = N'', @Rows int = 0, @Err int = 0
+	declare @Msg nvarchar(max) = N'', @Rows int = 0, @Err int = 0, @Ret int = 0
 		,	@Sql2 nvarchar(4000) = N'',	@TA_RowID int = cast( @TestCaseRowID as int)
 	;
 	/************************************************************************************************************/
@@ -30,12 +30,13 @@ begin
 	;
 
 	/************************************************************************************************************/
-	-- TODO: UPDATE [DEALS_CORS_TA] 
+	/* Find Test Case row and Corr Account */
 	declare @TBL_ROW_ID int = 0, @DealRowID int = 0
-		,	@CorrAccount varchar(64), @CorrAccCurrency varchar(8) = 'BGL'
+		,	@CorrAccount varchar(64) = N'', @CorrAccType int = 3
 	;
+
 	select	@DealRowID = [DEAL_ROW_ID]
-		,	 @TBL_ROW_ID = [CORS_ROW_ID]
+		,	@TBL_ROW_ID = [CORS_ROW_ID]
 	from dbo.[VIEW_CASH_PAYMENTS_CONDITIONS] with(nolock)
 	where [ROW_ID] = @TA_RowID
 
@@ -46,41 +47,76 @@ begin
 		return 0;
 	end 
 
-	;
-	with [CTE_CCY] as 
-	(
-		select [X].*
-		from ( 
-			values	( 36,	'AUD' )	,	(100,	'BGN' )	,	(124,	'CAD' )	,	(756,	'CHF' )
-				,	(826,	'GBP' )	,	(840,	'USD' )	,	(946,	'RON' )	,	(978,	'EUR' )
-		) X([ID], [NAME])		
-	)
 	select	@CorrAccount = [CORR_ACCOUNT]
-		,	@CorrAccCurrency = IsNull([CCY].[NAME], 'BGN')
 	from [dbo].[AGR_CASH_PAYMENTS_DEALS_WITH_OTHER_TAX_ACCOUNT] [C] with(nolock)
-	OUTER APPLY( 
-		select [NM].*
-		from [CTE_CCY] [NM]
-		where [NM].[ID] = [C].[PART_CURRENCY]
-	) [CCY]
 	where [DEAL_TYPE] = 1 AND [DEAL_NUM] = @DEAL_NUM
+	;	
+
+	if IsNull(@CorrAccount,'') = ''
+	begin  
+		select @Msg = 'Not found correspondence account TA ROW_ID : ' + @TestCaseRowID;
+		exec dbo.SP_SYS_LOG_PROC @@PROCID, @TestCaseRowID, @Msg
+		return 1;
+	end 
+
+	/************************************************************************************************************/
+	-- Load data from OnlinDB: 
+	drop table if exists dbo.[#TBL_ONLINE_DEALS_CORR_INFO]
 	;
 
-	if @LogResultTable = 1 select @DEAL_NUM as [DEAL_NUM], 0 as [TAX_UNCOLLECTED], @CorrAccCurrency as [CCY], @CorrAccount as [ACC], @DealRowID as [DEAL_ROW_ID]
-	;
-	if @LogResultTable = 1 select [DEAL_NUM], [TAX_UNCOLLECTED_SUM], [CURRENCY], [UI_CORR_ACCOUNT], [ROW_ID] from dbo.[DEALS_CORR_TA] [D] where [D].[ROW_ID] = @TBL_ROW_ID
+	create table dbo.[#TBL_ONLINE_DEALS_CORR_INFO]
+	(	[DEAL_TYPE]			int
+	,	[DEAL_NUM]			int	
+	,	[CORR_TYPE]			int	
+	,	[CORR_DEAL_TYPE]	int
+	,	[CORR_DEAL_NUM]		int
+	,	[CORR_ACCOUNT]		varchar(64)
+	,	[CORR_ACCOUNT_CCY]	varchar(8)
+	,	[BLK_SUMA_MIN]		float	
+	,	[AVAILABLE_BAL]		float	
+	,	[TAX_UNCOLLECTED]	float
+	);	
+
+	begin try
+		insert into dbo.[#TBL_ONLINE_DEALS_CORR_INFO]
+		exec  @Ret = dbo.[SP_LOAD_ONLINE_DEAL_CORS_DATA] @OnleneSqlServerName, @OnleneSqlDataBaseName, @DEAL_NUM, @CorrAccType, @CorrAccount
+	end try
+	begin catch 
+		select  @Msg = dbo.FN_GET_EXCEPTION_INFO()
+			,	@Sql2 = ' exec dbo.[SP_LOAD_ONLINE_DEAL_CORS_DATA] @OnleneSqlServerName = '+@OnleneSqlServerName+' '
+								+ ', @OnleneSqlDataBaseName = '+@OnleneSqlDataBaseName+' '
+								+ ', @DEAL_NUM = '+str(@DEAL_NUM,len(@DEAL_NUM),0)
+								+ ', @CORS_ACCOUNT_TYPE = '+str(@CorrAccType,len(@CorrAccType),0)
+								+ ', @CORS_ACCOUNT = '''+@CorrAccount+''''
+			;
+
+			exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql2, @Msg
+			return 2
+	end catch
+
+	if @Ret <> 0
+		return 3;	
+
+	/************************************************************************************************************/
+	-- UPDATE [DEALS_CORS_TA] 
+	if @LogResultTable = 1 select * from dbo.[#TBL_ONLINE_DEALS_CORR_INFO] with(nolock)
 	;
 
 	/* Update data in table [DEALS_CORR_TA] */
 	if @WithUpdate = 1
 	begin
 		UPDATE [D]
-		SET [DEAL_NUM]				= @DEAL_NUM			-- DEALS_CORR_TA	DEAL_NUM	Номер на кореспондираща сделка
-		,	[CURRENCY]				= @CorrAccCurrency	-- DEALS_CORR_TA	CURRENCY	
-		,	[UI_CORR_ACCOUNT]		= @CorrAccount		-- DEALS_CORR_TA	UI_CORR_ACCOUNT	Партида на кореспондиращата сделка
-		,	[TAX_UNCOLLECTED_SUM]	= 0					-- DEALS_CORR_TA	TAX_UNCOLLECTED_SUM	 /* @TODO: Трябва да я изчислим !!!... */ 
---		,	[DEAL_ROW_ID] =  @DealRowID					-- /* Това ще ви трябва ли */
+		SET [DEAL_NUM]				= [S].[CORR_DEAL_NUM]		-- DEALS_CORR_TA	DEAL_NUM	Номер на кореспондираща сделка
+		,	[CURRENCY]				= [S].[CORR_ACCOUNT_CCY]	-- DEALS_CORR_TA	CURRENCY	
+		,	[UI_CORR_ACCOUNT]		= [S].[CORR_ACCOUNT]		-- DEALS_CORR_TA	UI_CORR_ACCOUNT	Партида на кореспондиращата сделка
+		,	[TAX_UNCOLLECTED_SUM]	= [S].[TAX_UNCOLLECTED]		-- DEALS_CORR_TA	TAX_UNCOLLECTED_SUM	 /* @TODO: Трябва да я изчислим !!!... */ 
+
 		from dbo.[DEALS_CORR_TA] [D]
+		inner join dbo.[#TBL_ONLINE_DEALS_CORR_INFO] [S] with(nolock)
+			on	[S].[DEAL_TYPE] 	= 1
+			and [S].[DEAL_NUM]		= @DEAL_NUM
+			and [S].[CORR_TYPE]		= @CorrAccType
+			and [S].[CORR_ACCOUNT]	= @CorrAccount
 		where [D].[ROW_ID] = @TBL_ROW_ID
 	end
 

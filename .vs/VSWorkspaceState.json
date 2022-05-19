@@ -1,7 +1,8 @@
 {
   "ExpandedNodes": [
-    ""
+    "",
+    "\\HelperScript"
   ],
-  "SelectedNode": "\\Views",
+  "SelectedNode": "\\HelperScript\\_view_sys_log_proc_.sql",
   "PreviewInSolutionExplorer": false
 }

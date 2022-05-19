@@ -53,7 +53,7 @@ begin
 	end 
 
 	/************************************************************************************************************/
-	-- TODO: UPDATE [RAZPREG_TA]: 
+	-- UPDATE [RAZPREG_TA]: 
 	drop table if exists dbo.[#TBL_ONLINE_DEAL_INFO]
 	;
 

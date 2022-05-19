@@ -99,8 +99,8 @@ begin
 		INNER JOIN '+@SqlFullDBName+'.dbo.[NOMS] [N] with(nolock)
 			ON	[N].[NOMID] = 136 
 			AND [N].[CODE]	= [B].[WHYFREEZED] 
-			AND ([N].[STATUS] & @StsBlockReasonDistraint) = @StsBlockReasonDistraint 
-		WHERE [B].[PARTIDA] = [REG].[ACCOUNT] 
+			AND ([N].[STATUS] & @StsBlockReasonDistraint) = @StsBlockReasonDistraint
+		WHERE [B].[PARTIDA] = [REG].[ACCOUNT] AND [B].[CLOSED_FROZEN_SUM] = 0
 	) [DST]
 	cross apply (
 		SELECT	ROUND([XBAL].[BEG_SAL], 4) AS [BEG_SAL]

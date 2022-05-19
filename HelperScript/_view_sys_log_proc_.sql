@@ -13,12 +13,14 @@ go
 select top (2000) * 
 from sys_log_proc with(nolock)
 where [msg] like 'Not found suitable deal from Test Case with%'
+	and id > 1057
 order by id
 go
 
 select top (2000) * 
 from sys_log_proc with(nolock)
 where [msg] like '%After: insert into dbo._#TBL_RESULT_, Rows affected : 0%'
+	and id > 1057
 order by id DESC
 go
 

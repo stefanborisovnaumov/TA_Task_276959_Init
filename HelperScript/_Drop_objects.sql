@@ -1,3 +1,6 @@
+--use BPB_TA_REGRESSION_NEXT
+go
+
 -- proc for dropping
 drop proc IF EXISTS SP_GET_DATASOURCE
 drop proc IF EXISTS SP_LOAD_ONLINE_CLIENT_DATA
