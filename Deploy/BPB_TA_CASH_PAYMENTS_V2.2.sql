@@ -3557,7 +3557,7 @@ begin
 	--	exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql, @Msg
 	--end
 
-	select @Rows = (select count(*) from dbo.[#TBL_RESULT] with(nolock))	
+	select @Rows = (select count(*) from dbo.[#TBL_RESULT] with(nolock))
 
 	declare @DealNum int = 0, @CustomerID int = 0, @ProxyID int = 0, @WithUpdate int = 1
 	;

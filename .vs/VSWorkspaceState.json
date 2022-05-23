@@ -1,8 +1,9 @@
 {
   "ExpandedNodes": [
     "",
-    "\\HelperScript"
+    "\\HelperScript",
+    "\\Proc"
   ],
-  "SelectedNode": "\\HelperScript\\_view_sys_log_proc_.sql",
+  "SelectedNode": "\\Proc\\SP_CASH_PAYMENTS_UPDATE_TA_TABLES.SQL",
   "PreviewInSolutionExplorer": false
 }
