@@ -11,7 +11,7 @@ CREATE PROCEDURE dbo.[SP_CASH_PAYMENTS_UPDATE_TA_TABLES]
 AS 
 begin
 
-	declare @LogTraceInfo int = 0, @LogResultTable int = 0,	@LogSqlCondition int = 0
+	declare @LogTraceInfo int = 0, @LogResultTable int = 0
 		,	@LogBegEndProc int = 1,	@TimeBeg datetime = GetDate()
 	;
 
@@ -111,18 +111,6 @@ begin
 
 	/*********************************************************************************************************/
 	/* 4. Prepare Sql Conditions: */
-	drop table if EXISTS dbo.[#TBL_SQL_CONDITIONS]
-	;
-	create table dbo.[#TBL_SQL_CONDITIONS]
-	(
-		[ID] INT IDENTITY(1,1)
-	,	[SQL_COND] nvarchar(1000)
-	,	[DESCR] nvarchar(2000)
-	,	[IS_BASE_SELECT] BIT DEFAULT(0)
-	,	[IS_SELECT_COUNT] BIT DEFAULT(0)
-	)
-	;
-
 	drop table if EXISTS dbo.[#TBL_RESULT]
 	;
 	create table dbo.[#TBL_RESULT]
@@ -145,8 +133,6 @@ begin
 	end
 
 	if @LogResultTable = 1 select * from dbo.[#TBL_RESULT] with(nolock);
-
-	if @LogSqlCondition = 1 select * from dbo.[#TBL_SQL_CONDITIONS] with(nolock);
 
 	--EXEC @Ret = dbo.[SP_CASH_PAYMENTS_FIND_SUITABLE_DEAL] @RowIdStr, @CurrAccDate, @Sql
 	--begin 

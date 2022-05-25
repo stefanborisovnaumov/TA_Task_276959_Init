@@ -92,6 +92,7 @@ begin
 	select top(1) @IS_ZAPOR = 1 
 	from dbo.[AGR_CASH_PAYMENTS_DEALS] [D] with(nolock)
 	where [D].[CUSTOMER_ID] =  @OnlineDbCustomer_ID
+		and [D].[HAS_DISTRAINT] = 1
 	;
 	/* За клиентите със служебни EGFN-та да заредим Оригиналното: */
 	DECLARE @ClientIdentifier varchar(32) = N''

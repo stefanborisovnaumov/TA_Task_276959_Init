@@ -58,7 +58,7 @@ begin
 
 			UPDATE [D]
 			SET		[DEAL_NUM]				= 0		-- DEALS_CORR_TA	DEAL_NUM	Номер на кореспондираща сделка
-				,	[CURRENCY]				= '' 	-- DEALS_CORR_TA	CURRENCY	
+/*				,	[CURRENCY]				= '' 	-- DEALS_CORR_TA	CURRENCY	*/
 				,	[UI_CORR_ACCOUNT]		= ''	-- DEALS_CORR_TA	UI_CORR_ACCOUNT	Партида на кореспондиращата сделка
 				,	[TAX_UNCOLLECTED_SUM]	= 0		-- DEALS_CORR_TA	TAX_UNCOLLECTED_SUM	 /* @TODO: Трябва да я изчислим !!!... */ 
 			from dbo.[DEALS_CORR_TA] [D]
@@ -71,15 +71,15 @@ begin
 		begin
 
 			UPDATE [D]
-			SET		[UI_CUSTOMER_ID]		= ''		-- DT015_CUSTOMERS_ACTIONS_TA	UI_CUSTOMER_ID
-				,	[UI_EGFN]				= ''		-- DT015_CUSTOMERS_ACTIONS_TA	UI_EGFN
+			SET		[UI_CUSTOMER_ID]		= '0'		-- DT015_CUSTOMERS_ACTIONS_TA	UI_CUSTOMER_ID
+				,	[UI_EGFN]				= '0'		-- DT015_CUSTOMERS_ACTIONS_TA	UI_EGFN
 				,	[NAME]					= ''		-- DT015_CUSTOMERS_ACTIONS_TA	NAME
-				,	[COMPANY_EFN]			= ''		-- DT015_CUSTOMERS_ACTIONS_TA	COMPANY_EFN
-				,	[UI_CLIENT_CODE]		= ''		-- DT015_CUSTOMERS_ACTIONS_TA	UI_CLIENT_CODE
+				,	[COMPANY_EFN]			= '0'		-- DT015_CUSTOMERS_ACTIONS_TA	COMPANY_EFN
+				,	[UI_CLIENT_CODE]		= '0'		-- DT015_CUSTOMERS_ACTIONS_TA	UI_CLIENT_CODE
 				,	[UI_NOTES_EXIST]		= 0			-- DT015_CUSTOMERS_ACTIONS_TA	UI_NOTES_EXIST
 				,	[IS_ZAPOR]				= 0			-- DT015_CUSTOMERS_ACTIONS_TA	IS_ZAPOR (дали има съдебен запор някоя от сделките на клиента) 	Да се разработи обслужване в тестовете
-				,	[ID_NUMBER]				= ''		-- DT015_CUSTOMERS_ACTIONS_TA	ID_NUMBER номер на лична карта
-				,	[SERVICE_GROUP_EGFN]	= ''		-- DT015_CUSTOMERS_ACTIONS_TA	SERVICE_GROUP_EGFN	EGFN, което се попълва в допълнителния диалог за търсене според IS_SERVICE
+				,	[ID_NUMBER]				= '0'		-- DT015_CUSTOMERS_ACTIONS_TA	ID_NUMBER номер на лична карта
+				,	[SERVICE_GROUP_EGFN]	= '0'		-- DT015_CUSTOMERS_ACTIONS_TA	SERVICE_GROUP_EGFN	EGFN, което се попълва в допълнителния диалог за търсене според IS_SERVICE
 				,	[IS_ACTUAL]				= 0			-- DT015_CUSTOMERS_ACTIONS_TA	IS_ACTUAL (1; 0)	Да се разработи обслужване в тестовете на клиенти с неактуални данни при 1
 				,	[PROXY_COUNT]			= 0			-- DT015_CUSTOMERS_ACTIONS_TA	PROXY_COUNT	Брой активни пълномощници
 			from dbo.[DT015_CUSTOMERS_ACTIONS_TA] [D]

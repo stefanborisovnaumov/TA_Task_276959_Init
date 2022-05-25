@@ -8,7 +8,7 @@ CREATE PROCEDURE dbo.[SP_CASH_PAYMENTS_UPDATE_TA_TABLES_PREPARE_CONDITIONS]
 (
 	@TestCaseRowID nvarchar(16)
 ,	@CurrAccDate datetime
-,	@Save_TA_Cinditions tinyint = 0
+,	@SaveTAConditions tinyint = 0
 )
 AS 
 begin
@@ -28,6 +28,7 @@ begin
 	/* 1.0 Generate Sql for TA Conditions: */
 	declare @DateAcc DATE = @CurrAccDate
 	;
+
 	/* Client conditions [DT015_CUSTOMERS_ACTIONS_TA]: */
 	declare @TA_TYPE					sysname = ''	
 		,	@SECTOR						int = 0
@@ -76,6 +77,18 @@ begin
 		,	@PREF_CODE					sysname = '-1'
 		,	@DOC_SUM					float = 0.0
 		,	@DOC_TAX_SUM				float = 0.0
+	;
+
+	drop table if EXISTS dbo.[#TBL_SQL_CONDITIONS]
+	;
+	create table dbo.[#TBL_SQL_CONDITIONS]
+	(
+		[ID] INT IDENTITY(1,1)
+	,	[SQL_COND] nvarchar(1000)
+	,	[DESCR] nvarchar(2000)
+	,	[IS_BASE_SELECT] BIT DEFAULT(0)
+	,	[IS_SELECT_COUNT] BIT DEFAULT(0)
+	)
 	;
 
 	/**********************************************************************************************/
@@ -638,7 +651,7 @@ begin
 	 	exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql, @Msg;
 	end
 
-	if @Rows <= 0 and @Save_TA_Cinditions = 1
+	if @Rows <= 0 and @SaveTAConditions = 1
 	begin
 		insert into dbo.[AGR_CASH_PAYMENTS_SQL_CONDITIONS]
 		( [TEST_ID], [SQL_COND], [DESCR], [IS_BASE_SELECT], [IS_SELECT_COUNT] )
