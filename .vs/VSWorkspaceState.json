@@ -1,9 +1,8 @@
 {
   "ExpandedNodes": [
     "",
-    "\\HelperScript",
-    "\\Proc"
+    "\\HelperScript"
   ],
-  "SelectedNode": "\\Proc\\SP_CASH_PAYMENTS_UPDATE_TA_TABLES.SQL",
+  "SelectedNode": "\\HelperScript\\_Find_Break_Conditions.sql",
   "PreviewInSolutionExplorer": false
 }
