@@ -62,9 +62,11 @@ BEGIN
 		,	[ACC].[DEAL_NUMBER]			AS [CORR_DEAL_NUMBER]
 		,	[CORR].[CORR_ACCOUNT]		AS [CORR_ACCOUNT]
 		,	[CCY].[INI]					AS [CORR_ACCOUNT_CCY]
+		,	[ACC].[PART_CURRENCY]		AS [CORR_ACC_CCY_CODE]
 		,	[ACC].[BLK_SUMA_MIN]		AS [BLK_SUMA_MIN]
 		,	[BAL].[AVAILABLE_BAL]		AS [AVAILABLE_BAL]
 		,	[BAL].[TAX_UNCOLLECTED_SUM]	AS [TAX_UNCOLLECTED_SUM]
+		,	[BAL].[HAS_TAX_UNCOLLECTED]	AS [HAS_TAX_UNCOLLECTED]
 
 	from '+@SqlFullDBName+'.dbo.[DEALS_CORR] [CORR] with(nolock)
 	inner join '+@SqlFullDBName+'.dbo.[PARTS] [ACC]
@@ -93,7 +95,7 @@ BEGIN
 	) [XBAL]
 	outer apply 
 	(
-		select SUM( [T].[AMOUNT] - [T].[COLLECTED_AMOUNT] ) AS [TAX_UNCOLLECTED_SUM]
+		select top (1) cast(1 as bit) as [HAS_TAX_UNCOLLECTED]
 		from '+@SqlFullDBName+'.dbo.[TAX_UNCOLLECTED] [T] with(nolock)
 		where	[T].[ACCOUNT_DT] = [CORR].[CORR_ACCOUNT]
 			/* and [T].[DEAL_TYPE]	= @DealType */
@@ -110,11 +112,12 @@ BEGIN
 		where [B].[PARTIDA] = [CORR].[CORR_ACCOUNT] AND [B].[CLOSED_FROZEN_SUM] = 0
 	) [DST]
 	cross apply (
-		select	ROUND([XBAL].[BEG_SAL], 4)	 AS [BEG_SAL]
-			,	ROUND([XBAL].[DAY_MOVE], 4)  AS [DAY_MOVE]
+		select	ROUND([XBAL].[BEG_SAL], 4)					as [BEG_SAL]
+			,	ROUND([XBAL].[DAY_MOVE], 4)					as [DAY_MOVE]
 			,	ROUND([XBAL].[BEG_SAL] + [XBAL].[DAY_MOVE] - [ACC].[BLK_SUMA_MIN], 4) AS [AVAILABLE_BAL]
-			,	ROUND(IsNull([DST].[DISTRAINT_SUM],0), 4) as [DISTRAINT_SUM]
-			,	ROUND(IsNull([TAX].[TAX_UNCOLLECTED_SUM],0), 4) as [TAX_UNCOLLECTED_SUM]
+			,	ROUND(IsNull([DST].[DISTRAINT_SUM],0), 4)	as [DISTRAINT_SUM]
+			,	ROUND(cast(0 as float), 4)					as [TAX_UNCOLLECTED_SUM]
+			,	IsNull([TAX].[HAS_TAX_UNCOLLECTED], 0)		as [HAS_TAX_UNCOLLECTED]
 	) [BAL]
 	where [CORR].[DEAL_TYPE]		= @DealType
 		and [CORR].[DEAL_NUMBER]	= '+str(@DEAL_NUM,len(@DEAL_NUM), 0)+'
@@ -155,5 +158,5 @@ BEGIN
 	end
 
 	return 0;
-END 
-GO
+end 
+go

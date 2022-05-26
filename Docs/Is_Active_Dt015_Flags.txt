@@ -1,0 +1,76 @@
+CCustomerWithIncorrectDataHelper::GenerateNeededCustomerCorrectionsMessage
+
+	oMandatoryCorrectionsArray.AppendNew( NeededCustomerCorrectionIdentityDocuments );
+	oMandatoryCorrectionsArray.AppendNew( NeededCustomerCorrectionCorrespondencyAddress );
+	oMandatoryCorrectionsArray.AppendNew( NeededCustomerCorrectionPhoneNumbers );
+	oMandatoryCorrectionsArray.AppendNew( NeededCustomerCorrectionIdentifier );
+	oMandatoryCorrectionsArray.AppendNew( NeededCustomerCorrectionIdentifierType );
+	oMandatoryCorrectionsArray.AppendNew( NeededCustomerCorrectionCustomerName );
+	oMandatoryCorrectionsArray.AppendNew( NeededCustomerCorrectionBirthDate );
+	oMandatoryCorrectionsArray.AppendNew( NeededCustomerCorrectionGender );
+	oMandatoryCorrectionsArray.AppendNew( NeededCustomerCorrectionNAPBirthCountry );
+	oMandatoryCorrectionsArray.AppendNew( NeededCustomerCorrectionNAPResidenceCountry );
+	oMandatoryCorrectionsArray.AppendNew( NeededCustomerCorrectionTIN1 );
+
+
+//////////////////////////////////////////////////////////////////////////////////////////
+///<summary> Типове корекции от които се нуждаят клиентските данни  </summary>
+enum NeededCustomerCorrection : short
+{
+	NeededCustomerCorrectionNone					= 0,	///<summary> Клиента не се нуждае от редакция </summary>
+	NeededCustomerCorrectionSigningType				= 1,	///<summary> Начин на подписване </summary>
+	NeededCustomerCorrectionIdentityDocuments		= 2,	///<summary> Лични документи </summary>
+	NeededCustomerCorrectionCurrentAddress			= 3,	///<summary> Настоящ адрес </summary>
+	NeededCustomerCorrectionRegisteredAddress		= 4,	///<summary> Настоящ адрес </summary>
+	NeededCustomerCorrectionCorrespondencyAddress	= 5,	///<summary> Настоящ адрес </summary>
+	NeededCustomerCorrectionPhoneNumbers			= 6,	///<summary> Телефонни номера </summary>
+	NeededCustomerCorrectionIdentifier				= 7,	///<summary> Идентификатор </summary>
+	NeededCustomerCorrectionCustomerName			= 8,	///<summary> Име на кирилица </summary>
+	NeededCustomerCorrectionBirthDate				= 9,	///<summary> Дата на раждане </summary>
+	NeededCustomerCorrectionGender					= 10,	///<summary> Пол </summary>
+	NeededCustomerCorrectionNAPBirthCountry			= 11,	///<summary> Държава на раждане ( NM177 )  </summary>
+	NeededCustomerCorrectionNAPResidenceCountry		= 12,	///<summary> Местно лице на държава ( NM177 ) </summary>
+	NeededCustomerCorrectionTIN1					= 13,	///<summary> ТИН 1 </summary>
+	NeededCustomerCorrectionIdentifierType			= 14	///<summary> Некоректен тип идентификатор </summary>
+};
+
+DT015_CUSTOMER_PHONES - eStationaryCustomerPhoneType
+
+
+KlKartC::NeedToBeEdited
+	!SecIsLike5000
+		CCustomerPhone::Validate
+			if lPhoneCountry <= 0 return false;
+			if szPhoneNumber.IsEmpty() return false;
+			if ePhoneMobilityType != eUnknownPhoneNumberMobilityType and lPhonePrefixCode <= 0L return false;
+			return true;
+			
+	CCustomerAddressC oAddrCurrent( eCurrentAddressType, recClCart ); eRegisteredAddressType, eCorrespondenceAddressType
+		if m_lAddressCountry <= 0L return false;
+		if m_lAddressCountry == BULGARIA_NOM_CODE && m_lAddressZipCode <= 0L return false;
+		if m_lAddressCountry == BULGARIA_NOM_CODE && m_lAddressCity <= 0L return false;
+		if m_lAddressCountry != BULGARIA_NOM_CODE && m_szCity.GetLength() == 0 return false;
+		
+		if m_lAddressCountry != BULGARIA_NOM_CODE && m_szCity.GetLength() == 0 return false;
+
+		const bool bAddressType1 = m_szStreet.GetLength() > 0 || m_szNumber.GetLength() > 0;
+		const bool bAddressType2 = m_szComplex.GetLength() > 0 || m_szBlock.GetLength() > 0 || m_szEntrance.GetLength() > 0	|| m_sFloor > 0 || m_szApartment.GetLength() > 0;
+
+		// Ако не е попълнена нито една от двете позволени комбинации извеждаме съобщение за грешка
+		if bAddressType1 == false && bAddressType2 == false) return false;
+		
+		
+		
+		
+		
+		
+KrdS::GetAmountAvailableForAssimilation
+	LoadDealCLLine
+		if( m_pKrdCache && m_pKrdCache->GetKrd2Line() )
+		else CLLinesS().LoadLineForDeal( m_pPart->GetIDENT(), recLine, bMainLine );
+}
+
+https://blogs.windows.com/windows-insider/2022/05/20/update-to-windows-subsystem-for-android-on-windows-11/
+
+Changeset 538992
+Changeset 538994

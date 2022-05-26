@@ -186,13 +186,13 @@ begin
 	if @UI_RAZPOREDITEL IS NOT NULL
 	begin
 		/* NM622 (client roles): 1 - Титуляр, 2- Пълномощник; 3 - Законен представител, ... */
-		declare @CUSTOMER_ROLE_TYPE varchar(8) = N''
+		declare @CUSTOMER_ROLE_TYPE varchar(32) = N''
 		;
 		-- 0 - Пълномощник; 1 - Законен представител
 		select @CUSTOMER_ROLE_TYPE = case IsNull(@UI_RAZPOREDITEL,-1)	
 											when  0 then ' = 2'				/* 2 - Пълномощник*/
 											when  1 then ' = 3'				/* 3 - Законен представител */
-											when -1 then ' in (2,3)' end;	/* 2 & 3 */
+											when -1 then ' in (2,3) ' end;	/* 2 & 3 */
 		select @Sql2 = N'
 		inner join dbo.[AGR_CASH_PAYMENTS_DEALS_ACTIVE_PROXY_CUSTOMERS] [PROXY_ID] with(nolock)
 			on	[PROXY_ID].[DEAL_TYPE] = 1
@@ -392,6 +392,18 @@ begin
 			,	'[UI_INDIVIDUAL_DEAL] : ' + STR(@UI_INDIVIDUAL_DEAL, LEN(@UI_INDIVIDUAL_DEAL),0);
 
 		select @Sql += @Sql2
+
+		if IsNull(@UI_STD_DOG_CODE,-1) > 0
+		begin
+			select @Sql2 = ' AND [DEAL].[INT_COND_STDCONTRACT] = '+STR(@UI_STD_DOG_CODE, LEN(@UI_STD_DOG_CODE),0) + @CrLf;
+
+			insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
+			select	@Sql2
+				,	'[UI_STD_DOG_CODE] (for individual deal [INT_COND_STDCONTRACT] ) : ' + STR(@UI_STD_DOG_CODE, LEN(@UI_STD_DOG_CODE),0);
+
+			select @Sql += @Sql2
+		end
+
 	end 
 
 	-- 0 - не е комбиниран продукт, код > 0 - да принадлежи към този комбиниран продукт

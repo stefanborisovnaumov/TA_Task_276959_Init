@@ -61,6 +61,7 @@ begin
 	(
 		[DEAL_NUM]			int
 	,	[ACCOUNT]			varchar(64)
+	,	[ACCOUNT_CURRENCY]	int
 	,	[IBAN]				varchar(64)
 	,	[BEG_SAL]			float
 	,	[DAY_MOVE]			float
@@ -68,6 +69,7 @@ begin
 	,	[RAZPOL]			float
 	,	[TAX_UNCOLLECTED]	float
 	,	[DISTRAINT_SUM]		float
+	,	[HAS_TAX_UNCOLLECTED] int
 	);
 
 
@@ -93,6 +95,57 @@ begin
 	if @LogResultTable = 1 select * from dbo.[#TBL_ONLINE_DEAL_INFO]  with(nolock)
 	;
 
+	/************************************************************************************************************/
+	-- Load tax uncollected amount from OnlinDB:
+	declare @Account varchar(64) = N'', @AccCurrency int = 100, @HasTaxUncollected int = 0
+	;
+	
+	select top (1) @Account = [ACCOUNT], @AccCurrency = [ACCOUNT_CURRENCY], @HasTaxUncollected = [HAS_TAX_UNCOLLECTED]
+	from dbo.[#TBL_ONLINE_DEALS_CORR_INFO] with(nolock)
+	;
+
+	if IsNull(@HasTaxUncollected,0) = 1 and IsNull(@Account,'') <> ''
+	begin
+
+		drop table if exists dbo.[#TBL_ONLINE_ACC_TAX_UNCOLECTED]
+		;
+
+		create table dbo.[#TBL_ONLINE_ACC_TAX_UNCOLECTED]
+		(	[ACCOUNT]			varchar(64)
+		,	[TAX_UNCOLLECTED]	float
+		,	[CNT_ITEMS]			int	
+		);
+
+		begin try
+			insert into dbo.[#TBL_ONLINE_ACC_TAX_UNCOLECTED]
+			exec @Ret = dbo.[SP_LOAD_ONLINE_TAX_UNCOLECTED_BY_ACC] @OnleneSqlServerName, @OnleneSqlDataBaseName, @Account, @AccCurrency
+		end try
+		begin catch
+			select  @Msg = dbo.FN_GET_EXCEPTION_INFO()
+				,	@Sql2 = ' exec dbo.[SP_LOAD_ONLINE_TAX_UNCOLECTED_BY_ACC] @OnleneSqlServerName = '+@OnleneSqlServerName+' '
+									+ ', @OnleneSqlDataBaseName = '+@OnleneSqlDataBaseName+' '
+									+ ', @Account = '+@Account
+									+ ', @@AccCurrency = '+str(@AccCurrency,len(@AccCurrency),0)
+				;
+
+				exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql2, @Msg
+				return 4
+		end catch
+
+		if exists ( select * from dbo.[#TBL_ONLINE_ACC_TAX_UNCOLECTED] with(nolock))
+		begin
+
+			update [D]
+			set [TAX_UNCOLLECTED] = [s].[TAX_UNCOLLECTED]
+			from dbo.[#TBL_ONLINE_DEAL_INFO] [D]
+			inner join dbo.[#TBL_ONLINE_ACC_TAX_UNCOLECTED] [S] with(nolock)
+				on	[S].[CORR_ACCOUNT] = [D].[ACCOUNT]
+				and [d].[ACCOUNT_CURRENCY] = @AccCurrency
+		end
+
+	end
+
+	/********************************************************************************************************/
 	/* Update data in [RAZPREG_TA] */
 	if @WithUpdate = 1
 	begin 

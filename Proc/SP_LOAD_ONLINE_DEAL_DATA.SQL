@@ -51,6 +51,7 @@ begin
 
 	select	[REG].[DEAL_NUM]
 		,	[REG].[ACCOUNT]
+		,	[REG].[CURRENCY_CODE]	as [ACCOUNT_CURRENCY]
 		,	[II].[IBAN]
 		,	[BAL].[BEG_SAL]
 		,	[BAL].[DAY_MOVE]
@@ -58,6 +59,8 @@ begin
 		,	[BAL].[RAZPOL]
 		,	[BAL].[TAX_UNCOLLECTED_SUM]
 		,	[BAL].[DISTRAINT_SUM]
+		,	[BAL].[HAS_TAX_UNCOLLECTED]
+
 	from '+@SqlFullDBName+'.dbo.[RAZPREG] [REG] with(nolock)
 	inner join '+@SqlFullDBName+'.dbo.[IBAN_IDENT] [II] with(nolock)
 		ON	[II].[ID] = [REG].[ACCOUNT]
@@ -86,12 +89,12 @@ begin
 	) [XBAL]
 	outer apply 
 	(
-		select SUM( [T].[AMOUNT] - [T].[COLLECTED_AMOUNT] ) AS [TAX_UNCOLLECTED_SUM]
+		select top (1) cast(1 as bit) as [HAS_TAX_UNCOLLECTED]
 		from '+@SqlFullDBName+'.dbo.[TAX_UNCOLLECTED] [T] with(nolock)
-		WHERE	[T].[ACCOUNT_DT] = [REG].[ACCOUNT]
-			/* AND [T].[DEAL_TYPE]	= @DealType */
-			/* AND [T].[DEAL_NUM]	= [REG].[DEAL_NUM] */
-			AND [T].[TAX_STATUS] =  0
+		where	[T].[ACCOUNT_DT] = [CORR].[CORR_ACCOUNT]
+			/* and [T].[DEAL_TYPE]	= @DealType */
+			/* and [T].[DEAL_NUM]	= [REG].[DEAL_NUM] */
+			and [T].[TAX_STATUS] =  0
 	) [TAX]
 	outer apply (
 		SELECT SUM( [B].[SUMA] ) as [DISTRAINT_SUM]
@@ -103,11 +106,12 @@ begin
 		WHERE [B].[PARTIDA] = [REG].[ACCOUNT] AND [B].[CLOSED_FROZEN_SUM] = 0
 	) [DST]
 	cross apply (
-		SELECT	ROUND([XBAL].[BEG_SAL], 4) AS [BEG_SAL]
-			,	ROUND([XBAL].[DAY_MOVE], 4)  AS [DAY_MOVE]
+		SELECT	ROUND([XBAL].[BEG_SAL], 4)						as [BEG_SAL]
+			,	ROUND([XBAL].[DAY_MOVE], 4)						as [DAY_MOVE]
 			,	ROUND([XBAL].[BEG_SAL] + [XBAL].[DAY_MOVE] - [ACC].[BLK_SUMA_MIN], 4) AS [RAZPOL]
-			,	ROUND(IsNull([DST].[DISTRAINT_SUM],0), 4) as [DISTRAINT_SUM]
+			,	ROUND(IsNull([DST].[DISTRAINT_SUM],0), 4)		as [DISTRAINT_SUM]
 			,	ROUND(IsNull([TAX].[TAX_UNCOLLECTED_SUM],0), 4) as [TAX_UNCOLLECTED_SUM]
+			,	IsNull([TAX].[HAS_TAX_UNCOLLECTED], 0)			as [HAS_TAX_UNCOLLECTED]
 	) [BAL]
 	where [REG].[DEAL_NUM] = '+str(@DEAL_NUM,len(@DEAL_NUM),0);
 
@@ -137,7 +141,6 @@ begin
 		;
 		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg
 	end
-	;
 
 	return 0;
 end 
