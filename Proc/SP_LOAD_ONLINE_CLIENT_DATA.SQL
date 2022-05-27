@@ -84,6 +84,7 @@ begin
 		from '+@SqlFullDBName+'.dbo.[DT015_NOTES] [n] with(nolock)
 		where	[n].[CUSTOMER_ID] = [CUST].[CUSTOMER_ID]
 			and [n].[CLIENT_NOTETYPE] = 1 /* enum ClientNoteType : ClientNoteTypeExtraData = 1 */
+			and DATALENGTH([n].[NOTE]) > 1 /* Да има поне един символ освен нулевия терминатор */
 	) [NOTE]
 	outer apply (
 		select top(1) [NM405_DOCUMENT_TYPE]	as [DOCUMENT_TYPE]

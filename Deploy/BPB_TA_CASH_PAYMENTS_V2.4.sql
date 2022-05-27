@@ -1,7 +1,7 @@
 /***************************************************************************************************************/
 -- Име          : Янко Янков
 -- Дата и час   : 27.05.2022
--- Задача       : Task 276959 (v2.4.2)
+-- Задача       : Task 276959 (v2.4.3)
 -- Класификация : Test Automation
 -- Описание     : Автоматизация на тестовете за вснони бележки с използване на наличните данни от Online базата
 -- Параметри    : Няма
@@ -1693,6 +1693,7 @@ begin
 		from '+@SqlFullDBName+'.dbo.[DT015_NOTES] [n] with(nolock)
 		where	[n].[CUSTOMER_ID] = [CUST].[CUSTOMER_ID]
 			and [n].[CLIENT_NOTETYPE] = 1 /* enum ClientNoteType : ClientNoteTypeExtraData = 1 */
+			and DATALENGTH([n].[NOTE]) > 1 /* Да има поне един символ освен нулевия терминатор */
 	) [NOTE]
 	outer apply (
 		select top(1) [NM405_DOCUMENT_TYPE]	as [DOCUMENT_TYPE]
@@ -2700,8 +2701,8 @@ begin
 			ON [S].[DEAL_NUM] = @DEAL_NUM
 		cross apply (
 			select case when left([S].[ACCOUNT], 2) = '17' 
-				then left([S].[ACCOUNT],4)+' '+substring([S].[ACCOUNT],5,9)+' '+substring([S].[ACCOUNT],14,2)+' '+RIGHT([S].[ACCOUNT],1)
-				else left([S].[ACCOUNT],4)+' '+substring([S].[ACCOUNT],5,3)+' '+substring([S].[ACCOUNT],8,9) +' '+substring([S].[ACCOUNT],17,2)+' '+RIGHT([S].[ACCOUNT],1)
+				then left([S].[ACCOUNT],4)+' '+substring([S].[ACCOUNT],5,9)+' '+substring([S].[ACCOUNT],14,2)+' '+right(rtrim([S].[ACCOUNT]),1)
+				else left([S].[ACCOUNT],4)+' '+substring([S].[ACCOUNT],5,3)+' '+substring([S].[ACCOUNT],8,9) +' '+substring([S].[ACCOUNT],17,2)+' '+right(rtrim([S].[ACCOUNT]),1)
 				end AS  [ACC_WITH_SPACE]
 		) [xa]
 		WHERE [D].[ROW_ID] = @TBL_ROW_ID
@@ -3158,7 +3159,7 @@ begin
 		(
 			select * from dbo.[DT015_CUSTOMERS_ACTIONS_TA] [TA_CUST] with(nolock)
 			where [TA_CUST].[UI_CUSTOMER_ID] = [CUST].[CUSTOMER_ID]
-				and [TA_CUST].[TA_TYPE] = '+@TA_TYPE+' 
+				/* and [TA_CUST].[TA_TYPE] = '+@TA_TYPE+' */
 		)' + @CrLf;
 
 		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
@@ -3325,28 +3326,26 @@ begin
 	--0 - не е съвместна сделка, 1 - съвместна сделка от тип "по отделно"
 	if IsNull(@UI_JOINT_TYPE,-1) in (0, 1)
 	begin
+
+		select @Sql2 = ' AND [DEAL].[DEAL_IS_JOINT_DEAL] = ' + str(@UI_JOINT_TYPE,len(@UI_JOINT_TYPE),0) + @CrLf;
+
+		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
+		select	@Sql2
+			,	'[UI_JOINT_TYPE] : ' + str(@UI_JOINT_TYPE,len(@UI_JOINT_TYPE),0);
+
+		select @Sql += @Sql2
+
 		/* enum JointDealsAccessToFundsType: 0 - Separate; 1 - Always Together */	
-		if @UI_JOINT_TYPE = 0
-		begin 
-			select @Sql2 = ' AND [DEAL].[DEAL_IS_JOINT_DEAL] = 0' + @CrLf;
-
-			insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
-			select	@Sql2
-				,	'[UI_JOINT_TYPE] : ' + str(@UI_JOINT_TYPE,len(@UI_JOINT_TYPE),0);
-
-			select @Sql += @Sql2
-		end 
-
 		if @UI_JOINT_TYPE = 1
 		begin 
 			select @Sql2 = ' AND [DEAL].[DEAL_JOINT_ACCESS_TO_FUNDS_TYPE] = 0' + @CrLf;
 
 			insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 			select	@Sql2
-				,	'[UI_JOINT_TYPE] : ' + str(@UI_JOINT_TYPE,len(@UI_JOINT_TYPE),0);
+				,	'[UI_JOINT_TYPE] (Access type: 0 - Separate; 1 Always Together) : ';
 
 			select @Sql += @Sql2
-		end 
+		end
 	end
 
 	-- 0 или долна граница на разполагаемостта ( '<0', '>0' )
@@ -3431,7 +3430,7 @@ begin
 		select @Sql2 = ' AND NOT EXISTS (
 			select * FROM dbo.[RAZPREG_TA] [TA] with(nolock)
 			where  [TA].[UI_DEAL_NUM] = [DEAL].[DEAL_NUM]
-				and [TA].[TA_TYPE] = '+@TA_TYPE+' 
+				/* and [TA].[TA_TYPE] like '+@TA_TYPE+' */
 		)' + @CrLf;
 
 		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )

@@ -161,8 +161,8 @@ begin
 			ON [S].[DEAL_NUM] = @DEAL_NUM
 		cross apply (
 			select case when left([S].[ACCOUNT], 2) = '17' 
-				then left([S].[ACCOUNT],4)+' '+substring([S].[ACCOUNT],5,9)+' '+substring([S].[ACCOUNT],14,2)+' '+RIGHT([S].[ACCOUNT],1)
-				else left([S].[ACCOUNT],4)+' '+substring([S].[ACCOUNT],5,3)+' '+substring([S].[ACCOUNT],8,9) +' '+substring([S].[ACCOUNT],17,2)+' '+RIGHT([S].[ACCOUNT],1)
+				then left([S].[ACCOUNT],4)+' '+substring([S].[ACCOUNT],5,9)+' '+substring([S].[ACCOUNT],14,2)+' '+right(rtrim([S].[ACCOUNT]),1)
+				else left([S].[ACCOUNT],4)+' '+substring([S].[ACCOUNT],5,3)+' '+substring([S].[ACCOUNT],8,9) +' '+substring([S].[ACCOUNT],17,2)+' '+right(rtrim([S].[ACCOUNT]),1)
 				end AS  [ACC_WITH_SPACE]
 		) [xa]
 		WHERE [D].[ROW_ID] = @TBL_ROW_ID
