@@ -101,7 +101,7 @@ begin
 	;
 	
 	select top (1) @Account = [ACCOUNT], @AccCurrency = [ACCOUNT_CURRENCY], @HasTaxUncollected = [HAS_TAX_UNCOLLECTED]
-	from dbo.[#TBL_ONLINE_DEALS_CORR_INFO] with(nolock)
+	from dbo.[#TBL_ONLINE_DEAL_INFO] with(nolock)
 	;
 
 	if IsNull(@HasTaxUncollected,0) = 1 and IsNull(@Account,'') <> ''
@@ -139,7 +139,7 @@ begin
 			set [TAX_UNCOLLECTED] = [s].[TAX_UNCOLLECTED]
 			from dbo.[#TBL_ONLINE_DEAL_INFO] [D]
 			inner join dbo.[#TBL_ONLINE_ACC_TAX_UNCOLECTED] [S] with(nolock)
-				on	[S].[CORR_ACCOUNT] = [D].[ACCOUNT]
+				on	[S].[ACCOUNT] = [D].[ACCOUNT]
 				and [d].[ACCOUNT_CURRENCY] = @AccCurrency
 		end
 

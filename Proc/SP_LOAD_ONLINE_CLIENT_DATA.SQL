@@ -17,8 +17,7 @@ begin
 	declare @LogTraceInfo int = 0,	@LogBegEndProc int = 1,	@TimeBeg datetime = GetDate();
 	;
 
-	declare @Msg nvarchar(max) = N'', @Rows int = 0, @Err int = 0
-		,	@Sql1 nvarchar(4000) = N'', @Sql2 nvarchar(4000) = N'', @Sql3 nvarchar(4000) = N''
+	declare @Msg nvarchar(max) = N'', @Rows int = 0, @Err int = 0, @Ret int = 0, @Sql1 nvarchar(4000) = N''
 	;
 	/************************************************************************************************************/
 	/* 1. Log Begining of Procedure execution */
@@ -99,7 +98,7 @@ begin
 	;
 
 	begin try
-		exec sp_executeSql @Sql1
+		exec @Ret = sp_executeSql @Sql1
 	end try
 	begin catch 
 		select  @Msg = dbo.FN_GET_EXCEPTION_INFO()
@@ -124,7 +123,6 @@ begin
 		;
 		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg
 	end
-	;
 
 	return 0;
 end 

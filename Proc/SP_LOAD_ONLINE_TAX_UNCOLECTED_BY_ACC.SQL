@@ -11,14 +11,13 @@ CREATE PROCEDURE dbo.[SP_LOAD_ONLINE_TAX_UNCOLECTED_BY_ACC]
 ,	@Account				sysname
 ,	@AccCurrency			int
 )
-AS 
-BEGIN
+as 
+begin
 
 	declare @LogTraceInfo int = 0,	@LogBegEndProc int = 1,	@TimeBeg datetime = GetDate();
 	;
 
-	declare @Msg nvarchar(max) = N'', @Rows int = 0, @Err int = 0, @Ret int = 0
-		,	@Sql1 nvarchar(4000) = N''
+	declare @Msg nvarchar(max) = N'', @Rows int = 0, @Err int = 0, @Ret int = 0, @Sql1 nvarchar(4000) = N''
 	;
 	/************************************************************************************************************/
 	/* 1.Log Begining of Procedure execution */
@@ -45,32 +44,6 @@ BEGIN
 
 	/************************************************************************************************************/
 	/* 3. Load Tax Uncolected amount by Account from OlineDB */
-	;
-	drop table if exists dbo.[#TBL_ONLINE_ACC_TAX_UNCOLECTED]
-	;
-
-	create table dbo.[#TBL_ONLINE_ACC_TAX_UNCOLECTED]
-	(	[CORR_ACCOUNT]		varchar(64)
-	,	[TAX_UNCOLLECTED]	float
-	,	[CNT_ITEMS]			int	
-	);
-
-	begin try
-		insert into dbo.[#TBL_ONLINE_ACC_TAX_UNCOLECTED]
-		exec @Ret = dbo.[SP_LOAD_ONLINE_TAX_UNCOLECTED_BY_ACC] @OnleneSqlServerName, @OnleneSqlDataBaseName, @Account, @AccCurrency
-	end try
-	begin catch
-		select  @Msg = dbo.FN_GET_EXCEPTION_INFO()
-			,	@Sql1 = ' exec dbo.[SP_LOAD_ONLINE_TAX_UNCOLECTED_BY_ACC] @OnleneSqlServerName = '+@OnleneSqlServerName+' '
-								+ ', @OnleneSqlDataBaseName = '+@OnleneSqlDataBaseName+' '
-								+ ', @Account = '+@Account
-								+ ', @@AccCurrency = '+str(@AccCurrency,len(@AccCurrency),0)
-			;
-
-			exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg
-			return 1
-	end catch
-
 
 	select @Sql1 = N'
 	declare @Account varchar(64) = '''+@Account+'''
@@ -110,7 +83,7 @@ BEGIN
 	';
 
 	begin try
-		exec sp_executeSql @Sql1
+		exec @Ret = sp_executeSql @Sql1
 	end try
 	begin CATCH 
 		select  @Msg = dbo.FN_GET_EXCEPTION_INFO()
@@ -141,5 +114,5 @@ BEGIN
 	end
 
 	return 0;
-END 
-GO
+end 
+go

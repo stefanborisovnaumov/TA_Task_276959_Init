@@ -12,8 +12,8 @@
 
 select * 
 from dbo.[VIEW_CASH_PAYMENT_TEST_CASE_DATA] 
-where PROXY_ROW_ID is not null
-	and ROW_ID = 400019
+where	ROW_ID > 1 
+	and PROXY_ROW_ID is not null
 order by ROW_ID
 go
 

@@ -17,7 +17,7 @@ begin
 	declare @LogTraceInfo int = 0,	@LogBegEndProc int = 1,	@TimeBeg datetime = GetDate();
 	;
 
-	declare @Msg nvarchar(max) = N'', @Rows int = 0, @Err int = 0,	@Sql1 nvarchar(4000) = N''
+	declare @Msg nvarchar(max) = N'', @Rows int = 0, @Err int = 0, @Ret int = 0, @Sql1 nvarchar(4000) = N''
 	;
 	/************************************************************************************************************/
 	/* 1. Log Begining of Procedure execution */
@@ -91,9 +91,7 @@ begin
 	(
 		select top (1) cast(1 as bit) as [HAS_TAX_UNCOLLECTED]
 		from '+@SqlFullDBName+'.dbo.[TAX_UNCOLLECTED] [T] with(nolock)
-		where	[T].[ACCOUNT_DT] = [CORR].[CORR_ACCOUNT]
-			/* and [T].[DEAL_TYPE]	= @DealType */
-			/* and [T].[DEAL_NUM]	= [REG].[DEAL_NUM] */
+		where	[T].[ACCOUNT_DT] = [REG].[ACCOUNT]
 			and [T].[TAX_STATUS] =  0
 	) [TAX]
 	outer apply (
@@ -110,13 +108,13 @@ begin
 			,	ROUND([XBAL].[DAY_MOVE], 4)						as [DAY_MOVE]
 			,	ROUND([XBAL].[BEG_SAL] + [XBAL].[DAY_MOVE] - [ACC].[BLK_SUMA_MIN], 4) AS [RAZPOL]
 			,	ROUND(IsNull([DST].[DISTRAINT_SUM],0), 4)		as [DISTRAINT_SUM]
-			,	ROUND(IsNull([TAX].[TAX_UNCOLLECTED_SUM],0), 4) as [TAX_UNCOLLECTED_SUM]
+			,	cast(0 as float) 								as [TAX_UNCOLLECTED_SUM]
 			,	IsNull([TAX].[HAS_TAX_UNCOLLECTED], 0)			as [HAS_TAX_UNCOLLECTED]
 	) [BAL]
 	where [REG].[DEAL_NUM] = '+str(@DEAL_NUM,len(@DEAL_NUM),0);
 
 	begin try
-		exec sp_executeSql @Sql1
+		exec @Ret = sp_executeSql @Sql1
 	end try
 	begin catch 
 		select  @Msg = dbo.FN_GET_EXCEPTION_INFO()

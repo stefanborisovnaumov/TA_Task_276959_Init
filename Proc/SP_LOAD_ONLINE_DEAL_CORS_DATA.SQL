@@ -18,8 +18,7 @@ BEGIN
 	declare @LogTraceInfo int = 0,	@LogBegEndProc int = 1,	@TimeBeg datetime = GetDate();
 	;
 
-	declare @Msg nvarchar(max) = N'', @Rows int = 0, @Err int = 0
-		,	@Sql1 nvarchar(4000) = N'', @Sql2 nvarchar(4000) = N'', @Sql3 nvarchar(4000) = N''
+	declare @Msg nvarchar(max) = N'', @Rows int = 0, @Err int = 0, @Ret int = 0, @Sql1 nvarchar(4000) = N''
 	;
 	/************************************************************************************************************/
 	/* 1.Log Begining of Procedure execution */
@@ -98,8 +97,6 @@ BEGIN
 		select top (1) cast(1 as bit) as [HAS_TAX_UNCOLLECTED]
 		from '+@SqlFullDBName+'.dbo.[TAX_UNCOLLECTED] [T] with(nolock)
 		where	[T].[ACCOUNT_DT] = [CORR].[CORR_ACCOUNT]
-			/* and [T].[DEAL_TYPE]	= @DealType */
-			/* and [T].[DEAL_NUM]	= [REG].[DEAL_NUM] */
 			and [T].[TAX_STATUS] =  0
 	) [TAX]
 	outer apply (
@@ -128,7 +125,7 @@ BEGIN
 	if @LogTraceInfo = 1 select @Sql1 as [LOAD_ONLINE_CORS_INFO];
 
 	begin try
-		exec sp_executeSql @Sql1
+		exec @Ret = sp_executeSql @Sql1
 	end try
 	begin CATCH 
 		select  @Msg = dbo.FN_GET_EXCEPTION_INFO()

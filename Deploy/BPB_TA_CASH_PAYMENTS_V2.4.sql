@@ -1,7 +1,7 @@
 /***************************************************************************************************************/
 -- Име          : Янко Янков
--- Дата и час   : 26.05.2022
--- Задача       : Task 276959 (v2.4)
+-- Дата и час   : 27.05.2022
+-- Задача       : Task 276959 (v2.4.2)
 -- Класификация : Test Automation
 -- Описание     : Автоматизация на тестовете за вснони бележки с използване на наличните данни от Online базата
 -- Параметри    : Няма
@@ -1626,8 +1626,7 @@ begin
 	declare @LogTraceInfo int = 0,	@LogBegEndProc int = 1,	@TimeBeg datetime = GetDate();
 	;
 
-	declare @Msg nvarchar(max) = N'', @Rows int = 0, @Err int = 0
-		,	@Sql1 nvarchar(4000) = N'', @Sql2 nvarchar(4000) = N'', @Sql3 nvarchar(4000) = N''
+	declare @Msg nvarchar(max) = N'', @Rows int = 0, @Err int = 0, @Ret int = 0, @Sql1 nvarchar(4000) = N''
 	;
 	/************************************************************************************************************/
 	/* 1. Log Begining of Procedure execution */
@@ -1708,7 +1707,7 @@ begin
 	;
 
 	begin try
-		exec sp_executeSql @Sql1
+		exec @Ret = sp_executeSql @Sql1
 	end try
 	begin catch 
 		select  @Msg = dbo.FN_GET_EXCEPTION_INFO()
@@ -1733,7 +1732,6 @@ begin
 		;
 		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg
 	end
-	;
 
 	return 0;
 end 
@@ -1757,7 +1755,7 @@ begin
 	declare @LogTraceInfo int = 0,	@LogBegEndProc int = 1,	@TimeBeg datetime = GetDate();
 	;
 
-	declare @Msg nvarchar(max) = N'', @Rows int = 0, @Err int = 0,	@Sql1 nvarchar(4000) = N''
+	declare @Msg nvarchar(max) = N'', @Rows int = 0, @Err int = 0, @Ret int = 0, @Sql1 nvarchar(4000) = N''
 	;
 	/************************************************************************************************************/
 	/* 1. Log Begining of Procedure execution */
@@ -1831,9 +1829,7 @@ begin
 	(
 		select top (1) cast(1 as bit) as [HAS_TAX_UNCOLLECTED]
 		from '+@SqlFullDBName+'.dbo.[TAX_UNCOLLECTED] [T] with(nolock)
-		where	[T].[ACCOUNT_DT] = [CORR].[CORR_ACCOUNT]
-			/* and [T].[DEAL_TYPE]	= @DealType */
-			/* and [T].[DEAL_NUM]	= [REG].[DEAL_NUM] */
+		where	[T].[ACCOUNT_DT] = [REG].[ACCOUNT]
 			and [T].[TAX_STATUS] =  0
 	) [TAX]
 	outer apply (
@@ -1850,13 +1846,13 @@ begin
 			,	ROUND([XBAL].[DAY_MOVE], 4)						as [DAY_MOVE]
 			,	ROUND([XBAL].[BEG_SAL] + [XBAL].[DAY_MOVE] - [ACC].[BLK_SUMA_MIN], 4) AS [RAZPOL]
 			,	ROUND(IsNull([DST].[DISTRAINT_SUM],0), 4)		as [DISTRAINT_SUM]
-			,	ROUND(IsNull([TAX].[TAX_UNCOLLECTED_SUM],0), 4) as [TAX_UNCOLLECTED_SUM]
+			,	cast(0 as float) 								as [TAX_UNCOLLECTED_SUM]
 			,	IsNull([TAX].[HAS_TAX_UNCOLLECTED], 0)			as [HAS_TAX_UNCOLLECTED]
 	) [BAL]
 	where [REG].[DEAL_NUM] = '+str(@DEAL_NUM,len(@DEAL_NUM),0);
 
 	begin try
-		exec sp_executeSql @Sql1
+		exec @Ret = sp_executeSql @Sql1
 	end try
 	begin catch 
 		select  @Msg = dbo.FN_GET_EXCEPTION_INFO()
@@ -1881,7 +1877,6 @@ begin
 		;
 		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg
 	end
-	;
 
 	return 0;
 end 
@@ -1906,8 +1901,7 @@ BEGIN
 	declare @LogTraceInfo int = 0,	@LogBegEndProc int = 1,	@TimeBeg datetime = GetDate();
 	;
 
-	declare @Msg nvarchar(max) = N'', @Rows int = 0, @Err int = 0
-		,	@Sql1 nvarchar(4000) = N'', @Sql2 nvarchar(4000) = N'', @Sql3 nvarchar(4000) = N''
+	declare @Msg nvarchar(max) = N'', @Rows int = 0, @Err int = 0, @Ret int = 0, @Sql1 nvarchar(4000) = N''
 	;
 	/************************************************************************************************************/
 	/* 1.Log Begining of Procedure execution */
@@ -1986,8 +1980,6 @@ BEGIN
 		select top (1) cast(1 as bit) as [HAS_TAX_UNCOLLECTED]
 		from '+@SqlFullDBName+'.dbo.[TAX_UNCOLLECTED] [T] with(nolock)
 		where	[T].[ACCOUNT_DT] = [CORR].[CORR_ACCOUNT]
-			/* and [T].[DEAL_TYPE]	= @DealType */
-			/* and [T].[DEAL_NUM]	= [REG].[DEAL_NUM] */
 			and [T].[TAX_STATUS] =  0
 	) [TAX]
 	outer apply (
@@ -2016,7 +2008,7 @@ BEGIN
 	if @LogTraceInfo = 1 select @Sql1 as [LOAD_ONLINE_CORS_INFO];
 
 	begin try
-		exec sp_executeSql @Sql1
+		exec @Ret = sp_executeSql @Sql1
 	end try
 	begin CATCH 
 		select  @Msg = dbo.FN_GET_EXCEPTION_INFO()
@@ -2151,15 +2143,15 @@ begin
 
 		-- Актуализация данните на клиента
 		UPDATE [D]
-		SET		[UI_CUSTOMER_ID]		= ''		-- DT015_CUSTOMERS_ACTIONS_TA	UI_CUSTOMER_ID
-			,	[UI_EGFN]				= ''		-- DT015_CUSTOMERS_ACTIONS_TA	UI_EGFN
+		SET		[UI_CUSTOMER_ID]		= '0'		-- DT015_CUSTOMERS_ACTIONS_TA	UI_CUSTOMER_ID
+			,	[UI_EGFN]				= '0'		-- DT015_CUSTOMERS_ACTIONS_TA	UI_EGFN
 			,	[NAME]					= ''		-- DT015_CUSTOMERS_ACTIONS_TA	NAME
-			,	[COMPANY_EFN]			= ''		-- DT015_CUSTOMERS_ACTIONS_TA	COMPANY_EFN
-			,	[UI_CLIENT_CODE]		= ''		-- DT015_CUSTOMERS_ACTIONS_TA	UI_CLIENT_CODE
+			,	[COMPANY_EFN]			= '0'		-- DT015_CUSTOMERS_ACTIONS_TA	COMPANY_EFN
+			,	[UI_CLIENT_CODE]		= '0'		-- DT015_CUSTOMERS_ACTIONS_TA	UI_CLIENT_CODE
 			,	[UI_NOTES_EXIST]		= 0			-- DT015_CUSTOMERS_ACTIONS_TA	UI_NOTES_EXIST
 			,	[IS_ZAPOR]				= 0			-- DT015_CUSTOMERS_ACTIONS_TA	IS_ZAPOR (дали има съдебен запор някоя от сделките на клиента) 	Да се разработи обслужване в тестовете
-			,	[ID_NUMBER]				= ''		-- DT015_CUSTOMERS_ACTIONS_TA	ID_NUMBER номер на лична карта
-			,	[SERVICE_GROUP_EGFN]	= ''		-- DT015_CUSTOMERS_ACTIONS_TA	SERVICE_GROUP_EGFN	EGFN, което се попълва в допълнителния диалог за търсене според IS_SERVICE
+			,	[ID_NUMBER]				= '0'		-- DT015_CUSTOMERS_ACTIONS_TA	ID_NUMBER номер на лична карта
+			,	[SERVICE_GROUP_EGFN]	= '0'		-- DT015_CUSTOMERS_ACTIONS_TA	SERVICE_GROUP_EGFN	EGFN, което се попълва в допълнителния диалог за търсене според IS_SERVICE
 			,	[IS_ACTUAL]				= 0			-- DT015_CUSTOMERS_ACTIONS_TA	IS_ACTUAL (1; 0)	Да се разработи обслужване в тестовете на клиенти с неактуални данни при 1
 			,	[PROXY_COUNT]			= 0			-- DT015_CUSTOMERS_ACTIONS_TA	PROXY_COUNT	Брой активни пълномощници
 		from dbo.[DT015_CUSTOMERS_ACTIONS_TA] [D]
@@ -2648,7 +2640,7 @@ begin
 	;
 	
 	select top (1) @Account = [ACCOUNT], @AccCurrency = [ACCOUNT_CURRENCY], @HasTaxUncollected = [HAS_TAX_UNCOLLECTED]
-	from dbo.[#TBL_ONLINE_DEALS_CORR_INFO] with(nolock)
+	from dbo.[#TBL_ONLINE_DEAL_INFO] with(nolock)
 	;
 
 	if IsNull(@HasTaxUncollected,0) = 1 and IsNull(@Account,'') <> ''
@@ -2686,7 +2678,7 @@ begin
 			set [TAX_UNCOLLECTED] = [s].[TAX_UNCOLLECTED]
 			from dbo.[#TBL_ONLINE_DEAL_INFO] [D]
 			inner join dbo.[#TBL_ONLINE_ACC_TAX_UNCOLECTED] [S] with(nolock)
-				on	[S].[CORR_ACCOUNT] = [D].[ACCOUNT]
+				on	[S].[ACCOUNT] = [D].[ACCOUNT]
 				and [d].[ACCOUNT_CURRENCY] = @AccCurrency
 		end
 
@@ -3874,6 +3866,7 @@ begin
 end 
 go
 
+
 /********************************************************************************************************/
 /* Процедура за зареждане на Данни за Кореспонденция от OnLineDB по сделка по номер и кореспондираща партида */
 DROP PROCEDURE IF EXISTS dbo.[SP_LOAD_ONLINE_TAX_UNCOLECTED_BY_ACC]
@@ -3886,14 +3879,13 @@ CREATE PROCEDURE dbo.[SP_LOAD_ONLINE_TAX_UNCOLECTED_BY_ACC]
 ,	@Account				sysname
 ,	@AccCurrency			int
 )
-AS 
-BEGIN
+as 
+begin
 
 	declare @LogTraceInfo int = 0,	@LogBegEndProc int = 1,	@TimeBeg datetime = GetDate();
 	;
 
-	declare @Msg nvarchar(max) = N'', @Rows int = 0, @Err int = 0, @Ret int = 0
-		,	@Sql1 nvarchar(4000) = N''
+	declare @Msg nvarchar(max) = N'', @Rows int = 0, @Err int = 0, @Ret int = 0, @Sql1 nvarchar(4000) = N''
 	;
 	/************************************************************************************************************/
 	/* 1.Log Begining of Procedure execution */
@@ -3920,32 +3912,6 @@ BEGIN
 
 	/************************************************************************************************************/
 	/* 3. Load Tax Uncolected amount by Account from OlineDB */
-	;
-	drop table if exists dbo.[#TBL_ONLINE_ACC_TAX_UNCOLECTED]
-	;
-
-	create table dbo.[#TBL_ONLINE_ACC_TAX_UNCOLECTED]
-	(	[CORR_ACCOUNT]		varchar(64)
-	,	[TAX_UNCOLLECTED]	float
-	,	[CNT_ITEMS]			int	
-	);
-
-	begin try
-		insert into dbo.[#TBL_ONLINE_ACC_TAX_UNCOLECTED]
-		exec @Ret = dbo.[SP_LOAD_ONLINE_TAX_UNCOLECTED_BY_ACC] @OnleneSqlServerName, @OnleneSqlDataBaseName, @Account, @AccCurrency
-	end try
-	begin catch
-		select  @Msg = dbo.FN_GET_EXCEPTION_INFO()
-			,	@Sql1 = ' exec dbo.[SP_LOAD_ONLINE_TAX_UNCOLECTED_BY_ACC] @OnleneSqlServerName = '+@OnleneSqlServerName+' '
-								+ ', @OnleneSqlDataBaseName = '+@OnleneSqlDataBaseName+' '
-								+ ', @Account = '+@Account
-								+ ', @@AccCurrency = '+str(@AccCurrency,len(@AccCurrency),0)
-			;
-
-			exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg
-			return 1
-	end catch
-
 
 	select @Sql1 = N'
 	declare @Account varchar(64) = '''+@Account+'''
@@ -3985,7 +3951,7 @@ BEGIN
 	';
 
 	begin try
-		exec sp_executeSql @Sql1
+		exec @Ret = sp_executeSql @Sql1
 	end try
 	begin CATCH 
 		select  @Msg = dbo.FN_GET_EXCEPTION_INFO()
@@ -4016,6 +3982,5 @@ BEGIN
 	end
 
 	return 0;
-END 
-GO
-
+end 
+go
