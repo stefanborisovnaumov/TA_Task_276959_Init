@@ -90,8 +90,9 @@ begin
 		,	[PREV].TA_TYPE							AS [PREV_TA_TYPE]
 
 		,	[CUST].[SECTOR]							AS [CUST_CND_SECTOR]
-		,	[DREG].UI_STD_DOG_CODE					AS [DEAL_CND_UI_STD_DOG_CODE]
-		,	[DREG].UI_CURRENCY_CODE					AS [DEAL_CND_UI_CURRENCY_CODE]
+		,	[DREG].[UI_STD_DOG_CODE]				AS [DEAL_CND_UI_STD_DOG_CODE]
+		,	[DREG].[UI_CURRENCY_CODE]				AS [DEAL_CND_UI_CURRENCY_CODE]
+		,	[DREG].[UI_INDIVIDUAL_DEAL]				AS [UI_INDIVIDUAL_DEAL]
 
 	into #TBL_WITH_FILTERS
 	from dbo.[PREV_COMMON_TA] [PREV] with(nolock)
@@ -137,18 +138,18 @@ begin
 		,	@StsExtCapitOnBaseDateOpen		int = dbo.SETBIT(cast(0 as binary(4)), 14, 1)	/* STS_EXT_CAPIT_ON_BASE_DATE_OPEN (14) */
 		,	@StsExtDenyManualTaxAssign		int = dbo.SETBIT(cast(0 as binary(4)), 20, 1)	/* STS_EXT_DENY_MANUAL_TAX_ASSIGN (20)*/
 			/* [BLOCKSUM] */
-	;'
-
-	set @Sql2 = N'
+	;
 	WITH [X] AS 
 	(
 		select	[CUST_CND_SECTOR]
 			,	[DEAL_CND_UI_STD_DOG_CODE]
 			,	[DEAL_CND_UI_CURRENCY_CODE]
+			,	[UI_INDIVIDUAL_DEAL]
 			,	count(*) AS CNT
 		from #TBL_WITH_FILTERS with(nolock)
-		group by [CUST_CND_SECTOR], [DEAL_CND_UI_STD_DOG_CODE], [DEAL_CND_UI_CURRENCY_CODE] 
-	)
+		group by [CUST_CND_SECTOR], [DEAL_CND_UI_STD_DOG_CODE], [DEAL_CND_UI_CURRENCY_CODE], [UI_INDIVIDUAL_DEAL]
+	)';
+	set @Sql2 = N'
 	select	/* Deal info: */
 			IDENTITY( INT, 1, 1)					AS [ROW_ID]
 		,	1										AS [DEAL_TYPE]
@@ -203,9 +204,14 @@ begin
 
 	inner join [X] 
 		on  [X].[CUST_CND_SECTOR]			= [REG].[KL_SECTOR]
-		and [X].[DEAL_CND_UI_STD_DOG_CODE]	= [REG].[STD_DOG_CODE]
 		and [X].[DEAL_CND_UI_CURRENCY_CODE] = [CCY].[INI]
-	'
+		and [x].[UI_INDIVIDUAL_DEAL]		= (CASE WHEN ([REG].[STATUS] & @StsIsIndividual) = @StsIsIndividual THEN 1 ELSE 0 END)
+		and (
+			([x].[UI_INDIVIDUAL_DEAL] = 0 and [X].[DEAL_CND_UI_STD_DOG_CODE] = [REG].[STD_DOG_CODE])
+			or
+			([x].[UI_INDIVIDUAL_DEAL] = 1 and [X].[DEAL_CND_UI_STD_DOG_CODE] = [REG].[INT_COND_STDCONTRACT])
+		)
+	';
 	set @Sql3 = N' 
 	cross apply (
 		select	CAST(@DealType AS TINYINT)				AS [DEAL_TYPE]
