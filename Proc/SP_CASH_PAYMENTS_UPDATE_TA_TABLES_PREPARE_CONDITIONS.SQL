@@ -51,6 +51,7 @@ begin
 	/* Deal conditions [RAZPREG_TA]: */
 	declare @UI_STD_DOG_CODE			int = 0
 		,	@UI_INDIVIDUAL_DEAL			int = 0
+		,	@INT_COND_STDCONTRACT		int = 0
 		,	@CODE_UI_NM342				int = 0
 		,	@CCY_CODE_DEAL				int = 0
 		,	@UI_OTHER_ACCOUNT_FOR_TAX	int = 0
@@ -125,6 +126,7 @@ begin
 	select top(1) /* Deal conditions: */
 			@UI_STD_DOG_CODE			= cast( [UI_STD_DOG_CODE] as int)
 		,	@UI_INDIVIDUAL_DEAL			= cast( [UI_INDIVIDUAL_DEAL] as int)
+		,	@INT_COND_STDCONTRACT		= cast( [INT_COND_STDCONTRACT] as int )
 		,	@CODE_UI_NM342				= cast( [CODE_UI_NM342]  as int)
 		,	@CCY_CODE_DEAL				= [CCY_CODE_DEAL]
 		,	@UI_OTHER_ACCOUNT_FOR_TAX	= [UI_OTHER_ACCOUNT_FOR_TAX]
@@ -383,7 +385,7 @@ begin
 	end 
 
 	--0 - стандартна сделка, 1 - индивидуална сделка
-	if IsNull(@UI_INDIVIDUAL_DEAL,-1) IN (0, 1)
+	if IsNull(@UI_INDIVIDUAL_DEAL,-1) = 1
 	begin 
 		select @Sql2 = ' AND [DEAL].[DEAL_IS_INDIVIDUAL_DEAL] = '+STR(@UI_INDIVIDUAL_DEAL, LEN(@UI_INDIVIDUAL_DEAL),0) + @CrLf;
 
@@ -393,13 +395,25 @@ begin
 
 		select @Sql += @Sql2
 
-		if IsNull(@UI_STD_DOG_CODE,-1) > 0
+		--  од на стандартен договор по който е разкрита индивидуалната сделка
+		if IsNull(@INT_COND_STDCONTRACT,-1) > 0
 		begin
-			select @Sql2 = ' AND [DEAL].[INT_COND_STDCONTRACT] = '+STR(@UI_STD_DOG_CODE, LEN(@UI_STD_DOG_CODE),0) + @CrLf;
+			select @Sql2 = ' AND [DEAL].[INT_COND_STDCONTRACT] = '+STR(@INT_COND_STDCONTRACT, LEN(@INT_COND_STDCONTRACT),0) + @CrLf;
 
 			insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 			select	@Sql2
-				,	'[UI_STD_DOG_CODE] (for individual deal [INT_COND_STDCONTRACT] ) : ' + STR(@UI_STD_DOG_CODE, LEN(@UI_STD_DOG_CODE),0);
+				,	'[INT_COND_STDCONTRACT] : ' + +STR(@INT_COND_STDCONTRACT, LEN(@INT_COND_STDCONTRACT),0);
+
+			select @Sql += @Sql2
+		end		
+
+		if IsNull(@UI_STD_DOG_CODE,-1) > 0
+		begin
+			select @Sql2 = ' AND [DEAL].[DEAL_STD_DOG_CODE] = '+STR(@UI_STD_DOG_CODE, LEN(@UI_STD_DOG_CODE),0) + @CrLf;
+
+			insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
+			select	@Sql2
+				,	'[UI_STD_DOG_CODE] : ' + STR(@UI_STD_DOG_CODE, LEN(@UI_STD_DOG_CODE),0) + '/* for individual deal: [UI_INDIVIDUAL_DEAL] = 1 */';
 
 			select @Sql += @Sql2
 		end
