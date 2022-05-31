@@ -51,34 +51,26 @@ begin
 	;
 	with TAX_BY_CCY AS 
 	(
-		select	[T].[ACCOUNT_DT]
-			,	[T].[ORIGINAL_CURRENCY]				as [ORIGINAL_CURRENCY]
-			,	SUM ( [T].[AMOUNT] )				as [AMOUNT_TOT]
-			,	SUM ( [T].[COLLECTED_AMOUNT] )		as [COLLECTED_AMOUNT_TOT]
-			,	SUM ( [T].[DDS_AMOUNT] - [T].[DDS_COLLECTED_AMOUNT]
-										)			as [DDS_UNCOLLECTED]
-
-			,	COUNT(*)							as [CNT_ITEMS]
+		select	[T].[ORIGINAL_CURRENCY]									as [CURRENCY_TOT]
+			,	SUM ( [T].[AMOUNT] - [T].[COLLECTED_AMOUNT] )			as [TAX_UNCOLLECTED_TOT]
+			,	SUM ( [T].[DDS_AMOUNT] - [T].[DDS_COLLECTED_AMOUNT] )	as [DDS_UNCOLLECTED_TOT]
+			,	COUNT(*)												as [CNT_ITEMS]
 		from '+@SqlFullDBName+'.dbo.[TAX_UNCOLLECTED] [T] with(nolock)
 		where	[T].[ACCOUNT_DT] = @Account
 			and [T].[TAX_STATUS] = 0
-		GROUP BY [T].[ACCOUNT_DT], [T].[ORIGINAL_CURRENCY]
+		GROUP BY [T].[ORIGINAL_CURRENCY]
 	) 
 	, [TAX_BY_ACC] AS 
 	(
-		SELECT	[T].[ACCOUNT_DT] 
-			,	SUM(	
-						(dbo.TRANS_VAL_TO_VAL_TA([T].[AMOUNT_TOT], [T].[ORIGINAL_CURRENCY], @Account_CCY) - [T].[COLLECTED_AMOUNT_TOT]) 
-						+  dbo.TRANS_VAL_TO_VAL_TA([T].[DDS_UNCOLLECTED], 100,  @Account_CCY) 
-					) as [TAX_UNCOLLECTED]
-			,	SUM([CNT_ITEMS]) AS [CNT_ITEMS]
+		SELECT	SUM( dbo.TRANS_CCY_TO_CCY_TA( [T].[TAX_UNCOLLECTED_TOT], [T].[CURRENCY_TOT], @Account_CCY)
+				   + dbo.TRANS_CCY_TO_CCY_TA( [T].[DDS_UNCOLLECTED_TOT], 100,  @Account_CCY ) )
+									AS [TAX_UNCOLLECTED]
+			,	SUM( [CNT_ITEMS] )	AS [CNT_ITEMS]
 		FROM TAX_BY_CCY [T]
-		GROUP BY [T].[ACCOUNT_DT]
 	)
-	SELECT	[R].[ACCOUNT_DT]		as [ACCOUNT]
-		,	round([R].[TAX_UNCOLLECTED], 4)
-									as [TAX_UNCOLLECTED]
-		,	[R].[CNT_ITEMS]			as [CNT_ITEMS]
+	SELECT	@Account						as [ACCOUNT]
+		,	round([R].[TAX_UNCOLLECTED], 4)	as [TAX_UNCOLLECTED]
+		,	[R].[CNT_ITEMS]					as [CNT_ITEMS]
 	FROM [TAX_BY_ACC] [R]
 	';
 

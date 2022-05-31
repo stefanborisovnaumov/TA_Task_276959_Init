@@ -396,7 +396,7 @@ begin
 		select @Sql += @Sql2
 
 		--  од на стандартен договор по който е разкрита индивидуалната сделка
-		if IsNull(@INT_COND_STDCONTRACT,-1) > 0
+		if IsNull(@INT_COND_STDCONTRACT,-1) >= 0
 		begin
 			select @Sql2 = ' AND [DEAL].[INT_COND_STDCONTRACT] = '+STR(@INT_COND_STDCONTRACT, LEN(@INT_COND_STDCONTRACT),0) + @CrLf;
 
@@ -407,7 +407,7 @@ begin
 			select @Sql += @Sql2
 		end		
 
-		if IsNull(@UI_STD_DOG_CODE,-1) > 0
+		if IsNull(@UI_STD_DOG_CODE,-1) >= 0
 		begin
 			select @Sql2 = ' AND [DEAL].[DEAL_STD_DOG_CODE] = '+STR(@UI_STD_DOG_CODE, LEN(@UI_STD_DOG_CODE),0) + @CrLf;
 

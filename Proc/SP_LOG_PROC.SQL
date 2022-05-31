@@ -4,6 +4,7 @@
 DROP FUNCTION IF EXISTS  [dbo].[FN_GET_EXCEPTION_INFO]
 GO
 
+/********************************************************************************************************/
 /* Help function: Get Exception information */
 CREATE FUNCTION [dbo].[FN_GET_EXCEPTION_INFO]()
 	returns VARCHAR(MAX)
@@ -40,9 +41,11 @@ BEGIN
 END
 GO
 
+/********************************************************************************************************/
 DROP FUNCTION IF EXISTS dbo.FN_GET_TIME_DIFF
 GO
 
+/********************************************************************************************************/
 /* Help function: Get Time Diff as string in format: d:hh:mi:ss.mmm */
 CREATE FUNCTION dbo.FN_GET_TIME_DIFF( @TimeBeg DateTime, @TimeEnd DateTime )
 	RETURNS VARCHAR(64)
@@ -57,11 +60,74 @@ BEGIN
 END
 GO
 
+/*****************************************************************************/
+-- Create table dbo.[CURRENCIES_TA] for currency rate
+drop table if exists dbo.[CURRENCIES_TA]
+GO
+
+CREATE TABLE [dbo].[CURRENCIES_TA](
+	[ROW_ID] [int] IDENTITY(1, 1),
+	[CODE] [char](3) NULL,
+	[FIXING] [FLOAT] NULL,
+	[BASE] [int] NULL,
+	[CCY_CODE] [int] NULL,
+	CONSTRAINT [PK_CURRENCIES_TA] PRIMARY KEY CLUSTERED ([ROW_ID])
+)
+GO
+
+INSERT INTO dbo.[CURRENCIES_TA]
+	([CODE], [FIXING], [BASE], [CCY_CODE]) 
+VALUES
+('BGN', 1.00000, 1, 100),
+('USD', 1.75348, 1, 840),
+('EUR', 1.95583, 1, 978),
+('GBP', 2.47768, 1, 826)
+GO
+
+/********************************************************************************************************/
+DROP FUNCTION IF EXISTS dbo.[TRANS_CCY_TO_CCY_TA]
+GO
+
+/********************************************************************************************************/
+/* Help function: Convert amount from one currency to another */
+CREATE OR ALTER FUNCTION [dbo].[TRANS_CCY_TO_CCY_TA]( @SUMA AS FLOAT, @SUM_CCY AS INT, @TO_CCY AS INT )
+RETURNS FLOAT
+AS
+BEGIN
+	IF( @SUMA IS NULL OR @SUMA = 0.0 )
+		RETURN 0.0
+
+	DECLARE @FIXING_FROM AS FLOAT, @BASE_FROM AS INT
+		,	@FIXING_TO AS FLOAT, @BASE_TO AS INT, @PRE_TO AS SMALLINT
+
+	SELECT	@FIXING_TO = [FIXING], @BASE_TO = [BASE] , @PRE_TO = NULL
+	FROM 	dbo.[CURRENCIES_TA] WITH (NOLOCK)
+	WHERE	[CCY_CODE] = @TO_CCY
+
+	/* Ако двете валути са еднакви връщаме входната сума */
+	IF( @SUM_CCY IS NULL OR @SUM_CCY = @TO_CCY )
+		RETURN ROUND( ISNULL( @SUMA, 0.0 ), ISNULL(@PRE_TO, 2) )
+
+	SELECT	@FIXING_FROM = [FIXING], @BASE_FROM = [BASE]
+	FROM 	dbo.[CURRENCIES_TA] WITH (NOLOCK)
+	WHERE	[CCY_CODE] = @SUM_CCY
+
+	IF ( ISNULL ( @BASE_FROM, 0.0 ) = 0.0 OR ISNULL ( @BASE_TO, 0.0 ) = 0.0 
+		OR ISNULL ( @FIXING_FROM, 0.0 ) = 0.0 OR ISNULL ( @FIXING_TO, 0.0 ) = 0.0 )
+		RETURN 0.0
+
+	RETURN ROUND( ( @FIXING_FROM / @BASE_FROM ) * @SUMA / ( @FIXING_TO / @BASE_TO ),  ISNULL( @PRE_TO, 2 ) )
+END
+GO
+
+
+
 /********************************************************************************************************/
 /* Help procedure: */
 DROP PROCEDURE IF EXISTS  dbo.[SP_SYS_GET_ACCOUNT_DATE_FROM_DB]
 GO
 
+/********************************************************************************************************/
 /* Help procedure: Get account data from OnlineDB */
 CREATE PROCEDURE dbo.[SP_SYS_GET_ACCOUNT_DATE_FROM_DB]
 (

@@ -1,6 +1,6 @@
 /***************************************************************************************************************/
 -- Име          : Янко Янков
--- Дата и час   : 30.05.2022
+-- Дата и час   : 31.05.2022
 -- Задача       : Task 276959 (v2.5.1)
 -- Класификация : Test Automation
 -- Описание     : Автоматизация на тестовете за вснони бележки с използване на наличните данни от Online базата
@@ -12,6 +12,7 @@
 DROP FUNCTION IF EXISTS  [dbo].[FN_GET_EXCEPTION_INFO]
 GO
 
+/********************************************************************************************************/
 /* Help function: Get Exception information */
 CREATE FUNCTION [dbo].[FN_GET_EXCEPTION_INFO]()
 	returns VARCHAR(MAX)
@@ -48,9 +49,11 @@ BEGIN
 END
 GO
 
+/********************************************************************************************************/
 DROP FUNCTION IF EXISTS dbo.FN_GET_TIME_DIFF
 GO
 
+/********************************************************************************************************/
 /* Help function: Get Time Diff as string in format: d:hh:mi:ss.mmm */
 CREATE FUNCTION dbo.FN_GET_TIME_DIFF( @TimeBeg DateTime, @TimeEnd DateTime )
 	RETURNS VARCHAR(64)
@@ -65,11 +68,74 @@ BEGIN
 END
 GO
 
+/*****************************************************************************/
+-- Create table dbo.[CURRENCIES_TA] for currency rate
+drop table if exists dbo.[CURRENCIES_TA]
+GO
+
+CREATE TABLE [dbo].[CURRENCIES_TA](
+	[ROW_ID] [int] IDENTITY(1, 1),
+	[CODE] [char](3) NULL,
+	[FIXING] [FLOAT] NULL,
+	[BASE] [int] NULL,
+	[CCY_CODE] [int] NULL,
+	CONSTRAINT [PK_CURRENCIES_TA] PRIMARY KEY CLUSTERED ([ROW_ID])
+)
+GO
+
+INSERT INTO dbo.[CURRENCIES_TA]
+	([CODE], [FIXING], [BASE], [CCY_CODE]) 
+VALUES
+('BGN', 1.00000, 1, 100),
+('USD', 1.75348, 1, 840),
+('EUR', 1.95583, 1, 978),
+('GBP', 2.47768, 1, 826)
+GO
+
+/********************************************************************************************************/
+DROP FUNCTION IF EXISTS dbo.[TRANS_CCY_TO_CCY_TA]
+GO
+
+/********************************************************************************************************/
+/* Help function: Convert amount from one currency to another */
+CREATE OR ALTER FUNCTION [dbo].[TRANS_CCY_TO_CCY_TA]( @SUMA AS FLOAT, @SUM_CCY AS INT, @TO_CCY AS INT )
+RETURNS FLOAT
+AS
+BEGIN
+	IF( @SUMA IS NULL OR @SUMA = 0.0 )
+		RETURN 0.0
+
+	DECLARE @FIXING_FROM AS FLOAT, @BASE_FROM AS INT
+		,	@FIXING_TO AS FLOAT, @BASE_TO AS INT, @PRE_TO AS SMALLINT
+
+	SELECT	@FIXING_TO = [FIXING], @BASE_TO = [BASE] , @PRE_TO = NULL
+	FROM 	dbo.[CURRENCIES_TA] WITH (NOLOCK)
+	WHERE	[CCY_CODE] = @TO_CCY
+
+	/* РђРєРѕ РґРІРµС‚Рµ РІР°Р»СѓС‚Рё СЃР° РµРґРЅР°РєРІРё РІСЂСЉС‰Р°РјРµ РІС…РѕРґРЅР°С‚Р° СЃСѓРјР° */
+	IF( @SUM_CCY IS NULL OR @SUM_CCY = @TO_CCY )
+		RETURN ROUND( ISNULL( @SUMA, 0.0 ), ISNULL(@PRE_TO, 2) )
+
+	SELECT	@FIXING_FROM = [FIXING], @BASE_FROM = [BASE]
+	FROM 	dbo.[CURRENCIES_TA] WITH (NOLOCK)
+	WHERE	[CCY_CODE] = @SUM_CCY
+
+	IF ( ISNULL ( @BASE_FROM, 0.0 ) = 0.0 OR ISNULL ( @BASE_TO, 0.0 ) = 0.0 
+		OR ISNULL ( @FIXING_FROM, 0.0 ) = 0.0 OR ISNULL ( @FIXING_TO, 0.0 ) = 0.0 )
+		RETURN 0.0
+
+	RETURN ROUND( ( @FIXING_FROM / @BASE_FROM ) * @SUMA / ( @FIXING_TO / @BASE_TO ),  ISNULL( @PRE_TO, 2 ) )
+END
+GO
+
+
+
 /********************************************************************************************************/
 /* Help procedure: */
 DROP PROCEDURE IF EXISTS  dbo.[SP_SYS_GET_ACCOUNT_DATE_FROM_DB]
 GO
 
+/********************************************************************************************************/
 /* Help procedure: Get account data from OnlineDB */
 CREATE PROCEDURE dbo.[SP_SYS_GET_ACCOUNT_DATE_FROM_DB]
 (
@@ -3240,7 +3306,7 @@ begin
 		select @Sql += @Sql2
 
 		-- Код на стандартен договор по който е разкрита индивидуалната сделка
-		if IsNull(@INT_COND_STDCONTRACT,-1) > 0
+		if IsNull(@INT_COND_STDCONTRACT,-1) >= 0
 		begin
 			select @Sql2 = ' AND [DEAL].[INT_COND_STDCONTRACT] = '+STR(@INT_COND_STDCONTRACT, LEN(@INT_COND_STDCONTRACT),0) + @CrLf;
 
@@ -3251,7 +3317,7 @@ begin
 			select @Sql += @Sql2
 		end		
 
-		if IsNull(@UI_STD_DOG_CODE,-1) > 0
+		if IsNull(@UI_STD_DOG_CODE,-1) >= 0
 		begin
 			select @Sql2 = ' AND [DEAL].[DEAL_STD_DOG_CODE] = '+STR(@UI_STD_DOG_CODE, LEN(@UI_STD_DOG_CODE),0) + @CrLf;
 
@@ -3931,34 +3997,26 @@ begin
 	;
 	with TAX_BY_CCY AS 
 	(
-		select	[T].[ACCOUNT_DT]
-			,	[T].[ORIGINAL_CURRENCY]				as [ORIGINAL_CURRENCY]
-			,	SUM ( [T].[AMOUNT] )				as [AMOUNT_TOT]
-			,	SUM ( [T].[COLLECTED_AMOUNT] )		as [COLLECTED_AMOUNT_TOT]
-			,	SUM ( [T].[DDS_AMOUNT] - [T].[DDS_COLLECTED_AMOUNT]
-										)			as [DDS_UNCOLLECTED]
-
-			,	COUNT(*)							as [CNT_ITEMS]
+		select	[T].[ORIGINAL_CURRENCY]									as [CURRENCY_TOT]
+			,	SUM ( [T].[AMOUNT] - [T].[COLLECTED_AMOUNT] )			as [TAX_UNCOLLECTED_TOT]
+			,	SUM ( [T].[DDS_AMOUNT] - [T].[DDS_COLLECTED_AMOUNT] )	as [DDS_UNCOLLECTED_TOT]
+			,	COUNT(*)												as [CNT_ITEMS]
 		from '+@SqlFullDBName+'.dbo.[TAX_UNCOLLECTED] [T] with(nolock)
 		where	[T].[ACCOUNT_DT] = @Account
 			and [T].[TAX_STATUS] = 0
-		GROUP BY [T].[ACCOUNT_DT], [T].[ORIGINAL_CURRENCY]
+		GROUP BY [T].[ORIGINAL_CURRENCY]
 	) 
 	, [TAX_BY_ACC] AS 
 	(
-		SELECT	[T].[ACCOUNT_DT] 
-			,	SUM(	
-						(dbo.TRANS_VAL_TO_VAL_TA([T].[AMOUNT_TOT], [T].[ORIGINAL_CURRENCY], @Account_CCY) - [T].[COLLECTED_AMOUNT_TOT]) 
-						+  dbo.TRANS_VAL_TO_VAL_TA([T].[DDS_UNCOLLECTED], 100,  @Account_CCY) 
-					) as [TAX_UNCOLLECTED]
-			,	SUM([CNT_ITEMS]) AS [CNT_ITEMS]
+		SELECT	SUM( dbo.TRANS_CCY_TO_CCY_TA( [T].[TAX_UNCOLLECTED_TOT], [T].[CURRENCY_TOT], @Account_CCY)
+				   + dbo.TRANS_CCY_TO_CCY_TA( [T].[DDS_UNCOLLECTED_TOT], 100,  @Account_CCY ) )
+									AS [TAX_UNCOLLECTED]
+			,	SUM( [CNT_ITEMS] )	AS [CNT_ITEMS]
 		FROM TAX_BY_CCY [T]
-		GROUP BY [T].[ACCOUNT_DT]
 	)
-	SELECT	[R].[ACCOUNT_DT]		as [ACCOUNT]
-		,	round([R].[TAX_UNCOLLECTED], 4)
-									as [TAX_UNCOLLECTED]
-		,	[R].[CNT_ITEMS]			as [CNT_ITEMS]
+	SELECT	@Account						as [ACCOUNT]
+		,	round([R].[TAX_UNCOLLECTED], 4)	as [TAX_UNCOLLECTED]
+		,	[R].[CNT_ITEMS]					as [CNT_ITEMS]
 	FROM [TAX_BY_ACC] [R]
 	';
 
