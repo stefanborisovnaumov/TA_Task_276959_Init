@@ -1,8 +1,9 @@
 {
   "ExpandedNodes": [
     "",
-    "\\TaxInfo\\Script"
+    "\\TaxInfo",
+    "\\TaxInfo\\Docs"
   ],
-  "SelectedNode": "\\.gitignore",
+  "SelectedNode": "\\TaxInfo\\Docs\\Issue_280098.txt",
   "PreviewInSolutionExplorer": false
 }
