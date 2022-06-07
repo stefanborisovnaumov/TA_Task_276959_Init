@@ -135,9 +135,10 @@ AS
 /*		,	[PROXY_ACC_TA]  Пълномощника, да има права за действието по избраната сметка */
 
 			/* Условия за вносната бележка [PREV_COMMON_TA] */
-		,	[PREV].RUNNING_ORDER							AS [RUNNING_ORDER]
+		,	[PREV].[RUNNING_ORDER]							AS [RUNNING_ORDER]
+		,	[PREV].[TYPE_ACTION]							AS [TYPE_ACTION]
 		,	[PREV].TAX_CODE									AS [TAX_CODE]
-		,	[PREV].PREF_CODE								AS [PREF_CODE]		
+		,	[PREV].PREF_CODE								AS [PREF_CODE]
 
 			/* Зададената сума на документа и очакванета сума на таксата */						
 		,	[NM_ID].[DOC_SUM]								AS [DOC_SUM]

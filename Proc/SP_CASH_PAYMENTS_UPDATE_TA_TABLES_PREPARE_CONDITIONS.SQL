@@ -74,6 +74,8 @@ begin
 		,	@LIMIT_AVAILABILITY_CORS	sysname = '-1'
 
 		/* Conditions [PREV_COMMON_TA]: */
+		,	@RUNNING_ORDER				int = -1
+		,	@TYPE_ACTION				varchar(256)
 		,	@TAX_CODE					int = -1
 		,	@PREF_CODE					sysname = '-1'
 		,	@DOC_SUM					float = 0.0
@@ -153,6 +155,9 @@ begin
 		,	@PREF_CODE					= [PREF_CODE]
 		,	@DOC_SUM					= [DOC_SUM]
 		,	@DOC_TAX_SUM				= [DOC_TAX_SUM]
+				/* Conditions [PREV_COMMON_TA]: */
+		,	@RUNNING_ORDER				= [RUNNING_ORDER]
+		,	@TYPE_ACTION				= [TYPE_ACTION]
 	from dbo.[#TBL_TA_CONDITIONS] [F] with(nolock)
 	;
 
@@ -576,6 +581,18 @@ begin
 
 			select @Sql += @Sql2
 		end 
+	end
+
+	-- Да няма осчетоводено вносни бележки по сделката: @RUNNING_ORDER = 1 and @TYPE_ACTION = ''
+	if @TYPE_ACTION = 'CashPayment' and IsNull(@RUNNING_ORDER,-1) >= 1
+	begin
+		select @Sql2 = ' AND [DEAL].[HAS_WNOS_BEL] = ' + (case when @RUNNING_ORDER > 1 then '1' else '0' end)  + @CrLf;
+
+		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
+		select	@Sql2
+			,	'[TYPE_ACTION] = CashPayment and [RUNNING_ORDER] : ' + str(@RUNNING_ORDER,len(@RUNNING_ORDER),0);
+
+		select @Sql += @Sql2
 	end
 
 	-- Да укаже дали сметката е кореспондираща до други сделки: -1 няма значение; 0 не е; 1 да , кореспондираща е

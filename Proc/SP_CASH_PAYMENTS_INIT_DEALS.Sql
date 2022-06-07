@@ -1,6 +1,6 @@
 
 /********************************************************************************************************/
-/* пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ */
+/* Процедура за първоначална инициализация */
 DROP PROCEDURE IF EXISTS dbo.[SP_CASH_PAYMENTS_INIT_DEALS]
 GO
 
@@ -231,17 +231,18 @@ begin
 										AS [IS_ACTIVE_DEAL]
 			,	CAST(CASE WHEN ([REG].[STATUS] & @StsHasIndividualSpecCondPkgs) = @StsHasIndividualSpecCondPkgs THEN 1 ELSE 0 END AS BIT)
 										AS [IS_INDIVIDUAL_COND_PKGS]
+			,	CAST(CASE WHEN ([REG].[STATUS] & @StsExcludeFromBankCollection) = @StsExcludeFromBankCollection THEN 1 ELSE 0 END AS BIT)
+										AS [EXCLUDE_FROM_BANK_COLLECTIONS]
 			,	CAST(CASE WHEN ([REG].[STATUS] & @StsHasOtherTaxAcc) = @StsHasOtherTaxAcc THEN 1 ELSE 0 END AS BIT)
 										AS [HAS_OTHER_TAX_ACC]
 			,	CAST(CASE WHEN ([REG].[STATUS] & @StsIsIndividual) = @StsIsIndividual THEN 1 ELSE 0 END AS BIT)
 										AS [IS_INDIVIDUAL_DEAL]
 			,	CAST(CASE WHEN ([REG].[STATUS] & @StsNoAutoPayTax) = @StsNoAutoPayTax THEN 1 ELSE 0 END AS BIT)
 										AS [NO_AUTO_PAY_TAX]
+
 				/* Bits from [STATUS_EXT]: */
 			,	CAST(CASE WHEN ([REG].[STATUS_EXT] & @StsExtJointDeal) = @StsExtJointDeal THEN 1 ELSE 0 END AS BIT)
 										AS [IS_JOINT_DEAL]
-			,	CAST(CASE WHEN ([REG].[STATUS_EXT] & @StsExcludeFromBankCollection) = @StsExcludeFromBankCollection THEN 1 ELSE 0 END AS BIT)
-										AS [EXCLUDE_FROM_BANK_COLLECTIONS]
 			,	CAST(CASE WHEN ([REG].[STATUS_EXT] & @StsExtCapitOnBaseDateOpen) = @StsExtCapitOnBaseDateOpen THEN 1 ELSE 0 END AS BIT)
 										AS [CAPIT_ON_BASE_DATE_OPEN]
 			,	CAST(CASE WHEN ([REG].[STATUS_EXT] & @StsExtDenyManualTaxAssign) = @StsExtDenyManualTaxAssign THEN 1 ELSE 0 END AS BIT)
@@ -498,7 +499,7 @@ begin
 
 	select @Sql1 = N';
 	declare @DealType 	int = 1
-		,	@StsPART_IsSleepy int = dbo.SETBIT(cast(0 as binary(4)), 22, 1)	/* #define PART_IsSleepy (22) // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅ(пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ) */
+		,	@StsPART_IsSleepy int = dbo.SETBIT(cast(0 as binary(4)), 22, 1)	/* #define PART_IsSleepy (22) // Партидата е спяща(замразена) */
 	;
 
 	select	[REG].[DEAL_TYPE] 
@@ -550,10 +551,10 @@ begin
 	inner join '+@SqlFullDBName+'.dbo.[CUSTOMERS_RIGHTS_AND_LIMITS] [CRL] with(nolock) 
 		on  [CRL].[DEAL_TYPE]	= @DealType 
 		AND	[CRL].[DEAL_NUM]	= [D].[DEAL_NUM] 
-		AND	[CRL].[CHANNEL]		= 1	/* NM455 (Chanels) : 1 пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ, ... */
-		AND	[CRL].[CUSTOMER_ROLE_TYPE] in ( 1 ) /* NM622 (client roles): 1 - пїЅпїЅпїЅпїЅпїЅпїЅпїЅ, 2- пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ; 3 - пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ ... */
-		AND	[CRL].[CUSTOMER_ACCESS_RIGHT] = 1 /* NM620 (Type Rights): 1 - пїЅпїЅпїЅпїЅпїЅпїЅ, 2 - пїЅпїЅпїЅпїЅпїЅпїЅпїЅ, ... */
-	where ( [CRL].[STATUS] & @StsDeActivated ) <> @StsDeActivated /* STS_LIMIT_DEACTIVATED 12 (пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ) */
+		AND	[CRL].[CHANNEL]		= 1									/* NM455 (Chanels) : 1 Основна банкова система, ... */
+		AND	[CRL].[CUSTOMER_ROLE_TYPE] in ( 1 )						/* NM622 (client roles): 1 - Титуляр, 2- Пълномощник; 3 - Законен представител ... */
+		AND	[CRL].[CUSTOMER_ACCESS_RIGHT] = 1 						/* NM620 (Type Rights): 1 - Вноска, 2 - Теглене, ... */
+	where ( [CRL].[STATUS] & @StsDeActivated ) <> @StsDeActivated	/* STS_LIMIT_DEACTIVATED 12 (Деактивиран) */
 	';
 
 	begin try
@@ -591,9 +592,9 @@ begin
 	inner join '+@SqlFullDBName+'.dbo.[CUSTOMERS_RIGHTS_AND_LIMITS] [CRL] with(nolock) 
 		on  [CRL].[DEAL_TYPE]	= @DealType 
 		AND	[CRL].[DEAL_NUM]	= [D].[DEAL_NUM] 
-		AND	[CRL].[CHANNEL]		= 1	/* NM455 (Chanels) : 1 пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ, ... */
-		AND	[CRL].[CUSTOMER_ROLE_TYPE] IN ( 2, 3 ) /* NM622 (client roles): 1 - пїЅпїЅпїЅпїЅпїЅпїЅпїЅ, 2- пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ; 3 - пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, ... */
-		AND	[CRL].[CUSTOMER_ACCESS_RIGHT] = 1 /* NM620 (Type Rights): 1 - пїЅпїЅпїЅпїЅпїЅпїЅ, 2 - пїЅпїЅпїЅпїЅпїЅпїЅпїЅ, ... */
+		AND	[CRL].[CHANNEL]		= 1					/* NM455 (Chanels) : 1 Основна банкова система, ... */
+		AND	[CRL].[CUSTOMER_ROLE_TYPE] IN ( 2, 3 )	/* NM622 (client roles): 1 - Титуляр, 2- Пълномощник; 3 - Законен представител, ... */
+		AND	[CRL].[CUSTOMER_ACCESS_RIGHT] = 1		/* NM620 (Type Rights): 1 - Вноска, 2 - Теглене, ... */
 	where  ( [CRL].[STATUS] & @StsDeActivated ) <> @StsDeActivated 
 	and exists
 	(
@@ -818,7 +819,7 @@ begin
 		from '+@SqlFullDBName+'.dbo.[PROXY_SPEC] [PS] with(nolock)
 		WHERE	[PS].[REPRESENTATIVE_CUSTOMER_ID] = [C].[CUSTOMER_ID]
 			and [PS].[REPRESENTED_CUSTOMER_ID] <> [C].[CUSTOMER_ID]
-			and [PS].[CUSTOMER_ROLE_TYPE] IN ( 2, 3 )  /* NM622 (client roles): 1 - пїЅпїЅпїЅпїЅпїЅпїЅпїЅ, 2- пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ; 3 - пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, ... */
+			and [PS].[CUSTOMER_ROLE_TYPE] IN ( 2, 3 )  /* NM622 (client roles): 1 - Титуляр, 2- Пълномощник; 3 - Законен представител, ... */
 	) '
 	;
 
@@ -855,7 +856,7 @@ begin
 		select *
 		from '+@SqlFullDBName+'.dbo.[DT015_IDENTITY_DOCUMENTS] [D] with(nolock)
 		WHERE	[D].[CUSTOMER_ID] = [C].[CUSTOMER_ID]
-			and [D].[NM405_DOCUMENT_TYPE] IN ( 1, 7, 8  ) /* 1 - пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ; 7 - пїЅпїЅпїЅпїЅпїЅпїЅпїЅ; 8 - пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ */
+			and [D].[NM405_DOCUMENT_TYPE] IN ( 1, 7, 8  )  /* 1 - Лична карта; 7 - Паспорт; 8 - Шофьорска книжка */
 			and ( [D].[INDEFINITELY] = 1 OR [D].[EXPIRY_DATE] > @DateAcc )
 	) '
 	;

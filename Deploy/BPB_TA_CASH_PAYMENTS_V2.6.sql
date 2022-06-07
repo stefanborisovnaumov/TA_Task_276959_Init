@@ -1,7 +1,7 @@
 /***************************************************************************************************************/
 -- Име          : Янко Янков
 -- Дата и час   : 07.06.2022
--- Задача       : Task 276959 (v2.6.0)
+-- Задача       : Task 276959 (v2.6.1)
 -- Класификация : Test Automation
 -- Описание     : Автоматизация на тестовете за вснони бележки с използване на наличните данни от Online базата
 -- Параметри    : Няма
@@ -393,9 +393,10 @@ AS
 /*		,	[PROXY_ACC_TA]  Пълномощника, да има права за действието по избраната сметка */
 
 			/* Условия за вносната бележка [PREV_COMMON_TA] */
-		,	[PREV].RUNNING_ORDER							AS [RUNNING_ORDER]
+		,	[PREV].[RUNNING_ORDER]							AS [RUNNING_ORDER]
+		,	[PREV].[TYPE_ACTION]							AS [TYPE_ACTION]
 		,	[PREV].TAX_CODE									AS [TAX_CODE]
-		,	[PREV].PREF_CODE								AS [PREF_CODE]		
+		,	[PREV].PREF_CODE								AS [PREF_CODE]
 
 			/* Зададената сума на документа и очакванета сума на таксата */						
 		,	[NM_ID].[DOC_SUM]								AS [DOC_SUM]
@@ -600,7 +601,7 @@ end
 go
 
 /********************************************************************************************************/
-/* пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ */
+/* Процедура за първоначална инициализация */
 DROP PROCEDURE IF EXISTS dbo.[SP_CASH_PAYMENTS_INIT_DEALS]
 GO
 
@@ -831,17 +832,18 @@ begin
 										AS [IS_ACTIVE_DEAL]
 			,	CAST(CASE WHEN ([REG].[STATUS] & @StsHasIndividualSpecCondPkgs) = @StsHasIndividualSpecCondPkgs THEN 1 ELSE 0 END AS BIT)
 										AS [IS_INDIVIDUAL_COND_PKGS]
+			,	CAST(CASE WHEN ([REG].[STATUS] & @StsExcludeFromBankCollection) = @StsExcludeFromBankCollection THEN 1 ELSE 0 END AS BIT)
+										AS [EXCLUDE_FROM_BANK_COLLECTIONS]
 			,	CAST(CASE WHEN ([REG].[STATUS] & @StsHasOtherTaxAcc) = @StsHasOtherTaxAcc THEN 1 ELSE 0 END AS BIT)
 										AS [HAS_OTHER_TAX_ACC]
 			,	CAST(CASE WHEN ([REG].[STATUS] & @StsIsIndividual) = @StsIsIndividual THEN 1 ELSE 0 END AS BIT)
 										AS [IS_INDIVIDUAL_DEAL]
 			,	CAST(CASE WHEN ([REG].[STATUS] & @StsNoAutoPayTax) = @StsNoAutoPayTax THEN 1 ELSE 0 END AS BIT)
 										AS [NO_AUTO_PAY_TAX]
+
 				/* Bits from [STATUS_EXT]: */
 			,	CAST(CASE WHEN ([REG].[STATUS_EXT] & @StsExtJointDeal) = @StsExtJointDeal THEN 1 ELSE 0 END AS BIT)
 										AS [IS_JOINT_DEAL]
-			,	CAST(CASE WHEN ([REG].[STATUS_EXT] & @StsExcludeFromBankCollection) = @StsExcludeFromBankCollection THEN 1 ELSE 0 END AS BIT)
-										AS [EXCLUDE_FROM_BANK_COLLECTIONS]
 			,	CAST(CASE WHEN ([REG].[STATUS_EXT] & @StsExtCapitOnBaseDateOpen) = @StsExtCapitOnBaseDateOpen THEN 1 ELSE 0 END AS BIT)
 										AS [CAPIT_ON_BASE_DATE_OPEN]
 			,	CAST(CASE WHEN ([REG].[STATUS_EXT] & @StsExtDenyManualTaxAssign) = @StsExtDenyManualTaxAssign THEN 1 ELSE 0 END AS BIT)
@@ -1098,7 +1100,7 @@ begin
 
 	select @Sql1 = N';
 	declare @DealType 	int = 1
-		,	@StsPART_IsSleepy int = dbo.SETBIT(cast(0 as binary(4)), 22, 1)	/* #define PART_IsSleepy (22) // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅ(пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ) */
+		,	@StsPART_IsSleepy int = dbo.SETBIT(cast(0 as binary(4)), 22, 1)	/* #define PART_IsSleepy (22) // Партидата е спяща(замразена) */
 	;
 
 	select	[REG].[DEAL_TYPE] 
@@ -1150,10 +1152,10 @@ begin
 	inner join '+@SqlFullDBName+'.dbo.[CUSTOMERS_RIGHTS_AND_LIMITS] [CRL] with(nolock) 
 		on  [CRL].[DEAL_TYPE]	= @DealType 
 		AND	[CRL].[DEAL_NUM]	= [D].[DEAL_NUM] 
-		AND	[CRL].[CHANNEL]		= 1	/* NM455 (Chanels) : 1 пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ, ... */
-		AND	[CRL].[CUSTOMER_ROLE_TYPE] in ( 1 ) /* NM622 (client roles): 1 - пїЅпїЅпїЅпїЅпїЅпїЅпїЅ, 2- пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ; 3 - пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ ... */
-		AND	[CRL].[CUSTOMER_ACCESS_RIGHT] = 1 /* NM620 (Type Rights): 1 - пїЅпїЅпїЅпїЅпїЅпїЅ, 2 - пїЅпїЅпїЅпїЅпїЅпїЅпїЅ, ... */
-	where ( [CRL].[STATUS] & @StsDeActivated ) <> @StsDeActivated /* STS_LIMIT_DEACTIVATED 12 (пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ) */
+		AND	[CRL].[CHANNEL]		= 1									/* NM455 (Chanels) : 1 Основна банкова система, ... */
+		AND	[CRL].[CUSTOMER_ROLE_TYPE] in ( 1 )						/* NM622 (client roles): 1 - Титуляр, 2- Пълномощник; 3 - Законен представител ... */
+		AND	[CRL].[CUSTOMER_ACCESS_RIGHT] = 1 						/* NM620 (Type Rights): 1 - Вноска, 2 - Теглене, ... */
+	where ( [CRL].[STATUS] & @StsDeActivated ) <> @StsDeActivated	/* STS_LIMIT_DEACTIVATED 12 (Деактивиран) */
 	';
 
 	begin try
@@ -1191,9 +1193,9 @@ begin
 	inner join '+@SqlFullDBName+'.dbo.[CUSTOMERS_RIGHTS_AND_LIMITS] [CRL] with(nolock) 
 		on  [CRL].[DEAL_TYPE]	= @DealType 
 		AND	[CRL].[DEAL_NUM]	= [D].[DEAL_NUM] 
-		AND	[CRL].[CHANNEL]		= 1	/* NM455 (Chanels) : 1 пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ, ... */
-		AND	[CRL].[CUSTOMER_ROLE_TYPE] IN ( 2, 3 ) /* NM622 (client roles): 1 - пїЅпїЅпїЅпїЅпїЅпїЅпїЅ, 2- пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ; 3 - пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, ... */
-		AND	[CRL].[CUSTOMER_ACCESS_RIGHT] = 1 /* NM620 (Type Rights): 1 - пїЅпїЅпїЅпїЅпїЅпїЅ, 2 - пїЅпїЅпїЅпїЅпїЅпїЅпїЅ, ... */
+		AND	[CRL].[CHANNEL]		= 1					/* NM455 (Chanels) : 1 Основна банкова система, ... */
+		AND	[CRL].[CUSTOMER_ROLE_TYPE] IN ( 2, 3 )	/* NM622 (client roles): 1 - Титуляр, 2- Пълномощник; 3 - Законен представител, ... */
+		AND	[CRL].[CUSTOMER_ACCESS_RIGHT] = 1		/* NM620 (Type Rights): 1 - Вноска, 2 - Теглене, ... */
 	where  ( [CRL].[STATUS] & @StsDeActivated ) <> @StsDeActivated 
 	and exists
 	(
@@ -1418,7 +1420,7 @@ begin
 		from '+@SqlFullDBName+'.dbo.[PROXY_SPEC] [PS] with(nolock)
 		WHERE	[PS].[REPRESENTATIVE_CUSTOMER_ID] = [C].[CUSTOMER_ID]
 			and [PS].[REPRESENTED_CUSTOMER_ID] <> [C].[CUSTOMER_ID]
-			and [PS].[CUSTOMER_ROLE_TYPE] IN ( 2, 3 )  /* NM622 (client roles): 1 - пїЅпїЅпїЅпїЅпїЅпїЅпїЅ, 2- пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ; 3 - пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, ... */
+			and [PS].[CUSTOMER_ROLE_TYPE] IN ( 2, 3 )  /* NM622 (client roles): 1 - Титуляр, 2- Пълномощник; 3 - Законен представител, ... */
 	) '
 	;
 
@@ -1455,7 +1457,7 @@ begin
 		select *
 		from '+@SqlFullDBName+'.dbo.[DT015_IDENTITY_DOCUMENTS] [D] with(nolock)
 		WHERE	[D].[CUSTOMER_ID] = [C].[CUSTOMER_ID]
-			and [D].[NM405_DOCUMENT_TYPE] IN ( 1, 7, 8  ) /* 1 - пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ; 7 - пїЅпїЅпїЅпїЅпїЅпїЅпїЅ; 8 - пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ */
+			and [D].[NM405_DOCUMENT_TYPE] IN ( 1, 7, 8  )  /* 1 - Лична карта; 7 - Паспорт; 8 - Шофьорска книжка */
 			and ( [D].[INDEFINITELY] = 1 OR [D].[EXPIRY_DATE] > @DateAcc )
 	) '
 	;
@@ -2974,6 +2976,8 @@ begin
 		,	@LIMIT_AVAILABILITY_CORS	sysname = '-1'
 
 		/* Conditions [PREV_COMMON_TA]: */
+		,	@RUNNING_ORDER				int = -1
+		,	@TYPE_ACTION				varchar(256)
 		,	@TAX_CODE					int = -1
 		,	@PREF_CODE					sysname = '-1'
 		,	@DOC_SUM					float = 0.0
@@ -3053,6 +3057,9 @@ begin
 		,	@PREF_CODE					= [PREF_CODE]
 		,	@DOC_SUM					= [DOC_SUM]
 		,	@DOC_TAX_SUM				= [DOC_TAX_SUM]
+				/* Conditions [PREV_COMMON_TA]: */
+		,	@RUNNING_ORDER				= [RUNNING_ORDER]
+		,	@TYPE_ACTION				= [TYPE_ACTION]
 	from dbo.[#TBL_TA_CONDITIONS] [F] with(nolock)
 	;
 
@@ -3476,6 +3483,18 @@ begin
 
 			select @Sql += @Sql2
 		end 
+	end
+
+	-- Да няма осчетоводено вносни бележки по сделката: @RUNNING_ORDER = 1 and @TYPE_ACTION = ''
+	if @TYPE_ACTION = 'CashPayment' and IsNull(@RUNNING_ORDER,-1) >= 1
+	begin
+		select @Sql2 = ' AND [DEAL].[HAS_WNOS_BEL] = ' + (case when @RUNNING_ORDER > 1 then '1' else '0' end)  + @CrLf;
+
+		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
+		select	@Sql2
+			,	'[TYPE_ACTION] = CashPayment and [RUNNING_ORDER] : ' + str(@RUNNING_ORDER,len(@RUNNING_ORDER),0);
+
+		select @Sql += @Sql2
 	end
 
 	-- Да укаже дали сметката е кореспондираща до други сделки: -1 няма значение; 0 не е; 1 да , кореспондираща е
