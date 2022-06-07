@@ -155,26 +155,16 @@ AS
 	LEFT JOIN dbo.[DT015_CUSTOMERS_ACTIONS_TA] [PROXY] WITH(NOLOCK)
 		on [PROXY].[ROW_ID] = [PSPEC].[PROXY_CLIENT_ID]
 	CROSS APPLY (
-		SELECT	LEN(RTRIM(ltrim(IsNull([DREG].[UI_NM342_CODE],''))))			AS [LEN_UI_NM342]
-			,	charindex(N' ',ltrim(IsNull([DREG].[UI_NM342_CODE],'')),0)		AS [POS_UI_NM342]
-
-			,	LEN(RTRIM(ltrim(IsNull([DREG].[GS_PROGRAMME_CODE],''))))		AS [LEN_GS_PROGRAMME]
-			,	charindex(N' ',ltrim(IsNull([DREG].[GS_PROGRAMME_CODE],'')),0)	AS [POS_GS_PROGRAMME]
-
-			,	LEN(RTRIM(ltrim(IsNull([DREG].[GS_CARD_PRODUCT],''))))			AS [LEN_GS_CARD]
-			,	charindex(N' ',ltrim(IsNull([DREG].[GS_CARD_PRODUCT],'')),0)	AS [POS_GS_CARD]
-	) [POS]
-	CROSS APPLY (
-		SELECT	CASE WHEN [POS].[POS_UI_NM342] > 0 AND [POS].[LEN_UI_NM342] > 0 
-					THEN LEFT(ltrim([DREG].[UI_NM342_CODE]), [POS].[POS_UI_NM342]) 
+		SELECT	CASE WHEN IsNumeric([DREG].[UI_NM342_CODE]) = 1
+					then cast([DREG].[UI_NM342_CODE] as int )
 					ELSE '' END 	AS [CODE_UI_NM342]
 
-			,	CASE WHEN [POS].[POS_GS_PROGRAMME] > 0 AND [POS].[LEN_GS_PROGRAMME] > 0 
-					THEN LEFT(ltrim([DREG].[GS_PROGRAMME_CODE]), [POS].[POS_GS_PROGRAMME]) 
+			,	CASE WHEN IsNumeric([DREG].[GS_PROGRAMME_CODE]) = 1
+					THEN cast( [DREG].[GS_PROGRAMME_CODE] as int) 
 					ELSE '' END 	AS [CODE_GS_PROGRAMME]
 
-			,	CASE WHEN [POS].[POS_GS_CARD] > 0 AND [POS].[LEN_GS_CARD] > 0 
-					THEN LEFT(ltrim([DREG].[GS_CARD_PRODUCT]), [POS].[POS_GS_CARD]) 
+			,	CASE WHEN IsNumeric([DREG].[GS_CARD_PRODUCT]) = 1
+					THEN cast([DREG].[GS_CARD_PRODUCT] as int) 
 					ELSE '' END 	AS [CODE_GS_CARD]
 
 			,	CASE WHEN IsNumeric([PREV].[UI_SUM]) = 0 then 0.0

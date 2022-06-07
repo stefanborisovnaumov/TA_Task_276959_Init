@@ -282,11 +282,11 @@ begin
 	-- enum DetailedTypeOfIdentifier : [DT015_CUSTOMERS].[IDENTIFIER_TYPE]
 	if IsNull(@CODE_EGFN_TYPE,-1) <> -1
 	begin 
-		select @Sql2 = ' AND [CUST].[CUSTOMER_CHARACTERISTIC] = ' + str(@CUSTOMER_CHARACTERISTIC,len(@CUSTOMER_CHARACTERISTIC),0) + @CrLf;
+		select @Sql2 = ' AND [CUST].[CLIENT_IDENTIFIER_TYPE] = ' + str(@CODE_EGFN_TYPE,len(@CODE_EGFN_TYPE),0) + @CrLf;
 
 		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 		select	@Sql2
-			,	'[CODE_EGFN_TYPE] : ' + str(@CUSTOMER_CHARACTERISTIC,len(@CUSTOMER_CHARACTERISTIC),0 )
+			,	'[CODE_EGFN_TYPE] : ' + str(@CODE_EGFN_TYPE,len(@CODE_EGFN_TYPE),0 )
 
 		select @Sql += @Sql2
 	end 
