@@ -6,8 +6,8 @@ GO
 
 CREATE PROCEDURE dbo.[SP_LOAD_ONLINE_TAX_UNCOLECTED_BY_ACC]
 (
-	@OnleneSqlServerName	sysname
-,	@OnleneSqlDataBaseName	sysname
+	@OnlineSqlServerName	sysname
+,	@OnlineSqlDataBaseName	sysname
 ,	@Account				sysname
 ,	@AccCurrency			int
 )
@@ -23,8 +23,8 @@ begin
 	/* 1.Log Begining of Procedure execution */
 	if @LogBegEndProc = 1 
 	begin	
-		select @Sql1 = 'dbo.[SP_LOAD_ONLINE_TAX_UNCOLECTED_BY_ACC] @OnleneSqlServerName ='+@OnleneSqlServerName
-					+', @OnleneSqlDataBaseName = '+@OnleneSqlDataBaseName
+		select @Sql1 = 'dbo.[SP_LOAD_ONLINE_TAX_UNCOLECTED_BY_ACC] @OnlineSqlServerName ='+@OnlineSqlServerName
+					+', @OnlineSqlDataBaseName = '+@OnlineSqlDataBaseName
 					+', @Account = '''+@Account+''''
 					+', @AccCurrency = '+str(@AccCurrency,len(@AccCurrency),0)
 			,  @Msg =  '*** Begin Execute Proc ***: dbo.[SP_LOAD_ONLINE_TAX_UNCOLECTED_BY_ACC]'
@@ -34,13 +34,13 @@ begin
 
 	/************************************************************************************************************/
 	/* 2. Prepare Sql Server full database name */
-	IF LEN(@OnleneSqlServerName) > 1 AND LEFT(RTRIM(@OnleneSqlServerName),1) <> N'['
-		SELECT @OnleneSqlServerName = QUOTENAME(@OnleneSqlServerName)
+	IF LEN(@OnlineSqlServerName) > 1 AND LEFT(RTRIM(@OnlineSqlServerName),1) <> N'['
+		SELECT @OnlineSqlServerName = QUOTENAME(@OnlineSqlServerName)
 
-	IF LEN(@OnleneSqlDataBaseName) > 1 AND LEFT(RTRIM(@OnleneSqlDataBaseName),1) <> N'['
-		SELECT @OnleneSqlDataBaseName = QUOTENAME(@OnleneSqlDataBaseName)	
+	IF LEN(@OnlineSqlDataBaseName) > 1 AND LEFT(RTRIM(@OnlineSqlDataBaseName),1) <> N'['
+		SELECT @OnlineSqlDataBaseName = QUOTENAME(@OnlineSqlDataBaseName)	
 
-	declare @SqlFullDBName sysname = @OnleneSqlServerName +'.'+@OnleneSqlDataBaseName
+	declare @SqlFullDBName sysname = @OnlineSqlServerName +'.'+@OnlineSqlDataBaseName
 
 	/************************************************************************************************************/
 	/* 3. Load Tax Uncolected amount by Account from OlineDB */
@@ -95,8 +95,8 @@ begin
 	/* Log End Of Procedure */
 	if @LogBegEndProc = 1
 	begin 
-		select @Sql1 = 'dbo.[SP_LOAD_ONLINE_TAX_UNCOLECTED_BY_ACC] @OnleneSqlServerName ='+@OnleneSqlServerName
-					+', @OnleneSqlDataBaseName = '+@OnleneSqlDataBaseName
+		select @Sql1 = 'dbo.[SP_LOAD_ONLINE_TAX_UNCOLECTED_BY_ACC] @OnlineSqlServerName ='+@OnlineSqlServerName
+					+', @OnlineSqlDataBaseName = '+@OnlineSqlDataBaseName
 					+', @Account = '''+@Account+''''
 					+', @AccCurrency = '+str(@AccCurrency,len(@AccCurrency),0)
 			,	@Msg = '*** End Execute Proc ***: dbo.[SP_LOAD_ONLINE_TAX_UNCOLECTED_BY_ACC], Duration: '

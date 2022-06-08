@@ -6,8 +6,8 @@ GO
 
 CREATE PROCEDURE dbo.[SP_LOAD_ONLINE_CLIENT_DATA]
 (
-	@OnleneSqlServerName	sysname
-,	@OnleneSqlDataBaseName	sysname
+	@OnlineSqlServerName	sysname
+,	@OnlineSqlDataBaseName	sysname
 ,	@CurrentAccountDate		datetime
 ,	@CUSTOMER_ID			int
 )
@@ -23,8 +23,8 @@ begin
 	/* 1. Log Begining of Procedure execution */
 	if @LogBegEndProc = 1 
 	begin	
-		select @Sql1 = 'dbo.[SP_LOAD_ONLINE_CLIENT_DATA] @OnleneSqlServerName ='+@OnleneSqlServerName
-					+', @OnleneSqlDataBaseName = '+@OnleneSqlDataBaseName+', @CUSTOMER_ID = ' + STR(@CUSTOMER_ID,LEN(@CUSTOMER_ID),0)
+		select @Sql1 = 'dbo.[SP_LOAD_ONLINE_CLIENT_DATA] @OnlineSqlServerName ='+@OnlineSqlServerName
+					+', @OnlineSqlDataBaseName = '+@OnlineSqlDataBaseName+', @CUSTOMER_ID = ' + STR(@CUSTOMER_ID,LEN(@CUSTOMER_ID),0)
 			,  @Msg =  '*** Begin Execute Proc ***: dbo.[SP_LOAD_ONLINE_CLIENT_DATA]'
 		;
 		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg
@@ -32,13 +32,13 @@ begin
 
 	/************************************************************************************************************/
 	/* 2. Prepare Sql Server full database name */
-	IF LEN(@OnleneSqlServerName) > 1 AND LEFT(RTRIM(@OnleneSqlServerName),1) <> N'['
-		select @OnleneSqlServerName = QUOTENAME(@OnleneSqlServerName)
+	IF LEN(@OnlineSqlServerName) > 1 AND LEFT(RTRIM(@OnlineSqlServerName),1) <> N'['
+		select @OnlineSqlServerName = QUOTENAME(@OnlineSqlServerName)
 
-	IF LEN(@OnleneSqlDataBaseName) > 1 AND LEFT(RTRIM(@OnleneSqlDataBaseName),1) <> N'['
-		select @OnleneSqlDataBaseName = QUOTENAME(@OnleneSqlDataBaseName)	
+	IF LEN(@OnlineSqlDataBaseName) > 1 AND LEFT(RTRIM(@OnlineSqlDataBaseName),1) <> N'['
+		select @OnlineSqlDataBaseName = QUOTENAME(@OnlineSqlDataBaseName)	
 
-	declare @SqlFullDBName sysname = @OnleneSqlServerName +'.'+@OnleneSqlDataBaseName
+	declare @SqlFullDBName sysname = @OnlineSqlServerName +'.'+@OnlineSqlDataBaseName
 	;
 	/************************************************************************************************************/
 	/* 3. Load Deals data from OlineDB */
@@ -117,8 +117,8 @@ begin
 	/* Log End Of Procedure */
 	if @LogBegEndProc = 1
 	begin 
-		select @Sql1 = 'dbo.[SP_LOAD_ONLINE_CLIENT_DATA] @OnleneSqlServerName ='+@OnleneSqlServerName
-					+', @OnleneSqlDataBaseName = '+@OnleneSqlDataBaseName+', @CUSTOMER_ID = ' + STR(@CUSTOMER_ID,LEN(@CUSTOMER_ID),0)
+		select @Sql1 = 'dbo.[SP_LOAD_ONLINE_CLIENT_DATA] @OnlineSqlServerName ='+@OnlineSqlServerName
+					+', @OnlineSqlDataBaseName = '+@OnlineSqlDataBaseName+', @CUSTOMER_ID = ' + STR(@CUSTOMER_ID,LEN(@CUSTOMER_ID),0)
 			,	@Msg = '*** End Execute Proc ***: dbo.[SP_LOAD_ONLINE_CLIENT_DATA], Duration: '
 					+ dbo.FN_GET_TIME_DIFF(@TimeBeg, GetDate()) + ', CUSTOMER_ID: ' +  + STR(@CUSTOMER_ID,LEN(@CUSTOMER_ID),0)
 		;

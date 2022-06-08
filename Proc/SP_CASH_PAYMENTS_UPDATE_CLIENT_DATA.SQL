@@ -6,8 +6,8 @@ GO
 
 CREATE PROCEDURE dbo.[SP_CASH_PAYMENTS_UPDATE_CLIENT_DATA]
 (
-	@OnleneSqlServerName	sysname
-,	@OnleneSqlDataBaseName	sysname
+	@OnlineSqlServerName	sysname
+,	@OnlineSqlDataBaseName	sysname
 ,	@CurrAccountDate		datetime
 ,	@TestCaseRowID			nvarchar(16)
 ,	@Customer_ID			int
@@ -42,8 +42,8 @@ begin
 	if IsNull(@ProxyCustomer_ID,0) > 0
 	begin
 		begin try 
-			select @Sql2 = N'dbo.[SP_CASH_PAYMENTS_UPDATE_DT015_CUSTOMERS_ACTIONS_TA] @OnleneSqlServerName = '+@OnleneSqlServerName
-						+', @OnleneSqlDataBaseName = '+@OnleneSqlDataBaseName
+			select @Sql2 = N'dbo.[SP_CASH_PAYMENTS_UPDATE_DT015_CUSTOMERS_ACTIONS_TA] @OnlineSqlServerName = '+@OnlineSqlServerName
+						+', @OnlineSqlDataBaseName = '+@OnlineSqlDataBaseName
 						+', @CurrAccountDate = '+convert(varchar(16), @CurrAccountDate,23)
 						+', @TestCaseRowID = '+@TestCaseRowID
 						+', @OnlineDbCustomer_ID = '+str(@ProxyCustomer_ID,len(@ProxyCustomer_ID),0)
@@ -51,7 +51,7 @@ begin
 						+', @WithUpdate = '+str(@WithUpdate,len(@WithUpdate),0)
 
 
-			exec @Ret = dbo.[SP_CASH_PAYMENTS_UPDATE_DT015_CUSTOMERS_ACTIONS_TA] @OnleneSqlServerName, @OnleneSqlDataBaseName
+			exec @Ret = dbo.[SP_CASH_PAYMENTS_UPDATE_DT015_CUSTOMERS_ACTIONS_TA] @OnlineSqlServerName, @OnlineSqlDataBaseName
 				, @CurrAccountDate, @TestCaseRowID, @ProxyCustomer_ID, 1, @WithUpdate;
 
 			if @Ret <> 0
@@ -71,8 +71,8 @@ begin
 
 	-- Aктуализираме данните на Титуляра
 	begin try 
-		select @Sql2 = N'dbo.[SP_CASH_PAYMENTS_UPDATE_DT015_CUSTOMERS_ACTIONS_TA] @OnleneSqlServerName = '+@OnleneSqlServerName
-					+', @OnleneSqlDataBaseName = '+@OnleneSqlDataBaseName
+		select @Sql2 = N'dbo.[SP_CASH_PAYMENTS_UPDATE_DT015_CUSTOMERS_ACTIONS_TA] @OnlineSqlServerName = '+@OnlineSqlServerName
+					+', @OnlineSqlDataBaseName = '+@OnlineSqlDataBaseName
 					+', @CurrAccountDate = '+convert(varchar(16), @CurrAccountDate,23)
 					+', @TestCaseRowID = '+@TestCaseRowID
 					+', @OnlineDbCustomer_ID = '+str(@Customer_ID,len(@Customer_ID),0)
@@ -80,7 +80,7 @@ begin
 					+', @WithUpdate = '+str(@WithUpdate,len(@WithUpdate),0)
 
 
-		exec @Ret = dbo.[SP_CASH_PAYMENTS_UPDATE_DT015_CUSTOMERS_ACTIONS_TA] @OnleneSqlServerName, @OnleneSqlDataBaseName
+		exec @Ret = dbo.[SP_CASH_PAYMENTS_UPDATE_DT015_CUSTOMERS_ACTIONS_TA] @OnlineSqlServerName, @OnlineSqlDataBaseName
 			, @CurrAccountDate, @TestCaseRowID, @Customer_ID, 0, @WithUpdate;
 
 		if @Ret <> 0

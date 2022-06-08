@@ -6,8 +6,8 @@ GO
 
 CREATE PROCEDURE dbo.[SP_CASH_PAYMENTS_UPDATE_DT015_CUSTOMERS_ACTIONS_TA]
 (
-	@OnleneSqlServerName	sysname
-,	@OnleneSqlDataBaseName	sysname
+	@OnlineSqlServerName	sysname
+,	@OnlineSqlDataBaseName	sysname
 ,	@CurrAccountDate		datetime
 ,	@TestCaseRowID			nvarchar(16)
 ,	@OnlineDbCustomer_ID	int
@@ -67,12 +67,12 @@ begin
 
 	begin try
 		insert into dbo.[#TBL_ONLINE_DT015_INFO]
-		exec  @Ret = dbo.[SP_LOAD_ONLINE_CLIENT_DATA] @OnleneSqlServerName, @OnleneSqlDataBaseName, @CurrAccountDate, @OnlineDbCustomer_ID
+		exec  @Ret = dbo.[SP_LOAD_ONLINE_CLIENT_DATA] @OnlineSqlServerName, @OnlineSqlDataBaseName, @CurrAccountDate, @OnlineDbCustomer_ID
 	end try
 	begin catch 
 		select  @Msg = dbo.FN_GET_EXCEPTION_INFO()
-			,	@Sql2 = ' exec dbo.[SP_LOAD_ONLINE_CLIENT_DATA] @OnleneSqlServerName = '+@OnleneSqlServerName+' '
-								+ ', @OnleneSqlDataBaseName = '+@OnleneSqlDataBaseName+' '
+			,	@Sql2 = ' exec dbo.[SP_LOAD_ONLINE_CLIENT_DATA] @OnlineSqlServerName = '+@OnlineSqlServerName+' '
+								+ ', @OnlineSqlDataBaseName = '+@OnlineSqlDataBaseName+' '
 								+ ', @Customer_ID = '+str(@OnlineDbCustomer_ID,len(@OnlineDbCustomer_ID),0);
 
 			exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql2, @Msg
@@ -90,10 +90,10 @@ begin
 	;
 	/* Дали клиента има запори по някоя от сделките: */
 	select top(1) @IS_ZAPOR = 1 
-	from dbo.[AGR_CASH_PAYMENTS_DEALS] [D] with(nolock)
-	where [D].[CUSTOMER_ID] =  @OnlineDbCustomer_ID
-		and [D].[HAS_DISTRAINT] = 1
+	from dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_DISTRAINT] [D] with(nolock)
+	where [D].[CUSTOMER_ID] = @OnlineDbCustomer_ID
 	;
+
 	/* За клиентите със служебни EGFN-та да заредим Оригиналното: */
 	DECLARE @ClientIdentifier varchar(32) = N''
 		,	@HasDublClientIDs int = 0

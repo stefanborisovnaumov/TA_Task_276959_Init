@@ -2,11 +2,11 @@
 	declare @CurrAccDate datetime = 0
 		,	@AccountDate sysname = N''
 		,	@DB_TYPE sysname = N'BETA', @DB_ALIAS sysname = N'VCS_OnlineDB'
-		,	@OnleneSqlServerName sysname = N'', @OnleneSqlDataBaseName sysname = N''
+		,	@OnlineSqlServerName sysname = N'', @OnlineSqlDataBaseName sysname = N''
 	;
 
-	select @OnleneSqlServerName		= [SERVER_INSTANCE_NAME]
-		,	@OnleneSqlDataBaseName	= [DATABASE_NAME]
+	select @OnlineSqlServerName		= [SERVER_INSTANCE_NAME]
+		,	@OnlineSqlDataBaseName	= [DATABASE_NAME]
 	from dbo.[TEST_AUTOMATION_DATASOURCES] [DS] with(nolock)
 	where [DB_TYPE] = @DB_TYPE and [UNIQUE_ALIAS] = @DB_ALIAS
 	go

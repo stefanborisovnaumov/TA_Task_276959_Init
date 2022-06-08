@@ -6,8 +6,8 @@ GO
 
 CREATE PROCEDURE dbo.[SP_LOAD_ONLINE_DEAL_CORS_DATA]
 (
-	@OnleneSqlServerName	sysname
-,	@OnleneSqlDataBaseName	sysname
+	@OnlineSqlServerName	sysname
+,	@OnlineSqlDataBaseName	sysname
 ,	@DEAL_NUM				int
 ,	@CORS_ACCOUNT_TYPE		int
 ,	@CORS_ACCOUNT			varchar(33)
@@ -24,8 +24,8 @@ BEGIN
 	/* 1.Log Begining of Procedure execution */
 	if @LogBegEndProc = 1 
 	begin	
-		select @Sql1 = 'dbo.[SP_LOAD_ONLINE_DEAL_CORS_DATA] @OnleneSqlServerName ='+@OnleneSqlServerName
-					+', @OnleneSqlDataBaseName = '+@OnleneSqlDataBaseName
+		select @Sql1 = 'dbo.[SP_LOAD_ONLINE_DEAL_CORS_DATA] @OnlineSqlServerName ='+@OnlineSqlServerName
+					+', @OnlineSqlDataBaseName = '+@OnlineSqlDataBaseName
 					+', @DEAL_NUM = '+str(@DEAL_NUM,len(@DEAL_NUM),0)
 					+', @CORS_ACCOUNT_TYPE = '+str(@CORS_ACCOUNT_TYPE,len(@CORS_ACCOUNT_TYPE),0)
 					+', @CORS_ACCOUNT = '''+@CORS_ACCOUNT+''''
@@ -36,13 +36,13 @@ BEGIN
 
 	/************************************************************************************************************/
 	/* 2. Prepare Sql Server full database name */
-	IF LEN(@OnleneSqlServerName) > 1 AND LEFT(RTRIM(@OnleneSqlServerName),1) <> N'['
-		SELECT @OnleneSqlServerName = QUOTENAME(@OnleneSqlServerName)
+	IF LEN(@OnlineSqlServerName) > 1 AND LEFT(RTRIM(@OnlineSqlServerName),1) <> N'['
+		SELECT @OnlineSqlServerName = QUOTENAME(@OnlineSqlServerName)
 
-	IF LEN(@OnleneSqlDataBaseName) > 1 AND LEFT(RTRIM(@OnleneSqlDataBaseName),1) <> N'['
-		SELECT @OnleneSqlDataBaseName = QUOTENAME(@OnleneSqlDataBaseName)	
+	IF LEN(@OnlineSqlDataBaseName) > 1 AND LEFT(RTRIM(@OnlineSqlDataBaseName),1) <> N'['
+		SELECT @OnlineSqlDataBaseName = QUOTENAME(@OnlineSqlDataBaseName)	
 
-	declare @SqlFullDBName sysname = @OnleneSqlServerName +'.'+@OnleneSqlDataBaseName
+	declare @SqlFullDBName sysname = @OnlineSqlServerName +'.'+@OnlineSqlDataBaseName
 	;
 	/************************************************************************************************************/
 	/* 3. Load Deal Corrs data from OlineDB */
@@ -143,8 +143,8 @@ BEGIN
 	/* Log End Of Procedure */
 	if @LogBegEndProc = 1
 	begin 
-		select @Sql1 = 'dbo.[SP_LOAD_ONLINE_DEAL_CORS_DATA] @OnleneSqlServerName ='+@OnleneSqlServerName
-					+', @OnleneSqlDataBaseName = '+@OnleneSqlDataBaseName
+		select @Sql1 = 'dbo.[SP_LOAD_ONLINE_DEAL_CORS_DATA] @OnlineSqlServerName ='+@OnlineSqlServerName
+					+', @OnlineSqlDataBaseName = '+@OnlineSqlDataBaseName
 					+', @DEAL_NUM = '+str(@DEAL_NUM,len(@DEAL_NUM),0)
 					+', @CORS_ACCOUNT_TYPE = '+str(@CORS_ACCOUNT_TYPE,len(@CORS_ACCOUNT_TYPE),0)
 					+', @CORS_ACCOUNT = '''+@CORS_ACCOUNT+''''

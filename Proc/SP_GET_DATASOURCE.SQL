@@ -8,8 +8,8 @@ CREATE PROCEDURE dbo.[SP_CASH_PAYMENTS_GET_DATASOURCE]
 (
 	@DB_TYPE				sysname = N'BETA'
 ,	@DB_ALIAS				sysname = N'VCS_OnlineDB'
-,	@OnleneSqlServerName	sysname = N'' out
-,	@OnleneSqlDataBaseName	sysname = N'' out
+,	@OnlineSqlServerName	sysname = N'' out
+,	@OnlineSqlDataBaseName	sysname = N'' out
 )
 as
 begin
@@ -25,13 +25,13 @@ begin
 
 	/************************************************************************************************************/
 	/* @TODO: */
-	select	@OnleneSqlServerName	= [SERVER_INSTANCE_NAME]
-		,	@OnleneSqlDataBaseName	= [DATABASE_NAME]
+	select	@OnlineSqlServerName	= [SERVER_INSTANCE_NAME]
+		,	@OnlineSqlDataBaseName	= [DATABASE_NAME]
 	from dbo.[TEST_AUTOMATION_DATASOURCES] [DS] with(nolock)
 	where [DB_TYPE] = @DB_TYPE and [UNIQUE_ALIAS] = @DB_ALIAS
 	;
 
-	if IsNull(@OnleneSqlServerName,'') = '' or IsNull(@OnleneSqlServerName,'') = ''
+	if IsNull(@OnlineSqlServerName,'') = '' or IsNull(@OnlineSqlServerName,'') = ''
 	begin
 		select	@Msg = N'Can find datasource for [DB_TYPE] ='+@DB_TYPE+' AND [UNIQUE_ALIAS] = '+@DB_ALIAS+' '
 			,	@Sql = N' SELECT [SERVER_INSTANCE_NAME], [DATABASE_NAME] from dbo.[TEST_AUTOMATION_DATASOURCES] [DS] with(nolock)'
@@ -41,11 +41,11 @@ begin
 		return 1;
 	end
 
-	if LEN(@OnleneSqlServerName) > 1 and LEFT(@OnleneSqlServerName,1) <> N'['
-		select @OnleneSqlServerName = QUOTENAME(@OnleneSqlServerName)
+	if LEN(@OnlineSqlServerName) > 1 and LEFT(@OnlineSqlServerName,1) <> N'['
+		select @OnlineSqlServerName = QUOTENAME(@OnlineSqlServerName)
 
-	if LEN(@OnleneSqlDataBaseName) > 1 and LEFT(@OnleneSqlDataBaseName,1) <> N'['
-		select @OnleneSqlDataBaseName = QUOTENAME(@OnleneSqlDataBaseName)
+	if LEN(@OnlineSqlDataBaseName) > 1 and LEFT(@OnlineSqlDataBaseName,1) <> N'['
+		select @OnlineSqlDataBaseName = QUOTENAME(@OnlineSqlDataBaseName)
 
 	/************************************************************************************************************/
 	/* Log End Of Procedure */

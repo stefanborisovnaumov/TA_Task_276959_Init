@@ -6,8 +6,8 @@ GO
 
 CREATE PROCEDURE dbo.[SP_LOAD_ONLINE_DEAL_DATA]
 (
-	@OnleneSqlServerName	sysname
-,	@OnleneSqlDataBaseName	sysname
+	@OnlineSqlServerName	sysname
+,	@OnlineSqlDataBaseName	sysname
 ,	@DEAL_TYPE INT
 ,	@DEAL_NUM INT
 )
@@ -23,8 +23,8 @@ begin
 	/* 1. Log Begining of Procedure execution */
 	if @LogBegEndProc = 1 
 	begin	
-		select @Sql1 = 'dbo.[SP_LOAD_ONLINE_DEAL_DATA] @OnleneSqlServerName ='+@OnleneSqlServerName
-					+', @OnleneSqlDataBaseName = '+@OnleneSqlDataBaseName+', @DEAL_TYPE = 1'+', @DEAL_NUM = '+STR(@DEAL_NUM,LEN( @DEAL_NUM),0)
+		select @Sql1 = 'dbo.[SP_LOAD_ONLINE_DEAL_DATA] @OnlineSqlServerName ='+@OnlineSqlServerName
+					+', @OnlineSqlDataBaseName = '+@OnlineSqlDataBaseName+', @DEAL_TYPE = 1'+', @DEAL_NUM = '+STR(@DEAL_NUM,LEN( @DEAL_NUM),0)
 			,  @Msg =  '*** Begin Execute Proc ***: dbo.[SP_LOAD_ONLINE_DEAL_DATA]'
 		;
 		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg
@@ -32,13 +32,13 @@ begin
 
 	/************************************************************************************************************/
 	/* 2. Prepare Sql Server full database name */
-	IF LEN(@OnleneSqlServerName) > 1 AND LEFT(RTRIM(@OnleneSqlServerName),1) <> N'['
-		SELECT @OnleneSqlServerName = QUOTENAME(@OnleneSqlServerName)
+	IF LEN(@OnlineSqlServerName) > 1 AND LEFT(RTRIM(@OnlineSqlServerName),1) <> N'['
+		SELECT @OnlineSqlServerName = QUOTENAME(@OnlineSqlServerName)
 
-	IF LEN(@OnleneSqlDataBaseName) > 1 AND LEFT(RTRIM(@OnleneSqlDataBaseName),1) <> N'['
-		SELECT @OnleneSqlDataBaseName = QUOTENAME(@OnleneSqlDataBaseName)	
+	IF LEN(@OnlineSqlDataBaseName) > 1 AND LEFT(RTRIM(@OnlineSqlDataBaseName),1) <> N'['
+		SELECT @OnlineSqlDataBaseName = QUOTENAME(@OnlineSqlDataBaseName)	
 
-	declare @SqlFullDBName sysname = @OnleneSqlServerName +'.'+@OnleneSqlDataBaseName
+	declare @SqlFullDBName sysname = @OnlineSqlServerName +'.'+@OnlineSqlDataBaseName
 	;
 	/************************************************************************************************************/
 	/* 3. Load Deals data from OlineDB */
@@ -132,8 +132,8 @@ begin
 	/* Log End Of Procedure */
 	if @LogBegEndProc = 1
 	begin 
-		select	@Sql1 = 'dbo.[SP_LOAD_ONLINE_DEAL_DATA] @OnleneSqlServerName ='+@OnleneSqlServerName
-					+', @OnleneSqlDataBaseName = '+@OnleneSqlDataBaseName+', @DEAL_TYPE = 1'+', @DEAL_NUM = '+STR(@DEAL_NUM,LEN( @DEAL_NUM),0)
+		select	@Sql1 = 'dbo.[SP_LOAD_ONLINE_DEAL_DATA] @OnlineSqlServerName ='+@OnlineSqlServerName
+					+', @OnlineSqlDataBaseName = '+@OnlineSqlDataBaseName+', @DEAL_TYPE = 1'+', @DEAL_NUM = '+STR(@DEAL_NUM,LEN( @DEAL_NUM),0)
 			,	@Msg = '*** End Execute Proc ***: dbo.[SP_LOAD_ONLINE_DEAL_DATA], Duration: '
 					+ dbo.FN_GET_TIME_DIFF(@TimeBeg, GetDate()) + ', DEAL_NUM: ' + str(@DEAL_NUM,len(@DEAL_NUM),0)
 		;

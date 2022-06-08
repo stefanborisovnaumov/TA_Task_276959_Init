@@ -31,16 +31,16 @@ begin
 
 	/************************************************************************************************************/
 	/* 0.1. Get Datasources: */
-	declare @OnleneSqlServerName sysname = N'',	@OnleneSqlDataBaseName sysname = N'', @DB_ALIAS sysname = N'VCS_OnlineDB'
+	declare @OnlineSqlServerName sysname = N'',	@OnlineSqlDataBaseName sysname = N'', @DB_ALIAS sysname = N'VCS_OnlineDB'
 	;
 
-	exec @Ret = dbo.[SP_CASH_PAYMENTS_GET_DATASOURCE] @DB_TYPE, @DB_ALIAS, @OnleneSqlServerName out, @OnleneSqlDataBaseName out
+	exec @Ret = dbo.[SP_CASH_PAYMENTS_GET_DATASOURCE] @DB_TYPE, @DB_ALIAS, @OnlineSqlServerName out, @OnlineSqlDataBaseName out
 	if @Ret <> 0
 	begin
 		select  @Msg = N'Error execute proc, Error code: '+str(@Ret,len(@Ret),0)
-					+' ; Result: @OnleneSqlServerName = "'+@OnleneSqlServerName+'", @OnleneSqlDataBaseName = "'+@OnleneSqlDataBaseName+'"'
+					+' ; Result: @OnlineSqlServerName = "'+@OnlineSqlServerName+'", @OnlineSqlDataBaseName = "'+@OnlineSqlDataBaseName+'"'
 			,	@Sql1 = N'exec dbo.[SP_SYS_GET_ACCOUNT_DATE_FROM_DB] @DB_TYPE = '
-					+ @DB_TYPE  +N', @DB_ALIAS = '+ @DB_ALIAS +N', @OnleneSqlServerName OUT, @OnleneSqlDataBaseName OUT'
+					+ @DB_TYPE  +N', @DB_ALIAS = '+ @DB_ALIAS +N', @OnlineSqlServerName OUT, @OnlineSqlDataBaseName OUT'
 		;
 		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg
 		return -1;
@@ -48,14 +48,14 @@ begin
 
 	if @LogTraceInfo = 1 
 	begin 
-		select  @Msg = N'After: exec dbo.[SP_CASH_PAYMENTS_GET_DATASOURCE], @OnleneSqlServerName: ' +@OnleneSqlServerName+', @OnleneSqlDataBaseName = '+@OnleneSqlDataBaseName+' '
+		select  @Msg = N'After: exec dbo.[SP_CASH_PAYMENTS_GET_DATASOURCE], @OnlineSqlServerName: ' +@OnlineSqlServerName+', @OnlineSqlDataBaseName = '+@OnlineSqlDataBaseName+' '
 			,	@Sql1 = N'exec dbo.[SP_SYS_GET_ACCOUNT_DATE_FROM_DB] @DB_TYPE = '
-					+ @DB_TYPE  +N', @DB_ALIAS = '+ @DB_ALIAS +N', @OnleneSqlServerName OUT, @OnleneSqlDataBaseName OUT'
+					+ @DB_TYPE  +N', @DB_ALIAS = '+ @DB_ALIAS +N', @OnlineSqlServerName OUT, @OnlineSqlDataBaseName OUT'
 		;
 		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg
 	end
 	
-	declare @SqlFullDBName sysname = @OnleneSqlServerName +'.'+@OnleneSqlDataBaseName;
+	declare @SqlFullDBName sysname = @OnlineSqlServerName +'.'+@OnlineSqlDataBaseName;
 
 	/************************************************************************************************************/
 	/* 0.2. Get Account Date: */
@@ -63,11 +63,11 @@ begin
 	;
 
 	begin try
-		exec dbo.[SP_SYS_GET_ACCOUNT_DATE_FROM_DB] @OnleneSqlServerName, @OnleneSqlDataBaseName, @CurrAccDate OUT
+		exec dbo.[SP_SYS_GET_ACCOUNT_DATE_FROM_DB] @OnlineSqlServerName, @OnlineSqlDataBaseName, @CurrAccDate OUT
 	end try
 	begin catch
 		select  @Msg = dbo.FN_GET_EXCEPTION_INFO()
-			,	@Sql1 = N'exec dbo.[SP_SYS_GET_ACCOUNT_DATE_FROM_DB] '+@OnleneSqlServerName+N', '+@OnleneSqlDataBaseName+N', @CurrAccDate OUT'
+			,	@Sql1 = N'exec dbo.[SP_SYS_GET_ACCOUNT_DATE_FROM_DB] '+@OnlineSqlServerName+N', '+@OnlineSqlDataBaseName+N', @CurrAccDate OUT'
 		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg
 		return -2
 	end catch 
@@ -76,7 +76,7 @@ begin
 	if @LogTraceInfo = 1 
 	begin 
 		select  @Msg = N'After: exec dbo.[SP_SYS_GET_ACCOUNT_DATE_FROM_DB], Online Accoun Date: ' +@AccountDate
-			,	@Sql1 = N'exec dbo.[SP_SYS_GET_ACCOUNT_DATE_FROM_DB] '+@OnleneSqlServerName+N', '+@OnleneSqlDataBaseName+N', @CurrAccDate OUT'
+			,	@Sql1 = N'exec dbo.[SP_SYS_GET_ACCOUNT_DATE_FROM_DB] '+@OnlineSqlServerName+N', '+@OnlineSqlDataBaseName+N', @CurrAccDate OUT'
 		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg
 	end
 
@@ -414,6 +414,7 @@ begin
 
 	select @Sql1 = N';
 	declare @DealType 	int = 1
+		,	@CurrDate	date = GetDate()
 		,	@StsDeleted	int = dbo.SETBIT(cast(0 as binary(4)),  0, 1)
 		,	@REG_VNOS_BEL_BIS6 int = 63 /* #define REG_VNOS_BEL_BIS6 63 */		
 	;
@@ -428,7 +429,8 @@ begin
 		from '+@SqlFullDBName+'.dbo.[TRAITEMS_DAY] [T] with(nolock)
 		WHERE	[T].[DEAL_NUM]	= [REG].[DEAL_NUM]
 			and [T].[DEAL_TYPE] = @DealType
-			AND	[T].[SUM_OPER] > 0
+			and	[T].[SUM_OPER] > 0
+			and [T].[SYS_DATE] >= @CurrDate
 			and [T].[REG_CODE_DEF] = @REG_VNOS_BEL_BIS6
 			and ([T].[STATUS] & @StsDeleted) <> @StsDeleted
 	) '
@@ -710,6 +712,8 @@ begin
 			,	CAST ( 0 AS BIT )				AS [HAS_LOAN]
 			,	CAST ( 0 AS BIT )				AS [HAS_VALID_DOCUMENT]
 			,	CAST ( 1 AS BIT )				AS [IS_ORIGINAL_EGFN]
+			,	CAST ( 0 AS BIT )				AS [HAS_ZAPOR]
+			,	CAST ( 0 AS BIT )				AS [HAS_UNCOLLECTED_TAX_CONNECTED_TO_ALL_ACC]			
 	) [EX_BITS]
 	'
 	;
@@ -911,7 +915,37 @@ begin
 	begin 
 		select  @Msg = N'After: select * into dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_LOANS], Rows affected: ' + str(@Rows,len(@Rows),0);
 	 	exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg
-	end	
+	end
+
+	/**************************************************************/
+	/* 2.8 Prepare Customers with Distraint */
+	truncate table dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_DISTRAINT]
+	;
+	
+	insert into dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_DISTRAINT] ( [CUSTOMER_ID] )
+	exec @Ret = dbo.[SP_LOAD_ONLINE_CUSTOMERS_WITH_DISTRAINT] @OnlineSqlServerName, @OnlineSqlDataBaseName
+
+	select @Rows =  (select count(*) from dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_DISTRAINT] with(nolock) ), @Err = @@ERROR;
+	if @LogTraceInfo = 1
+	begin 
+		select  @Msg = N'After: insert into dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_DISTRAINT], Rows affected: ' + str(@Rows,len(@Rows),0);
+	 	exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg
+	end
+
+	/**************************************************************/
+	/* 2.9 Prepare Customers with Uncollected tax connected to all customer accounts */
+	truncate table dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_UNCOLLECTED_TAX_CONNECTED_TO_ALL_ACCOUNTS]
+	;
+	
+	insert into dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_UNCOLLECTED_TAX_CONNECTED_TO_ALL_ACCOUNTS] ( [CUSTOMER_ID] )
+	exec @Ret = dbo.[SP_LOAD_ONLINE_CUSTOMERS_WITH_UNCOLLECTED_TAX_CONNECTED_TO_ALL_ACCOUNTS] @OnlineSqlServerName, @OnlineSqlDataBaseName
+
+	select @Rows =  (select count(*) from dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_UNCOLLECTED_TAX_CONNECTED_TO_ALL_ACCOUNTS] with(nolock) ), @Err = @@ERROR;
+	if @LogTraceInfo = 1
+	begin 
+		select  @Msg = N'After: insert into dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_UNCOLLECTED_TAX_CONNECTED_TO_ALL_ACCOUNTS], Rows affected: ' + str(@Rows,len(@Rows),0);
+	 	exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg
+	end
 
 	/**************************************************************/
 	/* 3. update customers: */
@@ -958,9 +992,23 @@ begin
 		and [S].[IS_ORIGINAL_EGFN] = 0
 	;
 
+	update [D]
+	set [HAS_ZAPOR] = 1
+	from dbo.[AGR_CASH_PAYMENTS_CUSTOMERS] [D]
+	inner join dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_DISTRAINT] [S] with(nolock)
+		on  [S].[CUSTOMER_ID] = [D].[CUSTOMER_ID]
+	;
+
+	update [D]
+	set [HAS_UNCOLLECTED_TAX_CONNECTED_TO_ALL_ACC] = 1
+	from dbo.[AGR_CASH_PAYMENTS_CUSTOMERS] [D]
+	inner join dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_UNCOLLECTED_TAX_CONNECTED_TO_ALL_ACCOUNTS] [S] with(nolock)
+		on  [S].[CUSTOMER_ID] = [D].[CUSTOMER_ID]
+	;
+
 	if @LogTraceInfo = 1
 	begin 
-		select  @Msg = N'After: update bist in [AGR_CASH_PAYMENTS_CUSTOMERS]', @Sql1 = ' update [AGR_CASH_PAYMENTS_CUSTOMERS] set [HAS_VALID_DOCUMENT] = 1 where ...' 
+		select  @Msg = N'After: update bist in [AGR_CASH_PAYMENTS_CUSTOMERS]', @Sql1 = ' update [AGR_CASH_PAYMENTS_CUSTOMERS] set ...' 
 	 	exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg
 	end
 

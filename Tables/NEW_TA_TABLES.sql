@@ -60,3 +60,26 @@ create table dbo.[AGR_CASH_PAYMENTS_SQL_CONDITIONS]
 		PRIMARY KEY CLUSTERED ( [ID] )
 )
 go
+
+
+/*****************************************************************************/
+-- Create table dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_DISTRAINT]
+drop table if exists dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_DISTRAINT]
+go
+
+create table dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_DISTRAINT] 
+(
+	 [CUSTOMER_ID] int
+)
+go
+
+/*****************************************************************************/
+-- Create table dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_UNCOLLECTED_TAX_CONNECTED_TO_ALL_ACCOUNTS]
+drop table if exists dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_UNCOLLECTED_TAX_CONNECTED_TO_ALL_ACCOUNTS]
+go
+
+create table dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_UNCOLLECTED_TAX_CONNECTED_TO_ALL_ACCOUNTS] 
+(
+	 [CUSTOMER_ID] int
+)
+go

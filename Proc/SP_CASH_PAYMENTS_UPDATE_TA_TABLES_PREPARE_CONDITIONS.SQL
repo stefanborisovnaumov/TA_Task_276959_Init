@@ -26,7 +26,7 @@ begin
 
 	/************************************************************************************************************/
 	/* 1.0 Generate Sql for TA Conditions: */
-	declare @DateAcc DATE = @CurrAccDate
+	declare @DateAcc DATE = @CurrAccDate, @StrIntVal varchar(32) = ''
 	;
 
 	/* Client conditions [DT015_CUSTOMERS_ACTIONS_TA]: */
@@ -44,6 +44,7 @@ begin
 		,	@IS_PROXY					int = -1
 		,	@IS_UNIQUE_CUSTOMER			int = -1
 		,	@HAVE_CREDIT				int = -1
+		,	@COLLECT_TAX_FROM_ALL_ACC 	int = -1
 			/* [PROXY_SPEC_TA]: */
 		,	@UI_RAZPOREDITEL			int = -1
 		,	@UI_UNLIMITED				int = -1
@@ -118,6 +119,7 @@ begin
 		,	@IS_PROXY					= [IS_PROXY]
 		,	@IS_UNIQUE_CUSTOMER			= [IS_UNIQUE_CUSTOMER]
 		,	@HAVE_CREDIT				= [HAVE_CREDIT]
+		,	@COLLECT_TAX_FROM_ALL_ACC	= [COLLECT_TAX_FROM_ALL_ACC]
 	from dbo.[#TBL_TA_CONDITIONS] [F] with(nolock)
 	;
 	select top(1) /* Conditions [PROXY_SPEC_TA]: */
@@ -341,6 +343,18 @@ begin
 		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 		select	@Sql2
 			,	'[HAS_LOAN] : ' + str(@VALID_ID,len(@VALID_ID),0 )
+
+		select @Sql += @Sql2
+	end
+
+	-- [COLLECT_TAX_FROM_ALL_ACC] : Клиента има ли непратени такси, който могат да се събират от всички сметки на клиента
+	if IsNull(@COLLECT_TAX_FROM_ALL_ACC,-1) not in (0,1)
+	begin
+		select @StrIntVal = STR(@COLLECT_TAX_FROM_ALL_ACC,LEN(@COLLECT_TAX_FROM_ALL_ACC),0);
+		select @Sql2 = ' AND [CUST].[HAS_UNCOLLECTED_TAX_CONNECTED_TO_ALL_ACC] = ' + @StrIntVal + @CrLf;
+		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
+		select	@Sql2
+			,	'[COLLECT_TAX_FROM_ALL_ACC] : ' + @StrIntVal
 
 		select @Sql += @Sql2
 	end

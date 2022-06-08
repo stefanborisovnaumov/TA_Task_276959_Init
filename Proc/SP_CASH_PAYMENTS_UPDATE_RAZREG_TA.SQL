@@ -6,8 +6,8 @@ GO
 
 CREATE PROCEDURE dbo.[SP_CASH_PAYMENTS_UPDATE_RAZREG_TA]
 (
-	@OnleneSqlServerName	sysname
-,	@OnleneSqlDataBaseName	sysname
+	@@OnlineSqlServerName	sysname
+,	@OnlineSqlDataBaseName	sysname
 ,	@TestCaseRowID			nvarchar(16)
 ,	@DEAL_TYPE				int 
 ,	@DEAL_NUM				int 
@@ -28,13 +28,13 @@ begin
 	if @LogBegEndProc = 1 exec dbo.SP_SYS_LOG_PROC @@PROCID, @TestCaseRowID, '*** Begin Execute Proc ***: dbo.[SP_CASH_PAYMENTS_UPDATE_RAZREG_TA]'
 	;
 
-	IF LEN(@OnleneSqlServerName) > 1 AND LEFT(@OnleneSqlServerName,1) <> N'['
-		SELECT @OnleneSqlServerName = QUOTENAME(@OnleneSqlServerName)
+	IF LEN(@@OnlineSqlServerName) > 1 AND LEFT(@@OnlineSqlServerName,1) <> N'['
+		SELECT @@OnlineSqlServerName = QUOTENAME(@@OnlineSqlServerName)
 
-	IF LEN(@OnleneSqlDataBaseName) > 1 AND LEFT(@OnleneSqlDataBaseName,1) <> N'['
-		SELECT @OnleneSqlDataBaseName = QUOTENAME(@OnleneSqlDataBaseName)		
+	IF LEN(@OnlineSqlDataBaseName) > 1 AND LEFT(@OnlineSqlDataBaseName,1) <> N'['
+		SELECT @OnlineSqlDataBaseName = QUOTENAME(@OnlineSqlDataBaseName)		
 
-	declare @SqlFullDBName sysname = @OnleneSqlServerName +'.'+@OnleneSqlDataBaseName
+	declare @SqlFullDBName sysname = @@OnlineSqlServerName +'.'+@OnlineSqlDataBaseName
 	;
 
 	/************************************************************************************************************/
@@ -75,13 +75,13 @@ begin
 
 	begin try
 		insert into dbo.[#TBL_ONLINE_DEAL_INFO]
-		exec  @Ret = dbo.[SP_LOAD_ONLINE_DEAL_DATA] @OnleneSqlServerName, @OnleneSqlDataBaseName, @DEAL_TYPE, @DEAL_NUM
+		exec  @Ret = dbo.[SP_LOAD_ONLINE_DEAL_DATA] @@OnlineSqlServerName, @OnlineSqlDataBaseName, @DEAL_TYPE, @DEAL_NUM
 	end try
 	begin catch 
 		select  @Msg = dbo.FN_GET_EXCEPTION_INFO()
 
-			,	@Sql2 = ' exec dbo.[SP_LOAD_ONLINE_DEAL_DATA] @OnleneSqlServerName = '+@OnleneSqlServerName+' '
-								+ ', @OnleneSqlDataBaseName = '+@OnleneSqlDataBaseName+' '
+			,	@Sql2 = ' exec dbo.[SP_LOAD_ONLINE_DEAL_DATA] @@OnlineSqlServerName = '+@@OnlineSqlServerName+' '
+								+ ', @OnlineSqlDataBaseName = '+@OnlineSqlDataBaseName+' '
 								+ ', @DEAL_TYPE = 1, @DealNum = '+str(@DEAL_NUM,len(@DEAL_NUM),0);
 
 			exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql2, @Msg
@@ -118,12 +118,12 @@ begin
 
 		begin try
 			insert into dbo.[#TBL_ONLINE_ACC_TAX_UNCOLECTED]
-			exec @Ret = dbo.[SP_LOAD_ONLINE_TAX_UNCOLECTED_BY_ACC] @OnleneSqlServerName, @OnleneSqlDataBaseName, @Account, @AccCurrency
+			exec @Ret = dbo.[SP_LOAD_ONLINE_TAX_UNCOLECTED_BY_ACC] @@OnlineSqlServerName, @OnlineSqlDataBaseName, @Account, @AccCurrency
 		end try
 		begin catch
 			select  @Msg = dbo.FN_GET_EXCEPTION_INFO()
-				,	@Sql2 = ' exec dbo.[SP_LOAD_ONLINE_TAX_UNCOLECTED_BY_ACC] @OnleneSqlServerName = '+@OnleneSqlServerName+' '
-									+ ', @OnleneSqlDataBaseName = '+@OnleneSqlDataBaseName+' '
+				,	@Sql2 = ' exec dbo.[SP_LOAD_ONLINE_TAX_UNCOLECTED_BY_ACC] @@OnlineSqlServerName = '+@@OnlineSqlServerName+' '
+									+ ', @OnlineSqlDataBaseName = '+@OnlineSqlDataBaseName+' '
 									+ ', @Account = '+@Account
 									+ ', @@AccCurrency = '+str(@AccCurrency,len(@AccCurrency),0)
 				;

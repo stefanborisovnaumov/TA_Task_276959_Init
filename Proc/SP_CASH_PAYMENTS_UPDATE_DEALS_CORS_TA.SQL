@@ -6,8 +6,8 @@ GO
 
 CREATE PROCEDURE dbo.[SP_CASH_PAYMENTS_UPDATE_DEALS_CORS_TA]
 (
-	@OnleneSqlServerName	sysname
-,	@OnleneSqlDataBaseName	sysname
+	@OnlineSqlServerName	sysname
+,	@OnlineSqlDataBaseName	sysname
 ,	@TestCaseRowID			nvarchar(16)
 ,	@DEAL_TYPE				int 
 ,	@DEAL_NUM				int 
@@ -81,12 +81,12 @@ begin
 
 	begin try
 		insert into dbo.[#TBL_ONLINE_DEALS_CORR_INFO]
-		exec  @Ret = dbo.[SP_LOAD_ONLINE_DEAL_CORS_DATA] @OnleneSqlServerName, @OnleneSqlDataBaseName, @DEAL_NUM, @CorrAccType, @CorrAccount
+		exec  @Ret = dbo.[SP_LOAD_ONLINE_DEAL_CORS_DATA] @OnlineSqlServerName, @OnlineSqlDataBaseName, @DEAL_NUM, @CorrAccType, @CorrAccount
 	end try
 	begin catch 
 		select  @Msg = dbo.FN_GET_EXCEPTION_INFO()
-			,	@Sql2 = ' exec dbo.[SP_LOAD_ONLINE_DEAL_CORS_DATA] @OnleneSqlServerName = '+@OnleneSqlServerName+' '
-								+ ', @OnleneSqlDataBaseName = '+@OnleneSqlDataBaseName+' '
+			,	@Sql2 = ' exec dbo.[SP_LOAD_ONLINE_DEAL_CORS_DATA] @OnlineSqlServerName = '+@OnlineSqlServerName+' '
+								+ ', @OnlineSqlDataBaseName = '+@OnlineSqlDataBaseName+' '
 								+ ', @DEAL_NUM = '+str(@DEAL_NUM,len(@DEAL_NUM),0)
 								+ ', @CORS_ACCOUNT_TYPE = '+str(@CorrAccType,len(@CorrAccType),0)
 								+ ', @CORS_ACCOUNT = '''+@CorrAccount+''''
@@ -122,12 +122,12 @@ begin
 
 		begin try
 			insert into dbo.[#TBL_ONLINE_ACC_TAX_UNCOLECTED]
-			exec @Ret = dbo.[SP_LOAD_ONLINE_TAX_UNCOLECTED_BY_ACC] @OnleneSqlServerName, @OnleneSqlDataBaseName, @Account, @AccCurrency
+			exec @Ret = dbo.[SP_LOAD_ONLINE_TAX_UNCOLECTED_BY_ACC] @OnlineSqlServerName, @OnlineSqlDataBaseName, @Account, @AccCurrency
 		end try
 		begin catch
 			select  @Msg = dbo.FN_GET_EXCEPTION_INFO()
-				,	@Sql2 = ' exec dbo.[SP_LOAD_ONLINE_TAX_UNCOLECTED_BY_ACC] @OnleneSqlServerName = '+@OnleneSqlServerName+' '
-									+ ', @OnleneSqlDataBaseName = '+@OnleneSqlDataBaseName+' '
+				,	@Sql2 = ' exec dbo.[SP_LOAD_ONLINE_TAX_UNCOLECTED_BY_ACC] @OnlineSqlServerName = '+@OnlineSqlServerName+' '
+									+ ', @OnlineSqlDataBaseName = '+@OnlineSqlDataBaseName+' '
 									+ ', @Account = '+@Account
 									+ ', @@AccCurrency = '+str(@AccCurrency,len(@AccCurrency),0)
 				;

@@ -48,16 +48,16 @@ begin
 	;
 	/************************************************************************************************************/
 	/* 2. Get Datasources: */
-	declare @OnleneSqlServerName sysname = N'',	@OnleneSqlDataBaseName sysname = N'', @DB_ALIAS sysname = N'VCS_OnlineDB'
+	declare @OnlineSqlServerName sysname = N'',	@OnlineSqlDataBaseName sysname = N'', @DB_ALIAS sysname = N'VCS_OnlineDB'
 	;
 
-	exec @Ret = dbo.[SP_CASH_PAYMENTS_GET_DATASOURCE] @DB_TYPE, @DB_ALIAS, @OnleneSqlServerName out, @OnleneSqlDataBaseName out
+	exec @Ret = dbo.[SP_CASH_PAYMENTS_GET_DATASOURCE] @DB_TYPE, @DB_ALIAS, @OnlineSqlServerName out, @OnlineSqlDataBaseName out
 	if @Ret <> 0
 	begin
 		select  @Msg = N'Error execute proc, Error code: '+str(@Ret,len(@Ret),0)
-					+' ; Result: @OnleneSqlServerName = "'+@OnleneSqlServerName+'", @OnleneSqlDataBaseName = "'+@OnleneSqlDataBaseName+'"'
+					+' ; Result: @OnlineSqlServerName = "'+@OnlineSqlServerName+'", @OnlineSqlDataBaseName = "'+@OnlineSqlDataBaseName+'"'
 			,	@Sql = N'exec dbo.[SP_SYS_GET_ACCOUNT_DATE_FROM_DB] @DB_TYPE = '
-					+ @DB_TYPE  +N', @DB_ALIAS = '+ @DB_ALIAS +N', @OnleneSqlServerName OUT, @OnleneSqlDataBaseName OUT'
+					+ @DB_TYPE  +N', @DB_ALIAS = '+ @DB_ALIAS +N', @OnlineSqlServerName OUT, @OnlineSqlDataBaseName OUT'
 		;
 		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql, @Msg
 		return -2;
@@ -65,9 +65,9 @@ begin
 
 	if @LogTraceInfo = 1 
 	begin 
-		select  @Msg = N'After: exec dbo.[SP_CASH_PAYMENTS_GET_DATASOURCE], @OnleneSqlServerName: ' +@OnleneSqlServerName+', @OnleneSqlDataBaseName = '+@OnleneSqlDataBaseName+' '
+		select  @Msg = N'After: exec dbo.[SP_CASH_PAYMENTS_GET_DATASOURCE], @OnlineSqlServerName: ' +@OnlineSqlServerName+', @OnlineSqlDataBaseName = '+@OnlineSqlDataBaseName+' '
 			,	@Sql = N'exec dbo.[SP_SYS_GET_ACCOUNT_DATE_FROM_DB] @DB_TYPE = '
-					+ @DB_TYPE  +N', @DB_ALIAS = '+ @DB_ALIAS +N', @OnleneSqlServerName OUT, @OnleneSqlDataBaseName OUT'
+					+ @DB_TYPE  +N', @DB_ALIAS = '+ @DB_ALIAS +N', @OnlineSqlServerName OUT, @OnlineSqlDataBaseName OUT'
 		;
 		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql, @Msg
 	end
@@ -78,11 +78,11 @@ begin
 	;
 
 	begin try
-		exec dbo.[SP_SYS_GET_ACCOUNT_DATE_FROM_DB] @OnleneSqlServerName, @OnleneSqlDataBaseName, @CurrAccDate OUT
+		exec dbo.[SP_SYS_GET_ACCOUNT_DATE_FROM_DB] @OnlineSqlServerName, @OnlineSqlDataBaseName, @CurrAccDate OUT
 	end try
 	begin catch 
 		select  @Msg = dbo.FN_GET_EXCEPTION_INFO()
-			,	@Sql = N'exec dbo.[SP_SYS_GET_ACCOUNT_DATE_FROM_DB] '+@OnleneSqlServerName+N', '+@OnleneSqlDataBaseName+N', @CurrAccDate OUT'
+			,	@Sql = N'exec dbo.[SP_SYS_GET_ACCOUNT_DATE_FROM_DB] '+@OnlineSqlServerName+N', '+@OnlineSqlDataBaseName+N', @CurrAccDate OUT'
 		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql, @Msg
 		return -2;
 	end catch 
@@ -91,7 +91,7 @@ begin
 	if @LogTraceInfo = 1 
 	begin 
 		select  @Msg = N'After: exec dbo.[SP_SYS_GET_ACCOUNT_DATE_FROM_DB], Online Accoun Date: ' +@AccountDate
-			,	@Sql = N'exec dbo.[SP_SYS_GET_ACCOUNT_DATE_FROM_DB] '+@OnleneSqlServerName+N', '+@OnleneSqlDataBaseName+N', @CurrAccDate OUT'
+			,	@Sql = N'exec dbo.[SP_SYS_GET_ACCOUNT_DATE_FROM_DB] '+@OnlineSqlServerName+N', '+@OnlineSqlDataBaseName+N', @CurrAccDate OUT'
 		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql, @Msg
 	end
 
@@ -168,7 +168,7 @@ begin
 	begin
 
 		begin try
-				exec @Ret = dbo.[SP_CASH_PAYMENTS_UPDATE_DEALS_CORS_TA] @OnleneSqlServerName, @OnleneSqlDataBaseName
+				exec @Ret = dbo.[SP_CASH_PAYMENTS_UPDATE_DEALS_CORS_TA] @OnlineSqlServerName, @OnlineSqlDataBaseName
 				, @RowIdStr, 1, @DealNum, @CustomerID, @ProxyID, @WithUpdate
 		end try 	
 		begin catch
@@ -185,7 +185,7 @@ begin
 	/******************************************************************************************************/
 	/* 5.2. Updare table  dbo.[RAZPREG_TA] */
 	begin try
-			exec dbo.[SP_CASH_PAYMENTS_UPDATE_RAZREG_TA] @OnleneSqlServerName, @OnleneSqlDataBaseName
+			exec dbo.[SP_CASH_PAYMENTS_UPDATE_RAZREG_TA] @OnlineSqlServerName, @OnlineSqlDataBaseName
 			, @RowIdStr, 1, @DealNum, @CustomerID, @ProxyID, @WithUpdate
 	end try 	
 	begin catch
@@ -200,13 +200,13 @@ begin
 	/******************************************************************************************************/
 	/* 5.3. Updare table dbo.[DT015_CUSTOMERS_ACTIONS_TA] for Customer and Proxy */
 	begin try
-			exec dbo.[SP_CASH_PAYMENTS_UPDATE_CLIENT_DATA] @OnleneSqlServerName, @OnleneSqlDataBaseName, @CurrAccDate
+			exec dbo.[SP_CASH_PAYMENTS_UPDATE_CLIENT_DATA] @OnlineSqlServerName, @OnlineSqlDataBaseName, @CurrAccDate
 			, @RowIdStr, @CustomerID, @ProxyID, @WithUpdate
 	end try
 	begin catch 
 
 		select  @Msg = dbo.FN_GET_EXCEPTION_INFO()
-			,	@Sql = ' exec dbo.[SP_CASH_PAYMENTS_UPDATE_CLIENT_DATA] @OnleneSqlServerName, @OnleneSqlDataBaseName, @CurrAccDate'
+			,	@Sql = ' exec dbo.[SP_CASH_PAYMENTS_UPDATE_CLIENT_DATA] @OnlineSqlServerName, @OnlineSqlDataBaseName, @CurrAccDate'
 				+', @RowIdStr, @CustomerID, @ProxyID, @WithUpdate'
 
 		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql, @Msg
