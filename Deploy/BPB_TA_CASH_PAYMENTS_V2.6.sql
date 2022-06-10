@@ -1,7 +1,7 @@
 /***************************************************************************************************************/
 -- Име          : Янко Янков
--- Дата и час   : 08.06.2022
--- Задача       : Task 276959 (v2.6.2)
+-- Дата и час   : 09.06.2022
+-- Задача       : Task 276959 (v2.6.3)
 -- Класификация : Test Automation
 -- Описание     : Автоматизация на тестовете за вснони бележки с използване на наличните данни от Online базата
 -- Параметри    : Няма
@@ -2355,6 +2355,7 @@ go
 
 /********************************************************************************************************/
 /* Процедура за зачистване наданните от TA Таблиците */
+/* 2022/06/98 - v2.6.3 -> актуализацията на сделките с навързаните документи се извършва само за първия тестови случай */
 DROP PROCEDURE IF EXISTS dbo.[SP_CASH_PAYMENTS_CLEAR_TA_TABLES]
 GO
 
@@ -2378,7 +2379,9 @@ begin
 
 	/************************************************************************************************************/
 	-- 2. Get  TA Table Row IDs:
-	declare @RAZPREG_TA_RowID int = 0
+	declare @RUNNING_ORDER int = 0
+		,	@TYPE_ACTION varchar(128) = ''
+		,	@RAZPREG_TA_RowID int = 0
 		,	@DEALS_CORR_TA_RowID int = 0
 		,	@DT015_CUSTOMERS_RowID int = 0
 		,	@PROXY_CUSTOMERS_RowID int = 0
@@ -2387,8 +2390,16 @@ begin
 		,	@DEALS_CORR_TA_RowID	= [CORS_ROW_ID]
 		,	@DT015_CUSTOMERS_RowID	= [CUST_ROW_ID]
 		,	@PROXY_CUSTOMERS_RowID	= [PROXY_ROW_ID]
+		,	@PROXY_CUSTOMERS_RowID	= [PROXY_ROW_ID]
+		,	@RUNNING_ORDER			= [RUNNING_ORDER]
 	from dbo.[VIEW_CASH_PAYMENTS_CONDITIONS] with(nolock)
 	where [ROW_ID] = @TA_RowID
+	;
+
+	declare @IsNotFirstCashPaymentWithAccumulatedTax bit = 0
+	;
+	if IsNull(@TYPE_ACTION,'') = 'CashPayment' and IsNull(@RUNNING_ORDER,-1) > 1
+		select @IsNotFirstCashPaymentWithAccumulatedTax = 1;
 
 	if IsNull(@RAZPREG_TA_RowID,0) <= 0
 	begin  
@@ -2407,25 +2418,21 @@ begin
 	begin try
 
 		-- Актуализация данните за кореспондиращата сметка
-		if IsNull(@DEALS_CORR_TA_RowID,0) > 0
+		if IsNull(@DEALS_CORR_TA_RowID,0) > 0 and @IsNotFirstCashPaymentWithAccumulatedTax = 0
 		begin
-
-			UPDATE [D]
-			SET		[DEAL_NUM]				= 0		-- DEALS_CORR_TA	DEAL_NUM	Номер на кореспондираща сделка
-/*				,	[CURRENCY]				= '' 	-- DEALS_CORR_TA	CURRENCY	*/
+			update [D]
+			set		[DEAL_NUM]				= 0		-- DEALS_CORR_TA	DEAL_NUM	Номер на кореспондираща сделка
 				,	[UI_CORR_ACCOUNT]		= ''	-- DEALS_CORR_TA	UI_CORR_ACCOUNT	Партида на кореспондиращата сделка
 				,	[TAX_UNCOLLECTED_SUM]	= 0		-- DEALS_CORR_TA	TAX_UNCOLLECTED_SUM	 /* @TODO: Трябва да я изчислим !!!... */ 
 			from dbo.[DEALS_CORR_TA] [D]
 			where [D].[ROW_ID] = @DEALS_CORR_TA_RowID
-			;
 		end
 
 		-- Актуализация данните на пълномощника
-		if IsNull(@PROXY_CUSTOMERS_RowID,0) > 0
+		if IsNull(@PROXY_CUSTOMERS_RowID,0) > 0 and @IsNotFirstCashPaymentWithAccumulatedTax = 0
 		begin
-
-			UPDATE [D]
-			SET		[UI_CUSTOMER_ID]		= '0'		-- DT015_CUSTOMERS_ACTIONS_TA	UI_CUSTOMER_ID
+			update [D]
+			set		[UI_CUSTOMER_ID]		= '0'		-- DT015_CUSTOMERS_ACTIONS_TA	UI_CUSTOMER_ID
 				,	[UI_EGFN]				= '0'		-- DT015_CUSTOMERS_ACTIONS_TA	UI_EGFN
 				,	[NAME]					= ''		-- DT015_CUSTOMERS_ACTIONS_TA	NAME
 				,	[COMPANY_EFN]			= '0'		-- DT015_CUSTOMERS_ACTIONS_TA	COMPANY_EFN
@@ -2438,37 +2445,40 @@ begin
 				,	[PROXY_COUNT]			= 0			-- DT015_CUSTOMERS_ACTIONS_TA	PROXY_COUNT	Брой активни пълномощници
 			from dbo.[DT015_CUSTOMERS_ACTIONS_TA] [D]
 			where [D].[ROW_ID] = @PROXY_CUSTOMERS_RowID
-			;
 		end
 
 		-- Актуализация данните на сделката
-		UPDATE [D]
-		SET		[UI_DEAL_NUM]			= 0		-- RAZPREG_TA	UI_DEAL_NUM	
-			,	[DB_ACCOUNT]			= ''	-- RAZPREG_TA	DB_ACCOUNT	
-			,	[UI_ACCOUNT]			= ''	/* TODO: new function + date in TA TABLE */ -- RAZPREG_TA	UI_ACCOUNT 
-			,	[ZAPOR_SUM]				= ''	-- RAZPREG_TA	ZAPOR_SUM	Сума на запор по сметката (за целите на плащания по запор)
-			,	[IBAN]					= ''	-- RAZPREG_TA	IBAN	
-			,	[TAX_UNCOLLECTED_SUM]	= ''	-- RAZPREG_TA	TAX_UNCOLLECTED_SUM	Сума на неплатените такси. Ако няма да се записва 0.00
-		FROM dbo.[RAZPREG_TA] [D]
-		WHERE [D].[ROW_ID] = @RAZPREG_TA_RowID
-		;
+		if @IsNotFirstCashPaymentWithAccumulatedTax = 0
+		begin
+			update [D]
+			set		[UI_DEAL_NUM]			= 0		-- RAZPREG_TA	UI_DEAL_NUM	
+				,	[DB_ACCOUNT]			= ''	-- RAZPREG_TA	DB_ACCOUNT	
+				,	[UI_ACCOUNT]			= ''	/* TODO: new function + date in TA TABLE */ -- RAZPREG_TA	UI_ACCOUNT 
+				,	[ZAPOR_SUM]				= ''	-- RAZPREG_TA	ZAPOR_SUM	Сума на запор по сметката (за целите на плащания по запор)
+				,	[IBAN]					= ''	-- RAZPREG_TA	IBAN	
+				,	[TAX_UNCOLLECTED_SUM]	= ''	-- RAZPREG_TA	TAX_UNCOLLECTED_SUM	Сума на неплатените такси. Ако няма да се записва 0.00
+			from dbo.[RAZPREG_TA] [D]
+			where [D].[ROW_ID] = @RAZPREG_TA_RowID
+		end
 
 		-- Актуализация данните на клиента
-		UPDATE [D]
-		SET		[UI_CUSTOMER_ID]		= '0'		-- DT015_CUSTOMERS_ACTIONS_TA	UI_CUSTOMER_ID
-			,	[UI_EGFN]				= '0'		-- DT015_CUSTOMERS_ACTIONS_TA	UI_EGFN
-			,	[NAME]					= ''		-- DT015_CUSTOMERS_ACTIONS_TA	NAME
-			,	[COMPANY_EFN]			= '0'		-- DT015_CUSTOMERS_ACTIONS_TA	COMPANY_EFN
-			,	[UI_CLIENT_CODE]		= '0'		-- DT015_CUSTOMERS_ACTIONS_TA	UI_CLIENT_CODE
-			,	[UI_NOTES_EXIST]		= 0			-- DT015_CUSTOMERS_ACTIONS_TA	UI_NOTES_EXIST
-			,	[IS_ZAPOR]				= 0			-- DT015_CUSTOMERS_ACTIONS_TA	IS_ZAPOR (дали има съдебен запор някоя от сделките на клиента) 	Да се разработи обслужване в тестовете
-			,	[ID_NUMBER]				= '0'		-- DT015_CUSTOMERS_ACTIONS_TA	ID_NUMBER номер на лична карта
-			,	[SERVICE_GROUP_EGFN]	= '0'		-- DT015_CUSTOMERS_ACTIONS_TA	SERVICE_GROUP_EGFN	EGFN, което се попълва в допълнителния диалог за търсене според IS_SERVICE
-			,	[IS_ACTUAL]				= 0			-- DT015_CUSTOMERS_ACTIONS_TA	IS_ACTUAL (1; 0)	Да се разработи обслужване в тестовете на клиенти с неактуални данни при 1
-			,	[PROXY_COUNT]			= 0			-- DT015_CUSTOMERS_ACTIONS_TA	PROXY_COUNT	Брой активни пълномощници
-		from dbo.[DT015_CUSTOMERS_ACTIONS_TA] [D]
-		where [D].[ROW_ID] = @DT015_CUSTOMERS_RowID
-		;
+		if @IsNotFirstCashPaymentWithAccumulatedTax = 0
+		begin		
+			update [D]
+			set		[UI_CUSTOMER_ID]		= '0'		-- DT015_CUSTOMERS_ACTIONS_TA	UI_CUSTOMER_ID
+				,	[UI_EGFN]				= '0'		-- DT015_CUSTOMERS_ACTIONS_TA	UI_EGFN
+				,	[NAME]					= ''		-- DT015_CUSTOMERS_ACTIONS_TA	NAME
+				,	[COMPANY_EFN]			= '0'		-- DT015_CUSTOMERS_ACTIONS_TA	COMPANY_EFN
+				,	[UI_CLIENT_CODE]		= '0'		-- DT015_CUSTOMERS_ACTIONS_TA	UI_CLIENT_CODE
+				,	[UI_NOTES_EXIST]		= 0			-- DT015_CUSTOMERS_ACTIONS_TA	UI_NOTES_EXIST
+				,	[IS_ZAPOR]				= 0			-- DT015_CUSTOMERS_ACTIONS_TA	IS_ZAPOR (дали има съдебен запор някоя от сделките на клиента) 	Да се разработи обслужване в тестовете
+				,	[ID_NUMBER]				= '0'		-- DT015_CUSTOMERS_ACTIONS_TA	ID_NUMBER номер на лична карта
+				,	[SERVICE_GROUP_EGFN]	= '0'		-- DT015_CUSTOMERS_ACTIONS_TA	SERVICE_GROUP_EGFN	EGFN, което се попълва в допълнителния диалог за търсене според IS_SERVICE
+				,	[IS_ACTUAL]				= 0			-- DT015_CUSTOMERS_ACTIONS_TA	IS_ACTUAL (1; 0)	Да се разработи обслужване в тестовете на клиенти с неактуални данни при 1
+				,	[PROXY_COUNT]			= 0			-- DT015_CUSTOMERS_ACTIONS_TA	PROXY_COUNT	Брой активни пълномощници
+			from dbo.[DT015_CUSTOMERS_ACTIONS_TA] [D]
+			where [D].[ROW_ID] = @DT015_CUSTOMERS_RowID
+		end
 
 	end try
 	begin catch
@@ -2485,12 +2495,10 @@ begin
 			 + ', TA Row ID: ' + @TestCaseRowID
 		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Msg, '*** End Execute Proc ***: dbo.dbo.[SP_CASH_PAYMENTS_CLEAR_TA_TABLES]'
 	end
-	;
 
 	return 0;
 end 
 go
-
 
 /********************************************************************************************************/
 /* Процедура за актуализация на Таблица dbo.[DEALS_CORR_TA] */
@@ -3157,6 +3165,7 @@ go
 
 /********************************************************************************************************/
 /* Процедура формираща SQL заявката за търсене на подходяща сделка по ID на тестови случай */
+/* 2022/06/98 - v2.6.3 -> търсена на подходящи сделките за навързаните документи се извършва само за първия тестови случай */
 DROP PROCEDURE IF EXISTS dbo.[SP_CASH_PAYMENTS_UPDATE_TA_TABLES_PREPARE_CONDITIONS]
 GO
 
@@ -3754,7 +3763,7 @@ begin
 	end
 
 	-- Да няма осчетоводено вносни бележки по сделката: @RUNNING_ORDER = 1 and @TYPE_ACTION = ''
-	if @TYPE_ACTION = 'CashPayment' and IsNull(@RUNNING_ORDER,-1) >= 1
+	if @TYPE_ACTION = 'CashPayment' and IsNull(@RUNNING_ORDER,-1) = 1
 	begin
 		select @Sql2 = ' AND [DEAL].[HAS_WNOS_BEL] = ' + (case when @RUNNING_ORDER > 1 then '1' else '0' end)  + @CrLf;
 
@@ -3887,9 +3896,9 @@ begin
 end 
 go
 
-
 /********************************************************************************************************/
 /* Процедура за актуализация на Таблиците по ID на тестови case */
+/* 2022/06/98 - v2.6.3 -> актуализация на TA таблиците за навързаните документи се извършва само за първия тестови случай */
 DROP PROCEDURE IF EXISTS dbo.[SP_CASH_PAYMENTS_UPDATE_TA_TABLES]
 GO
 
@@ -3926,11 +3935,22 @@ begin
 	end
 	
 	declare @DB_TYPE sysname = N'BETA', @DEALS_CORR_TA_RowID int = 0
+		,	@TYPE_ACTION varchar(128) = '',  @RUNNING_ORDER int = 0
 	;
 
 	select	@DB_TYPE = [TA_TYPE], @DEALS_CORR_TA_RowID = [CORS_ROW_ID]
+		,	@TYPE_ACTION = [TYPE_ACTION], @RUNNING_ORDER = IsNull([RUNNING_ORDER],1)
 	from dbo.[VIEW_CASH_PAYMENTS_CONDITIONS] with(nolock) where [ROW_ID] = IsNull(@TestCaseRowID, -1)
 	;
+
+	if @TYPE_ACTION = 'CashPayment' and @RUNNING_ORDER <> 1
+	begin 
+		select  @Msg = N'Update cash payment with [ROW_ID] ' + @RowIdStr+' and  [RUNNING_ORDER] <> 1 not allowed.'
+			,	@Sql = @TestCaseRowID
+		;
+		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql, @Msg;
+		return 0;
+	end
 
 	select @DB_TYPE = [DB_TYPE] from dbo.[TEST_AUTOMATION_TA_TYPE] with(nolock)
 	where  [TA_TYPE] IN ( @DB_TYPE )
@@ -4331,4 +4351,3 @@ begin
 	return 0;
 end 
 go
-

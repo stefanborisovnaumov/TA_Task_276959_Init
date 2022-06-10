@@ -1,6 +1,7 @@
 
 /********************************************************************************************************/
 /* Процедура формираща SQL заявката за търсене на подходяща сделка по ID на тестови случай */
+/* 2022/06/98 - v2.6.3 -> търсена на подходящи сделките за навързаните документи се извършва само за първия тестови случай */
 DROP PROCEDURE IF EXISTS dbo.[SP_CASH_PAYMENTS_UPDATE_TA_TABLES_PREPARE_CONDITIONS]
 GO
 
@@ -598,7 +599,7 @@ begin
 	end
 
 	-- Да няма осчетоводено вносни бележки по сделката: @RUNNING_ORDER = 1 and @TYPE_ACTION = ''
-	if @TYPE_ACTION = 'CashPayment' and IsNull(@RUNNING_ORDER,-1) >= 1
+	if @TYPE_ACTION = 'CashPayment' and IsNull(@RUNNING_ORDER,-1) = 1
 	begin
 		select @Sql2 = ' AND [DEAL].[HAS_WNOS_BEL] = ' + (case when @RUNNING_ORDER > 1 then '1' else '0' end)  + @CrLf;
 
@@ -730,4 +731,3 @@ begin
 	return 0;
 end 
 go
-

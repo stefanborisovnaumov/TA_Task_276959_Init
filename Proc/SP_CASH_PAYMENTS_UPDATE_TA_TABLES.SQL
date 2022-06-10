@@ -1,6 +1,7 @@
 
 /********************************************************************************************************/
 /* Процедура за актуализация на Таблиците по ID на тестови case */
+/* 2022/06/98 - v2.6.3 -> актуализация на TA таблиците за навързаните документи се извършва само за първия тестови случай */
 DROP PROCEDURE IF EXISTS dbo.[SP_CASH_PAYMENTS_UPDATE_TA_TABLES]
 GO
 
@@ -37,11 +38,22 @@ begin
 	end
 	
 	declare @DB_TYPE sysname = N'BETA', @DEALS_CORR_TA_RowID int = 0
+		,	@TYPE_ACTION varchar(128) = '',  @RUNNING_ORDER int = 0
 	;
 
 	select	@DB_TYPE = [TA_TYPE], @DEALS_CORR_TA_RowID = [CORS_ROW_ID]
+		,	@TYPE_ACTION = [TYPE_ACTION], @RUNNING_ORDER = IsNull([RUNNING_ORDER],1)
 	from dbo.[VIEW_CASH_PAYMENTS_CONDITIONS] with(nolock) where [ROW_ID] = IsNull(@TestCaseRowID, -1)
 	;
+
+	if @TYPE_ACTION = 'CashPayment' and @RUNNING_ORDER <> 1
+	begin 
+		select  @Msg = N'Update cash payment with [ROW_ID] ' + @RowIdStr+' and  [RUNNING_ORDER] <> 1 not allowed.'
+			,	@Sql = @TestCaseRowID
+		;
+		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql, @Msg;
+		return 0;
+	end
 
 	select @DB_TYPE = [DB_TYPE] from dbo.[TEST_AUTOMATION_TA_TYPE] with(nolock)
 	where  [TA_TYPE] IN ( @DB_TYPE )
