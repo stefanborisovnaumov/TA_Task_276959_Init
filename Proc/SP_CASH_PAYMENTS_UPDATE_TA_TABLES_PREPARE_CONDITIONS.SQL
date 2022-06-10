@@ -164,7 +164,7 @@ begin
 	from dbo.[#TBL_TA_CONDITIONS] [F] with(nolock)
 	;
 
-	select @Sql2 = N'select DISTINCT TOP (50) ''ID_'+@TestCaseRowID+'_'+REPLACE(@TA_TYPE,'''','')+ ''''
+	select @Sql2 = N'select DISTINCT TOP (3) ''ID_'+@TestCaseRowID+'_'+REPLACE(@TA_TYPE,'''','')+ ''''
 		+ N' AS [TEST_ID], [DEAL].[DEAL_TYPE], [DEAL].[DEAL_NUM], [CUST].[CUSTOMER_ID], [PROXY].[CUSTOMER_ID] AS [REPRESENTATIVE_CUSTOMER_ID] ' + @CrLf
 	insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR], [IS_BASE_select] )
 	select	@Sql2,	N'SELECT ...', 1
@@ -349,7 +349,7 @@ begin
 	end
 
 	-- [COLLECT_TAX_FROM_ALL_ACC] : Клиента има ли непратени такси, който могат да се събират от всички сметки на клиента
-	if IsNull(@COLLECT_TAX_FROM_ALL_ACC,-1) not in (0,1)
+	if IsNull(@COLLECT_TAX_FROM_ALL_ACC,-1) in (0,1)
 	begin
 		select @StrIntVal = STR(@COLLECT_TAX_FROM_ALL_ACC,LEN(@COLLECT_TAX_FROM_ALL_ACC),0);
 		select @Sql2 = ' AND [CUST].[HAS_UNCOLLECTED_TAX_CONNECTED_TO_ALL_ACC] = ' + @StrIntVal + @CrLf;

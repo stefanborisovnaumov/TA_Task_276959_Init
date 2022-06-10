@@ -1,7 +1,7 @@
 /***************************************************************************************************************/
 -- Име          : Янко Янков
--- Дата и час   : 09.06.2022
--- Задача       : Task 276959 (v2.6.3)
+-- Дата и час   : 10.06.2022
+-- Задача       : Task 276959 (v2.6.4)
 -- Класификация : Test Automation
 -- Описание     : Автоматизация на тестовете за вснони бележки с използване на наличните данни от Online базата
 -- Параметри    : Няма
@@ -691,6 +691,7 @@ select 	[v].[ROW_ID]
 	,	[c].[UI_CLIENT_CODE]
 	,	[c].[UI_NOTES_EXIST]
 	,	[c].[IS_ZAPOR]
+	,	[c].[ID_TYPE]
 	,	[c].[ID_NUMBER]
 	,	[c].[SERVICE_GROUP_EGFN]
 	,	[c].[IS_ACTUAL]
@@ -1969,16 +1970,17 @@ begin
 	;
 	select top (1)  
 			[CUST].[CUSTOMER_ID]
-		,	[CUST].[IDENTIFIER]				AS [UI_EGFN]
-		,	[CUST].[CUSTOMER_NAME]			AS [CUSTOMER_NAME]
-		,	[CUST].[COMPANY_EFN]			AS [COMPANY_EFN]	
-		,	[MCLC].[CL_CODE]				AS [MAIN_CLIENT_CODE]
-		,	[NOTE].[HAS_POPUP_NOTE]			AS [UI_NOTES_EXIST]
-		,	[XF].[IS_ZAPOR]					AS [IS_ZAPOR]			/* [IS_ZAPOR] : (дали има съдебен запор някоя от сделките на клиента) */
-		,	[DOC].[ID_NUMBER]				AS [ID_NUMBER]			/* [ID_NUMBER] Номера на: лична карта; паспорт; шофьорска книжка ... */
-		,	[XF].[SERVICE_GROUP_EGFN]		AS [SERVICE_GROUP_EGFN]	/* TODO: [SERVICE_GROUP_EGFN]: */
-		,	[XF].[IS_ACTUAL]				AS [IS_ACTUAL]			/* TODO: [IS_ACTUAL]: ?!?*/
-		,	[PR].[PROXY_COUNT]				AS [PROXY_COUNT]
+		,	[CUST].[IDENTIFIER]					AS [UI_EGFN]
+		,	[CUST].[CUSTOMER_NAME]				AS [CUSTOMER_NAME]
+		,	[CUST].[COMPANY_EFN]				AS [COMPANY_EFN]	
+		,	[MCLC].[CL_CODE]					AS [MAIN_CLIENT_CODE]
+		,	[NOTE].[HAS_POPUP_NOTE]				AS [UI_NOTES_EXIST]
+		,	[XF].[IS_ZAPOR]						AS [IS_ZAPOR]			/* [IS_ZAPOR] : (дали има съдебен запор някоя от сделките на клиента) */
+		,	IsNull([DOC].[DOCUMENT_TYPE],-1)	AS [ID_DOCUMENT_TYPE]	/* Тип на личния документ - код от NM405 */
+		,	IsNull([DOC].[ID_NUMBER], '''')		AS [ID_NUMBER]			/* [ID_NUMBER] Номера на: лична карта; паспорт; шофьорска книжка ... */
+		,	[XF].[SERVICE_GROUP_EGFN]			AS [SERVICE_GROUP_EGFN]	/* TODO: [SERVICE_GROUP_EGFN]: */
+		,	[XF].[IS_ACTUAL]					AS [IS_ACTUAL]			/* TODO: [IS_ACTUAL]: ?!?*/
+		,	[PR].[PROXY_COUNT]					AS [PROXY_COUNT]
 	from '+@SqlFullDBName+'.dbo.[DT015_CUSTOMERS] [CUST] WITH(NOLOCK)
 	inner join '+@SqlFullDBName+'.dbo.[DT015_MAINCODE_CUSTID] [MCLC] WITH(NOLOCK)
 		ON [MCLC].[CUSTOMER_ID] = [CUST].[CUSTOMER_ID]
@@ -2472,6 +2474,7 @@ begin
 				,	[UI_CLIENT_CODE]		= '0'		-- DT015_CUSTOMERS_ACTIONS_TA	UI_CLIENT_CODE
 				,	[UI_NOTES_EXIST]		= 0			-- DT015_CUSTOMERS_ACTIONS_TA	UI_NOTES_EXIST
 				,	[IS_ZAPOR]				= 0			-- DT015_CUSTOMERS_ACTIONS_TA	IS_ZAPOR (дали има съдебен запор някоя от сделките на клиента) 	Да се разработи обслужване в тестовете
+				,	[ID_TYPE]				= 0
 				,	[ID_NUMBER]				= '0'		-- DT015_CUSTOMERS_ACTIONS_TA	ID_NUMBER номер на лична карта
 				,	[SERVICE_GROUP_EGFN]	= '0'		-- DT015_CUSTOMERS_ACTIONS_TA	SERVICE_GROUP_EGFN	EGFN, което се попълва в допълнителния диалог за търсене според IS_SERVICE
 				,	[IS_ACTUAL]				= 0			-- DT015_CUSTOMERS_ACTIONS_TA	IS_ACTUAL (1; 0)	Да се разработи обслужване в тестовете на клиенти с неактуални данни при 1
@@ -2755,6 +2758,7 @@ begin
 	,	[UI_CLIENT_CODE]		varchar(32)
 	,	[UI_NOTES_EXIST]		int
 	,	[IS_ZAPOR]				int
+	,	[ID_DOCUMENT_TYPE]		int
 	,	[ID_NUMBER]				varchar(50)
 	,	[SERVICE_GROUP_EGFN]	varchar(50)
 	,	[IS_ACTUAL]				int
@@ -2825,6 +2829,7 @@ begin
 			,	[UI_CLIENT_CODE]		= [S].[UI_CLIENT_CODE]			 -- DT015_CUSTOMERS_ACTIONS_TA	UI_CLIENT_CODE
 			,	[UI_NOTES_EXIST]		= IsNull([S].[UI_NOTES_EXIST],0) -- DT015_CUSTOMERS_ACTIONS_TA	UI_NOTES_EXIST
 			,	[IS_ZAPOR]				= @IS_ZAPOR						 -- DT015_CUSTOMERS_ACTIONS_TA	IS_ZAPOR (дали има съдебен запор някоя от сделките на клиента) 	Да се разработи обслужване в тестовете
+			,	[ID_TYPE]				= [S].[ID_DOCUMENT_TYPE]		-- DT015_CUSTOMERS_ACTIONS_TA  ID_TYPE типа на документа за самоличност 
 			,	[ID_NUMBER]				= IsNull([S].[ID_NUMBER], '')	 -- DT015_CUSTOMERS_ACTIONS_TA	ID_NUMBER номер на лична карта
 			,	[SERVICE_GROUP_EGFN]	= @SERVICE_GROUP_EGFN			 -- DT015_CUSTOMERS_ACTIONS_TA	SERVICE_GROUP_EGFN	EGFN, което се попълва в допълнителния диалог за търсене според IS_SERVICE
 			,	[IS_ACTUAL]				= [S].[IS_ACTUAL]				 -- DT015_CUSTOMERS_ACTIONS_TA	IS_ACTUAL (1; 0)	Да се разработи обслужване в тестовете на клиенти с неактуални данни при 1
@@ -3328,7 +3333,7 @@ begin
 	from dbo.[#TBL_TA_CONDITIONS] [F] with(nolock)
 	;
 
-	select @Sql2 = N'select DISTINCT TOP (50) ''ID_'+@TestCaseRowID+'_'+REPLACE(@TA_TYPE,'''','')+ ''''
+	select @Sql2 = N'select DISTINCT TOP (5) ''ID_'+@TestCaseRowID+'_'+REPLACE(@TA_TYPE,'''','')+ ''''
 		+ N' AS [TEST_ID], [DEAL].[DEAL_TYPE], [DEAL].[DEAL_NUM], [CUST].[CUSTOMER_ID], [PROXY].[CUSTOMER_ID] AS [REPRESENTATIVE_CUSTOMER_ID] ' + @CrLf
 	insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR], [IS_BASE_select] )
 	select	@Sql2,	N'SELECT ...', 1
@@ -3513,7 +3518,7 @@ begin
 	end
 
 	-- [COLLECT_TAX_FROM_ALL_ACC] : Клиента има ли непратени такси, който могат да се събират от всички сметки на клиента
-	if IsNull(@COLLECT_TAX_FROM_ALL_ACC,-1) not in (0,1)
+	if IsNull(@COLLECT_TAX_FROM_ALL_ACC,-1) in (0,1)
 	begin
 		select @StrIntVal = STR(@COLLECT_TAX_FROM_ALL_ACC,LEN(@COLLECT_TAX_FROM_ALL_ACC),0);
 		select @Sql2 = ' AND [CUST].[HAS_UNCOLLECTED_TAX_CONNECTED_TO_ALL_ACC] = ' + @StrIntVal + @CrLf;

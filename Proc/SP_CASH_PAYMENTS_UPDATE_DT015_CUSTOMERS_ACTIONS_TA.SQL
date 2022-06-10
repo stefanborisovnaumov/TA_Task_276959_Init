@@ -58,6 +58,7 @@ begin
 	,	[UI_CLIENT_CODE]		varchar(32)
 	,	[UI_NOTES_EXIST]		int
 	,	[IS_ZAPOR]				int
+	,	[ID_DOCUMENT_TYPE]		int
 	,	[ID_NUMBER]				varchar(50)
 	,	[SERVICE_GROUP_EGFN]	varchar(50)
 	,	[IS_ACTUAL]				int
@@ -128,6 +129,7 @@ begin
 			,	[UI_CLIENT_CODE]		= [S].[UI_CLIENT_CODE]			 -- DT015_CUSTOMERS_ACTIONS_TA	UI_CLIENT_CODE
 			,	[UI_NOTES_EXIST]		= IsNull([S].[UI_NOTES_EXIST],0) -- DT015_CUSTOMERS_ACTIONS_TA	UI_NOTES_EXIST
 			,	[IS_ZAPOR]				= @IS_ZAPOR						 -- DT015_CUSTOMERS_ACTIONS_TA	IS_ZAPOR (дали има съдебен запор някоя от сделките на клиента) 	Да се разработи обслужване в тестовете
+			,	[ID_TYPE]				= [S].[ID_DOCUMENT_TYPE]		-- DT015_CUSTOMERS_ACTIONS_TA  ID_TYPE типа на документа за самоличност 
 			,	[ID_NUMBER]				= IsNull([S].[ID_NUMBER], '')	 -- DT015_CUSTOMERS_ACTIONS_TA	ID_NUMBER номер на лична карта
 			,	[SERVICE_GROUP_EGFN]	= @SERVICE_GROUP_EGFN			 -- DT015_CUSTOMERS_ACTIONS_TA	SERVICE_GROUP_EGFN	EGFN, което се попълва в допълнителния диалог за търсене според IS_SERVICE
 			,	[IS_ACTUAL]				= [S].[IS_ACTUAL]				 -- DT015_CUSTOMERS_ACTIONS_TA	IS_ACTUAL (1; 0)	Да се разработи обслужване в тестовете на клиенти с неактуални данни при 1

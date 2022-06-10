@@ -49,16 +49,17 @@ begin
 	;
 	select top (1)  
 			[CUST].[CUSTOMER_ID]
-		,	[CUST].[IDENTIFIER]				AS [UI_EGFN]
-		,	[CUST].[CUSTOMER_NAME]			AS [CUSTOMER_NAME]
-		,	[CUST].[COMPANY_EFN]			AS [COMPANY_EFN]	
-		,	[MCLC].[CL_CODE]				AS [MAIN_CLIENT_CODE]
-		,	[NOTE].[HAS_POPUP_NOTE]			AS [UI_NOTES_EXIST]
-		,	[XF].[IS_ZAPOR]					AS [IS_ZAPOR]			/* [IS_ZAPOR] : (дали има съдебен запор някоя от сделките на клиента) */
-		,	[DOC].[ID_NUMBER]				AS [ID_NUMBER]			/* [ID_NUMBER] Номера на: лична карта; паспорт; шофьорска книжка ... */
-		,	[XF].[SERVICE_GROUP_EGFN]		AS [SERVICE_GROUP_EGFN]	/* TODO: [SERVICE_GROUP_EGFN]: */
-		,	[XF].[IS_ACTUAL]				AS [IS_ACTUAL]			/* TODO: [IS_ACTUAL]: ?!?*/
-		,	[PR].[PROXY_COUNT]				AS [PROXY_COUNT]
+		,	[CUST].[IDENTIFIER]					AS [UI_EGFN]
+		,	[CUST].[CUSTOMER_NAME]				AS [CUSTOMER_NAME]
+		,	[CUST].[COMPANY_EFN]				AS [COMPANY_EFN]	
+		,	[MCLC].[CL_CODE]					AS [MAIN_CLIENT_CODE]
+		,	[NOTE].[HAS_POPUP_NOTE]				AS [UI_NOTES_EXIST]
+		,	[XF].[IS_ZAPOR]						AS [IS_ZAPOR]			/* [IS_ZAPOR] : (дали има съдебен запор някоя от сделките на клиента) */
+		,	IsNull([DOC].[DOCUMENT_TYPE],-1)	AS [ID_DOCUMENT_TYPE]	/* Тип на личния документ - код от NM405 */
+		,	IsNull([DOC].[ID_NUMBER], '''')		AS [ID_NUMBER]			/* [ID_NUMBER] Номера на: лична карта; паспорт; шофьорска книжка ... */
+		,	[XF].[SERVICE_GROUP_EGFN]			AS [SERVICE_GROUP_EGFN]	/* TODO: [SERVICE_GROUP_EGFN]: */
+		,	[XF].[IS_ACTUAL]					AS [IS_ACTUAL]			/* TODO: [IS_ACTUAL]: ?!?*/
+		,	[PR].[PROXY_COUNT]					AS [PROXY_COUNT]
 	from '+@SqlFullDBName+'.dbo.[DT015_CUSTOMERS] [CUST] WITH(NOLOCK)
 	inner join '+@SqlFullDBName+'.dbo.[DT015_MAINCODE_CUSTID] [MCLC] WITH(NOLOCK)
 		ON [MCLC].[CUSTOMER_ID] = [CUST].[CUSTOMER_ID]
