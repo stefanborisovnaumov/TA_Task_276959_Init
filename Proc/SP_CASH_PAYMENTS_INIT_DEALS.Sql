@@ -12,7 +12,7 @@ GO
 CREATE PROCEDURE dbo.[SP_CASH_PAYMENTS_INIT_DEALS]
 (
 	@DB_TYPE				sysname = N'BETA'
-,	@TestAutomationType		sysname = N'%CashPaymentCA%BETA%'
+,	@TestAutomationType		sysname = N'%BETA%'
 ,	@LogTraceInfo			int = 0
 )
 as 
@@ -103,9 +103,10 @@ begin
 	inner join dbo.[DT015_CUSTOMERS_ACTIONS_TA] [CUST] with(nolock)
 		on [DREG].REF_ID = [CUST].ROW_ID
 	left join dbo.[PROXY_SPEC_TA] as [PSPEC] with(nolock)
-		on [CUST].ROW_ID =[PSPEC].REF_ID
+		on [CUST].ROW_ID = [PSPEC].REF_ID
 	where [PREV].[TA_TYPE] LIKE @TestAutomationType
-	order by [PREV].ROW_ID
+		and [PREV].[DB_TYPE] = 'BETA'
+	order by [PREV].[ROW_ID]
 	;
 
 	select @Rows = @@ROWCOUNT, @Err = @@ERROR;
@@ -1090,6 +1091,19 @@ begin
 	) [S]
 		on  [S].[DEAL_NUM] = [D].[DEAL_NUM]
 		and [D].[DEAL_TYPE] = 1
+	;
+
+	truncate table dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_COUNT_DEAL_BY_CURRENCY]
+	;
+	insert into dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_COUNT_DEAL_BY_CURRENCY]
+	( [CUSTOMER_ID], [DEAL_TYPE], [CURRENCY_CODE], [DEAL_COUNT] )
+	select  [s].[CUSTOMER_ID]			AS [CUSTOMER_ID]
+		,	1 							AS [DEAL_TYPE]	
+		,	[s].[DEAL_CURRENCY_CODE]	AS [CURRENCY_CODE] 
+		,	COUNT(*) 					AS [DEAL_COUNT]
+	from dbo.[AGR_CASH_PAYMENTS_DEALS] [s] with(nolock)
+	group by [s].[CUSTOMER_ID], [s].[DEAL_CURRENCY_CODE]
+	/* having count(*) > 1 */
 	;
 
 	if @LogTraceInfo = 1

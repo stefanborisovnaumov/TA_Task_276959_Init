@@ -84,6 +84,12 @@ begin
 		,	@DOC_TAX_SUM				float = 0.0
 	;
 
+	/* Conditions for DirPrev from [PREV_COMMON_TA] & [RAZPREG_TA]: */
+	declare @UI_INOUT_TRANSFER			varchar(256) = null
+		,	@BETWEEN_OWN_ACCOUNTS		int = -1
+		,	@CCY_CODE_DEAL_BEN			int = -1
+	;
+
 	drop table if EXISTS dbo.[#TBL_SQL_CONDITIONS]
 	;
 	create table dbo.[#TBL_SQL_CONDITIONS]
@@ -161,24 +167,30 @@ begin
 				/* Conditions [PREV_COMMON_TA]: */
 		,	@RUNNING_ORDER				= [RUNNING_ORDER]
 		,	@TYPE_ACTION				= [TYPE_ACTION]
+				/* Conditions for DirPrev from [PREV_COMMON_TA] & [RAZPREG_TA]: */
+		,	@UI_INOUT_TRANSFER			= [UI_INOUT_TRANSFER]
+		,	@BETWEEN_OWN_ACCOUNTS		= [BETWEEN_OWN_ACCOUNTS]
+		,	@CCY_CODE_DEAL_BEN			= [CCY_CODE_DEAL_BEN]
 	from dbo.[#TBL_TA_CONDITIONS] [F] with(nolock)
 	;
 
+	/*********************************************************************/
+	/* Prepate Base SELECT statement: */
 	select @Sql2 = N'select DISTINCT TOP (3) ''ID_'+@TestCaseRowID+'_'+REPLACE(@TA_TYPE,'''','')+ ''''
-		+ N' AS [TEST_ID], [DEAL].[DEAL_TYPE], [DEAL].[DEAL_NUM], [CUST].[CUSTOMER_ID], [PROXY].[CUSTOMER_ID] AS [REPRESENTATIVE_CUSTOMER_ID] ' + @CrLf
+		+ N' AS [TEST_ID]
+		, [DEAL].[DEAL_TYPE], [DEAL].[DEAL_NUM]
+		, [CUST].[CUSTOMER_ID], [PROXY].[CUSTOMER_ID] AS [REPRESENTATIVE_CUSTOMER_ID] '
+		+ case when IsNull(@TYPE_ACTION,'') = 'CT' and IsNull(@UI_INOUT_TRANSFER,'-1') = '3' and IsNull(@BETWEEN_OWN_ACCOUNTS,-1) in (0,1)
+			then ' [DEAL_BEN].[DEAL_TYPE_BEN], [DEAL_BEN].[DEAL_NUM_BEN] '
+			else ', NULL AS [DEAL_TYPE_BEN],  NULL AS [DEAL_NUM_BEN]' end + @CrLf
 	insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR], [IS_BASE_select] )
 	select	@Sql2,	N'SELECT ...', 1
 	;
 	select @Sql += @Sql2
 	;
 
-	--select @Sql2 = N'select COUNT(*) AS [CNT] '+ @CrLf
-	--insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR], [IS_select_COUNT] )
-	--select	@Sql2,	'select COUNT(*) ...', 1
-	--;
-	--select @Sql += @Sql2
-	--;
-
+	/*********************************************************************/
+	/* prepare tables joint statement:  */
 	-- @SECTOR and @CCY_CODE_DEAL
 	select @Sql2 = N'
 	from dbo.[AGR_CASH_PAYMENTS_DEALS] [DEAL] with(nolock)
@@ -231,6 +243,51 @@ begin
 		select @Sql += @Sql2;
 	end
 
+		-- Add additional joint for document "Credit Transfer":
+	if IsNull(@TYPE_ACTION,'') = 'CT' and IsNull(@UI_INOUT_TRANSFER,'-1') = '3' and IsNull(@BETWEEN_OWN_ACCOUNTS,-1) in (0,1)
+	begin
+
+		if @BETWEEN_OWN_ACCOUNTS = 1
+		begin
+			select @Sql2 = N'
+			inner join dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_COUNT_DEAL_BY_CURRENCY] [CD_CNT] with(nolock)
+				ON	[CD_CNT].[CUSTOMER_ID]	 = [DEAL].[CUSTOMER_ID]
+				AND [CD_CNT].[CURRENCY_CODE] = '+str(@CCY_CODE_DEAL_BEN,len(@CCY_CODE_DEAL_BEN),0)+' 
+				AND	[CD_CNT].[DEAL_TYPE]	 = 1
+				AND	[CD_CNT].[DEAL_COUNT]	 > 1
+			cross apply (
+				select top(1)
+						[D].[DEAL_TYPE]	AS	[DEAL_TYPE_BEN] 
+					,	[D].[DEAL_NUM] 	AS	[DEAL_NUM_BEN] 
+				from dbo.[AGR_CASH_PAYMENTS_DEALS] [D] with(nolock)
+				where	[D].[CUSTOMER_ID] = [DEAL].[CUSTOMER_ID]
+					and [D].[DEAL_CURRENCY_CODE] = '+str(@CCY_CODE_DEAL_BEN,len(@CCY_CODE_DEAL_BEN),0)+'
+					and	[D].[DEAL_NUM] <> [DEAL].[DEAL_NUM]
+			) [DEAL_BEN]
+			';
+		end
+		else 
+		begin
+			select @Sql2 = N'
+			cross apply (
+				select top(1)
+						[D].[DEAL_TYPE]	AS	[DEAL_TYPE_BEN] 
+					,	[D].[DEAL_NUM] 	AS	[DEAL_NUM_BEN] 
+				from dbo.[AGR_CASH_PAYMENTS_DEALS] [D] with(nolock)
+				where	[D].[CUSTOMER_ID] <> [DEAL].[CUSTOMER_ID]
+					and [D].[DEAL_CURRENCY_CODE] = '+str(@CCY_CODE_DEAL_BEN,len(@CCY_CODE_DEAL_BEN),0)+'
+			) [DEAL_BEN]
+			';
+		end
+
+		-- Base join clause: 
+		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
+		select	(@Sql2 + @CrLf), N' Add additiona join for document Credit Transfer; @BETWEEN_OWN_ACCOUNTS :'+str(@BETWEEN_OWN_ACCOUNTS,len(@BETWEEN_OWN_ACCOUNTS),0)
+		select @Sql += @Sql2;
+	end
+
+	/*********************************************************************/
+	/* Prepare WHERE statement: */
 	-- [DT015_CUSTOMERS_ACTIONS_TA].[DB_CLIENT_TYPE] => @DB_CLIENT_TYPE_DT300:
 	select @Sql2 = N'
 	where [CUST].[CLIENT_TYPE_DT300_CODE] = '+str(@DB_CLIENT_TYPE_DT300,len(@DB_CLIENT_TYPE_DT300),0);
@@ -682,6 +739,8 @@ begin
 		select @Sql += @Sql2
 	end 
 
+	/**********************************************************************/
+	/* Execute Sql statement: */
 	if len(@Sql) > 10
 	begin 
 		select @Sql as [SQL_QUERY]

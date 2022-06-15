@@ -34,7 +34,7 @@ select 	[v].[ROW_ID]
 	,	[R].[IBAN]
 	,	[R].[TAX_UNCOLLECTED_SUM]
 
-	/* Данни за кореспонденцията */
+	/* Данни за обслужващата пардита за такси */
 	,	[v].[CORS_ROW_ID]
 	,	[D].[DEAL_NUM]
 	,	[D].[CURRENCY]
@@ -57,10 +57,20 @@ select 	[v].[ROW_ID]
 	,	[p].[PROXY_COUNT]			as [PROXY_COUNT_PROXY]
 	,	[p].[IS_PROXY]				as [PROXY_IS_PROXY]
 
+	/* Данни на Сделката на бенефицента - за някой от тестовите случай за кредитните преводи */
+	,	[v].[DEAL_BEN_ROW_ID]
+	,	[DBEN].[UI_DEAL_NUM]			AS [UI_DEAL_NUM_BEN]
+	,	[DBEN].[DB_ACCOUNT]				AS [DB_ACCOUNT_BEN]
+	,	[DBEN].[UI_ACCOUNT]				AS [UI_ACCOUNT_BEN]
+	,	[DBEN].[ZAPOR_SUM]				AS [ZAPOR_SUM_BEN]
+	,	[DBEN].[IBAN]					AS [IBAN_BEN]
+	,	[DBEN].[TAX_UNCOLLECTED_SUM]	AS [TAX_UNCOLLECTED_SUM_BEN]		
+
 from dbo.[VIEW_CASH_PAYMENTS_CONDITIONS] [v]
 
 inner join dbo.[DT015_CUSTOMERS_ACTIONS_TA] [c]
 	on [c].[ROW_ID] = [v].[CUST_ROW_ID]
+
 inner join dbo.[RAZPREG_TA] [R]
 	on [R].[ROW_ID] = [v].[DEAL_ROW_ID]
 
@@ -72,4 +82,7 @@ left outer join dbo.[PROXY_SPEC_TA] [S]
 
 left outer join  dbo.[DT015_CUSTOMERS_ACTIONS_TA] [p]
 	on [p].[ROW_ID] = [S].[PROXY_CLIENT_ID]
+
+left outer join dbo.[RAZPREG_TA] [DBEN]
+	on [DBEN].[ROW_ID] = [v].[DEAL_BEN_ROW_ID]	
 go

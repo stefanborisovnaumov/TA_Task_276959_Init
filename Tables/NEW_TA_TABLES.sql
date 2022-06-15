@@ -19,7 +19,7 @@ create unique index [IX_TEST_AUTOMATION_TA_TYPE]
 go
 
 DECLARE @DB_TYPE varchar(64)		= N'BETA'
-	,	@TA_Type_Lile varchar(64)	= N'%CashPay%BETA%'
+	,	@TA_Type_Lile varchar(64)	= N'%BETA%'
 ;
 insert into dbo.[TEST_AUTOMATION_TA_TYPE]
 ( [TA_TYPE], [DB_TYPE] )
@@ -81,5 +81,20 @@ go
 create table dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_UNCOLLECTED_TAX_CONNECTED_TO_ALL_ACCOUNTS] 
 (
 	 [CUSTOMER_ID] int
+)
+go
+
+
+/*****************************************************************************/
+-- Create table dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_COUNT_DEAL_BY_CURRENCY]
+drop table if exists dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_COUNT_DEAL_BY_CURRENCY]
+go
+
+create table dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_COUNT_DEAL_BY_CURRENCY]
+(
+	[CUSTOMER_ID]	int
+,	[DEAL_TYPE] 	smallint
+,	[CURRENCY_CODE]	smallint
+,	[DEAL_COUNT]	int
 )
 go

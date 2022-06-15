@@ -129,7 +129,7 @@ begin
 				,	@Sql2 = ' exec dbo.[SP_LOAD_ONLINE_TAX_UNCOLECTED_BY_ACC] @OnlineSqlServerName = '+@OnlineSqlServerName+' '
 									+ ', @OnlineSqlDataBaseName = '+@OnlineSqlDataBaseName+' '
 									+ ', @Account = '+@Account
-									+ ', @@AccCurrency = '+str(@AccCurrency,len(@AccCurrency),0)
+									+ ', @AccCurrency = '+str(@AccCurrency,len(@AccCurrency),0)
 				;
 
 				exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql2, @Msg

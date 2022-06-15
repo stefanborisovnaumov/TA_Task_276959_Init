@@ -74,6 +74,7 @@ AS
 		,	[CORS].[ROW_ID]									AS [CORS_ROW_ID]		
 		,	[PSPEC].[ROW_ID]								AS [PSPEC_ROW_ID]
 		,	[PROXY].[ROW_ID]								AS [PROXY_ROW_ID]
+		,	[DBEN].[ROW_ID]									AS [DEAL_BEN_ROW_ID]
 
 		/* ”слови€ за титул€ра dbo.[DT015_CUSTOMERS_ACTIONS_TA] */
 		,	[CUST].[SECTOR]									AS [SECTOR]
@@ -145,6 +146,13 @@ AS
 		,	[NM_ID].[DOC_SUM]								AS [DOC_SUM]
 		,	[PREV].[TAX_SUM]								AS [DOC_TAX_SUM]
 
+		/* ”слови€ за кореспондиращата за документ кредитен превод */
+		,	[PREV].[UI_INOUT_TRANSFER]
+		,	[PREV].[BETWEEN_OWN_ACCOUNTS]
+		/* ¬ида на валутата на кореспондирашата партида от dbo.[RAZPREG_TA] */
+		,	[DBEN].UI_CURRENCY_CODE							AS [UI_CURRENCY_CODE_BEN]
+		,	[CCY_DEAL_BEN].[CCY_CODE_DEAL]					AS [CCY_CODE_DEAL_BEN]
+
 	FROM dbo.[PREV_COMMON_TA] [PREV] WITH(NOLOCK)
 	INNER JOIN dbo.[RAZPREG_TA] [DREG] WITH(NOLOCK)
 		on [PREV].[REF_ID] = [DREG].[ROW_ID]
@@ -156,6 +164,8 @@ AS
 		on [CUST].[ROW_ID] = [PSPEC].[REF_ID]
 	LEFT JOIN dbo.[DT015_CUSTOMERS_ACTIONS_TA] [PROXY] WITH(NOLOCK)
 		on [PROXY].[ROW_ID] = [PSPEC].[PROXY_CLIENT_ID]
+	LEFT JOIN dbo.[RAZPREG_TA] [DBEN] WITH(NOLOCK)
+		on [PREV].[REF_ID_BEN] = [DBEN].[ROW_ID]	
 	CROSS APPLY (
 		SELECT	CASE WHEN IsNumeric([DREG].[UI_NM342_CODE]) = 1
 					then cast([DREG].[UI_NM342_CODE] as int )
@@ -204,7 +214,13 @@ AS
 		FROM [CTE_CCY] [NV] WITH(NOLOCK)
 		WHERE [NV].[NAME] = [CORS].[CURRENCY]
 	) [CCY_CORS]
-	WHERE [PREV].[TA_TYPE] LIKE N'%CashPayment%BETA%'
+	OUTER APPLY (
+		SELECT TOP (1) [NV].[ID] AS [CCY_CODE_DEAL]
+		FROM [CTE_CCY] [NV] WITH(NOLOCK)
+		WHERE [NV].[NAME] = [DBEN].[UI_CURRENCY_CODE]
+	) [CCY_DEAL_BEN]	
+	WHERE [PREV].[DB_TYPE] = 'BETA'
+		AND [PREV].[TA_TYPE] LIKE N'%BETA%'
 		AND [PREV].[ROW_ID] = IsNull( NULL,  [PREV].[ROW_ID] )
 	;
 GO

@@ -132,6 +132,8 @@ begin
 	,	[DEAL_NUM]		INT 	
 	,	[CUSTOMER_ID]	INT
 	,	[REPRESENTATIVE_CUSTOMER_ID] INT
+	,	[DEAL_TYPE_BEN]	SMALLINT
+	,	[DEAL_NUM_BEN]	INT
 	)
 	;
 
@@ -146,22 +148,19 @@ begin
 
 	if @LogResultTable = 1 select * from dbo.[#TBL_RESULT] with(nolock);
 
-	--EXEC @Ret = dbo.[SP_CASH_PAYMENTS_FIND_SUITABLE_DEAL] @RowIdStr, @CurrAccDate, @Sql
-	--begin 
-	--	select  @Msg = N'Error Execute procedure dbo.[SP_CASH_PAYMENTS_FIND_SUITABLE_DEAL], Online Accoun Date: ' +@AccountDate
-	--		,	@Sql = N'exec dbo.[SP_CASH_PAYMENTS_FIND_SUITABLE_DEAL] '+@RowIdStr+', '+@AccountDate+' '
-	--	exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql, @Msg
-	--end
-
 	select @Rows = (select count(*) from dbo.[#TBL_RESULT] with(nolock))
 
-	declare @DealNum int = 0, @CustomerID int = 0, @ProxyID int = 0, @WithUpdate int = 1
+	declare @DealType int = 0, @DealNum int = 0, @CustomerID int = 0, @ProxyID int = 0, @WithUpdate int = 1
+		,	@DealTypBen int = -1, @DealNumBen int = -1
 	;
 
 	select	Top(1)
 			@DealNum	= [DEAL_NUM]
+		,	@DealType	= [DEAL_TYPE]
 		,	@CustomerID	= [CUSTOMER_ID]
 		,	@ProxyID	= [REPRESENTATIVE_CUSTOMER_ID]
+		,	@DealNumBen	= [DEAL_NUM_BEN]
+		,	@DealTypBen = [DEAL_TYPE_BEN]
 	from dbo.[#TBL_RESULT] with(nolock);
 
 	if @Rows <= 0 or IsNull(@DealNum,0) <= 0 or IsNull(@CustomerID,0) <= 0
@@ -198,16 +197,33 @@ begin
 	/* 5.2. Updare table  dbo.[RAZPREG_TA] */
 	begin try
 			exec dbo.[SP_CASH_PAYMENTS_UPDATE_RAZREG_TA] @OnlineSqlServerName, @OnlineSqlDataBaseName
-			, @RowIdStr, 1, @DealNum, @CustomerID, @ProxyID, @WithUpdate
+			, @RowIdStr, 1, @DealNum, 0, @WithUpdate
 	end try 	
 	begin catch
 
 		select  @Msg = dbo.FN_GET_EXCEPTION_INFO()
-			,	@Sql = ' exec dbo.[SP_CASH_PAYMENTS_UPDATE_RAZREG_TA] @RowIdStr, @CurrAccDate, 1, @DealNum, @CustID, @ProxyID'
+			,	@Sql = ' exec dbo.[SP_CASH_PAYMENTS_UPDATE_RAZREG_TA] @RowIdStr, @CurrAccDate, 1, @DealNum, 0 '
 		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql, @Msg
 
 		return 4;
 	end catch 
+
+	/* Update Ben deal: */
+	if @DealNumBen > 1 and @DealTypBen > 0
+	begin  
+		begin try
+				exec dbo.[SP_CASH_PAYMENTS_UPDATE_RAZREG_TA] @OnlineSqlServerName, @OnlineSqlDataBaseName
+				, @RowIdStr, 1, @DealNumBen, 1, @WithUpdate
+		end try 	
+		begin catch
+
+			select  @Msg = dbo.FN_GET_EXCEPTION_INFO()
+				,	@Sql = ' exec dbo.[SP_CASH_PAYMENTS_UPDATE_RAZREG_TA] @RowIdStr, @CurrAccDate, 1, @DealNumBen, 1 '
+			exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql, @Msg
+
+			return 5;
+		end catch
+	end	
 
 	/******************************************************************************************************/
 	/* 5.3. Updare table dbo.[DT015_CUSTOMERS_ACTIONS_TA] for Customer and Proxy */
@@ -223,7 +239,7 @@ begin
 
 		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql, @Msg
 
-		return 5;
+		return 6;
 	end catch
 
 	/************************************************************************************************************/

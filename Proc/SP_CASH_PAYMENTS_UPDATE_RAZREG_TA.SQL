@@ -6,13 +6,12 @@ GO
 
 CREATE PROCEDURE dbo.[SP_CASH_PAYMENTS_UPDATE_RAZREG_TA]
 (
-	@@OnlineSqlServerName	sysname
+	@OnlineSqlServerName	sysname
 ,	@OnlineSqlDataBaseName	sysname
 ,	@TestCaseRowID			nvarchar(16)
 ,	@DEAL_TYPE				int 
 ,	@DEAL_NUM				int 
-,	@CUSTOMER_ID			int
-,	@PROXY_ID				int
+,	@IS_DEAL_BEN			bit = 0 
 ,	@WithUpdate				int = 0
 )
 AS 
@@ -28,26 +27,26 @@ begin
 	if @LogBegEndProc = 1 exec dbo.SP_SYS_LOG_PROC @@PROCID, @TestCaseRowID, '*** Begin Execute Proc ***: dbo.[SP_CASH_PAYMENTS_UPDATE_RAZREG_TA]'
 	;
 
-	IF LEN(@@OnlineSqlServerName) > 1 AND LEFT(@@OnlineSqlServerName,1) <> N'['
-		SELECT @@OnlineSqlServerName = QUOTENAME(@@OnlineSqlServerName)
+	IF LEN(@OnlineSqlServerName) > 1 AND LEFT(@OnlineSqlServerName,1) <> N'['
+		SELECT @OnlineSqlServerName = QUOTENAME(@OnlineSqlServerName)
 
 	IF LEN(@OnlineSqlDataBaseName) > 1 AND LEFT(@OnlineSqlDataBaseName,1) <> N'['
 		SELECT @OnlineSqlDataBaseName = QUOTENAME(@OnlineSqlDataBaseName)		
 
-	declare @SqlFullDBName sysname = @@OnlineSqlServerName +'.'+@OnlineSqlDataBaseName
+	declare @SqlFullDBName sysname = @OnlineSqlServerName +'.'+@OnlineSqlDataBaseName
 	;
 
 	/************************************************************************************************************/
 	-- Get TA Deal Row ID:
 	declare @TBL_ROW_ID int = 0
 	;
-	select	@TBL_ROW_ID = [DEAL_ROW_ID]
+	select	@TBL_ROW_ID = case when @IS_DEAL_BEN = 1 then [DEAL_BEN_ROW_ID] else [DEAL_ROW_ID] end
 	from dbo.[VIEW_CASH_PAYMENTS_CONDITIONS] with(nolock)
 	where [ROW_ID] = @TA_RowID
 
 	if IsNull(@TBL_ROW_ID,0) <= 0
 	begin  
-		select @Msg = 'Not found deal from TA ROW_ID : ' + @TestCaseRowID;
+		select @Msg = 'Not found deal from TA ROW_ID : ' + @TestCaseRowID+ '; Is ben deal: ' + str(@IS_DEAL_BEN,len(@IS_DEAL_BEN),0);
 		exec dbo.SP_SYS_LOG_PROC @@PROCID, @TestCaseRowID, @Msg
 		return 0;
 	end 
@@ -75,12 +74,12 @@ begin
 
 	begin try
 		insert into dbo.[#TBL_ONLINE_DEAL_INFO]
-		exec  @Ret = dbo.[SP_LOAD_ONLINE_DEAL_DATA] @@OnlineSqlServerName, @OnlineSqlDataBaseName, @DEAL_TYPE, @DEAL_NUM
+		exec  @Ret = dbo.[SP_LOAD_ONLINE_DEAL_DATA] @OnlineSqlServerName, @OnlineSqlDataBaseName, @DEAL_TYPE, @DEAL_NUM
 	end try
 	begin catch 
 		select  @Msg = dbo.FN_GET_EXCEPTION_INFO()
 
-			,	@Sql2 = ' exec dbo.[SP_LOAD_ONLINE_DEAL_DATA] @@OnlineSqlServerName = '+@@OnlineSqlServerName+' '
+			,	@Sql2 = ' exec dbo.[SP_LOAD_ONLINE_DEAL_DATA] @OnlineSqlServerName = '+@OnlineSqlServerName+' '
 								+ ', @OnlineSqlDataBaseName = '+@OnlineSqlDataBaseName+' '
 								+ ', @DEAL_TYPE = 1, @DealNum = '+str(@DEAL_NUM,len(@DEAL_NUM),0);
 
@@ -104,7 +103,7 @@ begin
 	from dbo.[#TBL_ONLINE_DEAL_INFO] with(nolock)
 	;
 
-	if IsNull(@HasTaxUncollected,0) = 1 and IsNull(@Account,'') <> ''
+	if IsNull(@HasTaxUncollected,0) = 1 and IsNull(@Account,'') <> '' and @IS_DEAL_BEN = 0
 	begin
 
 		drop table if exists dbo.[#TBL_ONLINE_ACC_TAX_UNCOLECTED]
@@ -118,14 +117,14 @@ begin
 
 		begin try
 			insert into dbo.[#TBL_ONLINE_ACC_TAX_UNCOLECTED]
-			exec @Ret = dbo.[SP_LOAD_ONLINE_TAX_UNCOLECTED_BY_ACC] @@OnlineSqlServerName, @OnlineSqlDataBaseName, @Account, @AccCurrency
+			exec @Ret = dbo.[SP_LOAD_ONLINE_TAX_UNCOLECTED_BY_ACC] @OnlineSqlServerName, @OnlineSqlDataBaseName, @Account, @AccCurrency
 		end try
 		begin catch
 			select  @Msg = dbo.FN_GET_EXCEPTION_INFO()
-				,	@Sql2 = ' exec dbo.[SP_LOAD_ONLINE_TAX_UNCOLECTED_BY_ACC] @@OnlineSqlServerName = '+@@OnlineSqlServerName+' '
+				,	@Sql2 = ' exec dbo.[SP_LOAD_ONLINE_TAX_UNCOLECTED_BY_ACC] @OnlineSqlServerName = '+@OnlineSqlServerName+' '
 									+ ', @OnlineSqlDataBaseName = '+@OnlineSqlDataBaseName+' '
 									+ ', @Account = '+@Account
-									+ ', @@AccCurrency = '+str(@AccCurrency,len(@AccCurrency),0)
+									+ ', @AccCurrency = '+str(@AccCurrency,len(@AccCurrency),0)
 				;
 
 				exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql2, @Msg
@@ -183,7 +182,7 @@ begin
 	if @LogBegEndProc = 1
 	begin 
 		select @Msg = 'Duration: '+ dbo.FN_GET_TIME_DIFF(@TimeBeg, GetDate()) + 
-			 + ', TA Row ID: ' + @TestCaseRowID
+			 + ', TA Row ID: ' + @TestCaseRowID + ' Is Ben deal: ' + str(@IS_DEAL_BEN,len(@IS_DEAL_BEN),0)
 		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Msg, '*** End Execute Proc ***: dbo.dbo.[SP_CASH_PAYMENTS_UPDATE_RAZREG_TA]'
 	end
 

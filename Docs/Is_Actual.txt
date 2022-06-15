@@ -10,3 +10,56 @@ IS_ACTUAL ни служи да разберем дали ще излезе съобщение на екран:"клиента е с не
 [12.05.2022 г. 12:15] Nelina Kareeva
 SERVICE_GROUP_EGFN ни трябва за да изберем пак същия клиент от диалога, който допълнително излиза при този тип клиенти:
 
+
+
+PREV_COMMON_TA -> BETWEEN_OWN_ACCOUNTS flag -1 1, 0 
+
+UI_INOUT_TRANSFER 3 - вътрешно банки
+                  2 - издаден 
+                  1 - получен 
+
+SELECT * FROM PREV_COMMON_TA
+WHERE DB_TYPE = 'BETA'
+	and BETWEEN_OWN_ACCOUNTS = 1
+GO
+
+-- ROW_ID -> 401001
+select * from RAZPREG_TA
+where ROW_ID = 201001 /* PREV_COMMON_TA.REF_ID */
+go
+
+select * from RAZPREG_TA
+where ROW_ID = 201405 /* PREV_COMMON_TA.FOREIGN_GROUP_ID */
+go
+
+
+/* 1. Междубанкиви преводи */
+SELECT * FROM dbo.[PREV_COMMON_TA]
+WHERE [DB_TYPE] = 'BETA'
+	and [UI_INOUT_TRANSFER] <> 3
+	and IsNull([BETWEEN_OWN_ACCOUNTS],0) = 0
+GO
+
+/* 3. Вътрешно банкови преводи */
+SELECT * FROM dbo.[PREV_COMMON_TA]
+WHERE [DB_TYPE] = 'BETA'
+	and [UI_INOUT_TRANSFER] = 3
+	and IsNull([BETWEEN_OWN_ACCOUNTS],0) = 0
+GO
+
+/* 3. Вътрешно банкови преводи - между собствени сметки: */
+SELECT * FROM dbo.[PREV_COMMON_TA]
+WHERE [DB_TYPE] = 'BETA'
+	and [UI_INOUT_TRANSFER] = 3
+	and IsNull([BETWEEN_OWN_ACCOUNTS],0) = 1
+GO
+
+/* Промер: */
+-- PREV_COMMON_TA.ROW_ID = 401001 =>
+select * from dbo.[RAZPREG_TA]
+where ROW_ID = 201001 /* PREV_COMMON_TA.REF_ID */
+go
+
+select * from dbo.[RAZPREG_TA]
+where ROW_ID = 201405 /* PREV_COMMON_TA.FOREIGN_GROUP_ID */
+go
