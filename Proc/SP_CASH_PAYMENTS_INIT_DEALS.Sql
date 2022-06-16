@@ -863,6 +863,9 @@ begin
 		WHERE	[D].[CUSTOMER_ID] = [C].[CUSTOMER_ID]
 			and [D].[NM405_DOCUMENT_TYPE] IN ( 1, 7, 8  )  /* 1 - Лична карта; 7 - Паспорт; 8 - Шофьорска книжка */
 			and ( [D].[INDEFINITELY] = 1 OR [D].[EXPIRY_DATE] > @DateAcc )
+			and [D].[ISSUER_COUNTRY_CODE] > 0
+			and [D].[ISSUE_DATE] > ''1970-12-31''
+			and len([D].[ISSUER_NAME]) > 0
 	) '
 	;
 

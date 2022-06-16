@@ -31,6 +31,7 @@ begin
 		,	@DEALS_CORR_TA_RowID int = 0
 		,	@DT015_CUSTOMERS_RowID int = 0
 		,	@PROXY_CUSTOMERS_RowID int = 0
+		,	@RAZPREG_TA_BEN_RowID int = 0
 	;
 	select	@RAZPREG_TA_RowID		= [DEAL_ROW_ID]
 		,	@DEALS_CORR_TA_RowID	= [CORS_ROW_ID]
@@ -38,6 +39,7 @@ begin
 		,	@PROXY_CUSTOMERS_RowID	= [PROXY_ROW_ID]
 		,	@PROXY_CUSTOMERS_RowID	= [PROXY_ROW_ID]
 		,	@RUNNING_ORDER			= [RUNNING_ORDER]
+		,	@RAZPREG_TA_BEN_RowID	= IsNull( [DEAL_BEN_ROW_ID],-1)
 	from dbo.[VIEW_CASH_PAYMENTS_CONDITIONS] with(nolock)
 	where [ROW_ID] = @TA_RowID
 	;
@@ -104,7 +106,7 @@ begin
 				,	[IBAN]					= ''	-- RAZPREG_TA	IBAN	
 				,	[TAX_UNCOLLECTED_SUM]	= ''	-- RAZPREG_TA	TAX_UNCOLLECTED_SUM	Сума на неплатените такси. Ако няма да се записва 0.00
 			from dbo.[RAZPREG_TA] [D]
-			where [D].[ROW_ID] = @RAZPREG_TA_RowID
+			where [D].[ROW_ID] in ( @RAZPREG_TA_RowID, @RAZPREG_TA_BEN_RowID )
 		end
 
 		-- Актуализация данните на клиента
