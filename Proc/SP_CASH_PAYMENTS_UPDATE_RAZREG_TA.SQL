@@ -46,7 +46,10 @@ begin
 
 	if IsNull(@TBL_ROW_ID,0) <= 0
 	begin  
-		select @Msg = 'Not found deal from TA ROW_ID : ' + @TestCaseRowID+ '; Is ben deal: ' + str(@IS_DEAL_BEN,len(@IS_DEAL_BEN),0);
+		select @Msg = 'Not found deal from TA ROW_ID : ' + @TestCaseRowID
+			+ '; Deal num: ' + str(@DEAL_NUM,len(@DEAL_NUM),0)
+			+ '; Is ben deal: ' + str(@IS_DEAL_BEN,len(@IS_DEAL_BEN),0);
+
 		exec dbo.SP_SYS_LOG_PROC @@PROCID, @TestCaseRowID, @Msg
 		return 0;
 	end 
@@ -182,7 +185,9 @@ begin
 	if @LogBegEndProc = 1
 	begin 
 		select @Msg = 'Duration: '+ dbo.FN_GET_TIME_DIFF(@TimeBeg, GetDate()) + 
-			 + ', TA Row ID: ' + @TestCaseRowID + ' Is Ben deal: ' + str(@IS_DEAL_BEN,len(@IS_DEAL_BEN),0)
+			 + ', TA Row ID: ' + @TestCaseRowID 
+			 + ', Deal num: ' + str(@DEAL_NUM,len(@DEAL_NUM),0)
+			 + ', Is Ben deal: ' + str(@IS_DEAL_BEN,len(@IS_DEAL_BEN),0)
 		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Msg, '*** End Execute Proc ***: dbo.dbo.[SP_CASH_PAYMENTS_UPDATE_RAZREG_TA]'
 	end
 

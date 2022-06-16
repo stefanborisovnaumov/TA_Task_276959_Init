@@ -181,7 +181,7 @@ begin
 		, [DEAL].[DEAL_TYPE], [DEAL].[DEAL_NUM]
 		, [CUST].[CUSTOMER_ID], [PROXY].[CUSTOMER_ID] AS [REPRESENTATIVE_CUSTOMER_ID] '
 		+ case when IsNull(@TYPE_ACTION,'') = 'CT' and IsNull(@UI_INOUT_TRANSFER,'-1') = '3' and IsNull(@BETWEEN_OWN_ACCOUNTS,-1) in (0,1)
-			then ' [DEAL_BEN].[DEAL_TYPE_BEN], [DEAL_BEN].[DEAL_NUM_BEN] '
+			then ', [DEAL_BEN].[DEAL_TYPE_BEN], [DEAL_BEN].[DEAL_NUM_BEN] '
 			else ', NULL AS [DEAL_TYPE_BEN],  NULL AS [DEAL_NUM_BEN]' end + @CrLf
 	insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR], [IS_BASE_select] )
 	select	@Sql2,	N'SELECT ...', 1
@@ -597,7 +597,7 @@ begin
 	-- 0 или долна граница на разполагаемостта ( '<0', '>0' )
 	if Left(ltrim(IsNull(@LIMIT_AVAILABILITY,'0')),1) in ('<', '>', '=')
 	begin 
-		select @Sql2 = ' AND ([DEAL].[ACCOUNT_BEG_DAY_BALANCE] - [DEAL].[BLK_SUMA_MIN]) '+@LIMIT_AVAILABILITY + @CrLf;
+		select @Sql2 = ' AND ([DEAL].[ACCOUNT_BEG_DAY_BALANCE] - [DEAL].[BLK_SUMA_MIN]) ' + REPLACE(@LIMIT_AVAILABILITY, ' ','') + @CrLf;
 
 		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 		select	@Sql2, '[LIMIT_AVAILABILITY] : ' + @LIMIT_AVAILABILITY;
@@ -728,7 +728,7 @@ begin
 
 		-- Разполагаемост по сделката 
 		if left(ltrim(IsNull(@LIMIT_AVAILABILITY_CORS, '0')),1) in ('<', '>', '=')
-				select @Sql2 += ' AND ([TAX].[ACCOUNT_BEG_DAY_BALANCE] - [DEAL].[BLK_SUMA_MIN]) '+@LIMIT_AVAILABILITY_CORS;
+				select @Sql2 += ' AND ([TAX].[ACCOUNT_BEG_DAY_BALANCE] - [DEAL].[BLK_SUMA_MIN]) ' + REPLACE(@LIMIT_AVAILABILITY_CORS,' ','');
 
 		select @Sql2 += ')' + @CrLf;
 

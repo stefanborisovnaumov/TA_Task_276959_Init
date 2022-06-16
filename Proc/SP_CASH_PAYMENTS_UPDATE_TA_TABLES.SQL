@@ -159,8 +159,8 @@ begin
 		,	@DealType	= [DEAL_TYPE]
 		,	@CustomerID	= [CUSTOMER_ID]
 		,	@ProxyID	= [REPRESENTATIVE_CUSTOMER_ID]
-		,	@DealNumBen	= [DEAL_NUM_BEN]
-		,	@DealTypBen = [DEAL_TYPE_BEN]
+		,	@DealNumBen	= IsNull([DEAL_NUM_BEN],-1)
+		,	@DealTypBen = IsNull([DEAL_TYPE_BEN],-1)
 	from dbo.[#TBL_RESULT] with(nolock);
 
 	if @Rows <= 0 or IsNull(@DealNum,0) <= 0 or IsNull(@CustomerID,0) <= 0
