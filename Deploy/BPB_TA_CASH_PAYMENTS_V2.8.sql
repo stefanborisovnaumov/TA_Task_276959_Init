@@ -1,7 +1,7 @@
 /***************************************************************************************************************/
 -- Име          : Янко Янков
 -- Дата и час   : 17.06.2022
--- Задача       : Task 276959 (v2.8.0)
+-- Задача       : Task 276959 (v2.8.1)
 -- Класификация : Test Automation
 -- Описание     : Автоматизация на тестовете за вснони бележки с използване на наличните данни от Online базата
 -- Параметри    : Няма
@@ -1273,7 +1273,7 @@ begin
 		,	[REG].[DEAL_NUM]	
 		,	[GSI].[PROGRAMME_CODE]					AS [DEAL_GS_INDIVIDUAL_PROGRAM_CODE]
 		,	[GSI].[PRODUCT_CODE]					AS [DEAL_GS_INDIVIDUAL_PRODUCT_CODE]
-		,	[GSI].[CARDHOLDER_PREMIUM]				AS [DEAL_GS_INDIVIDUAL_CARDHOLDER_PREMIUM]
+		,	[GSI].[CARD_PRODUCT]					AS [DEAL_GS_INDIVIDUAL_CARD_PRODUCT]
 
 	into dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_GS_INDIVIDUAL_PROGRAMME]
 	from DBO.[AGR_CASH_PAYMENTS_DEALS] [REG] with(nolock)
@@ -3969,7 +3969,7 @@ begin
 			where	[GS].[DEAL_NUM]	 = [DEAL].[DEAL_NUM]
 				and [GS].[DEAL_TYPE] = 1
 				and [GS].[DEAL_GS_INDIVIDUAL_PROGRAM_CODE] = '+STR(@CODE_GS_PROGRAMME,LEN(@CODE_GS_PROGRAMME),0)+'
-				and [GS].[DEAL_GS_INDIVIDUAL_CARDHOLDER_PREMIUM] = '+STR(@CODE_GS_CARD,LEN(@CODE_GS_CARD),0)+'
+				and [GS].[DEAL_GS_INDIVIDUAL_CARD_PRODUCT] = '+STR(@CODE_GS_CARD,LEN(@CODE_GS_CARD),0)+'
 				and [GS].[DEAL_GS_INDIVIDUAL_PRODUCT_CODE] = '+STR(@GS_PRODUCT_CODE,LEN(@GS_PRODUCT_CODE),0)+'
 		)' + @CrLf;
 
@@ -4100,7 +4100,7 @@ begin
 	from dbo.[VIEW_CASH_PAYMENTS_CONDITIONS] with(nolock) where [ROW_ID] = IsNull(@TestCaseRowID, -1)
 	;
 
-	if @TYPE_ACTION = 'CashPayment' and @RUNNING_ORDER <> 1
+	if /* @TYPE_ACTION = 'CashPayment' and */ @RUNNING_ORDER > 1
 	begin 
 		select  @Msg = N'Update cash payment with [ROW_ID] ' + @RowIdStr+' and  [RUNNING_ORDER] <> 1 not allowed.'
 			,	@Sql = @TestCaseRowID
@@ -4526,4 +4526,3 @@ begin
 	return 0;
 end 
 go
-

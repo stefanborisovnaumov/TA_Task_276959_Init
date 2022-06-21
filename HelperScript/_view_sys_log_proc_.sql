@@ -24,7 +24,7 @@ where [msg] like '%After: insert into dbo._#TBL_RESULT_, Rows affected : 0%'
 order by id DESC
 go
 
-After: insert into dbo.[#TBL_RESULT], Rows affected : 0, TA ID :400063
+--After: insert into dbo.[#TBL_RESULT], Rows affected : 0, TA ID :400063
 
 --Not found correspondence from TA ROW_ID : 
 -- Not found Customer from TA ROW_ID : 400001

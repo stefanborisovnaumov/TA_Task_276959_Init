@@ -46,7 +46,7 @@ begin
 	from dbo.[VIEW_CASH_PAYMENTS_CONDITIONS] with(nolock) where [ROW_ID] = IsNull(@TestCaseRowID, -1)
 	;
 
-	if @TYPE_ACTION = 'CashPayment' and @RUNNING_ORDER <> 1
+	if /* @TYPE_ACTION = 'CashPayment' and */ @RUNNING_ORDER > 1
 	begin 
 		select  @Msg = N'Update cash payment with [ROW_ID] ' + @RowIdStr+' and  [RUNNING_ORDER] <> 1 not allowed.'
 			,	@Sql = @TestCaseRowID
