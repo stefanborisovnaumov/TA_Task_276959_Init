@@ -162,8 +162,9 @@ begin
 		,	[REG].[NM342_CODE]						AS [DEAL_NM342_BUNDLE_PRODUCT_CODE] 
 		,	[REG].[JOINT_ACCESS_TO_FUNDS_TYPE]		AS [DEAL_JOINT_ACCESS_TO_FUNDS_TYPE] /* enum JointDealsAccessToFundsType: 0 - Separate; 1 - Always Together */		
 
-		,	[REG].[INT_SUM_DAY]						AS [ACCOUNT_BEG_DAY_BALANCE]		/* Begin day saldo  */
+		,	[BAL].[BEG_SALDO] 						AS [ACCOUNT_BEG_DAY_BALANCE] /* Begin day saldo  */
 		,	[ACC].[BLK_SUMA_MIN]					AS [BLK_SUMA_MIN] /* Block amount for deal */
+		,	[BAL].[DAY_SALDO] 						AS [DAY_OPERATION_BALANCE] /* Day operation balance */
 
 			/* Client info: */
 		,	[REG].[KL_SECTOR]						AS [CLIENT_SECTOR]
@@ -201,6 +202,12 @@ begin
 	inner join '+@SqlFullDBName+'.dbo.[PARTS] [ACC] with(nolock) 
 		on  [ACC].[PART_ID] = [REG].[ACCOUNT]
 
+	left outer join '+@SqlFullDBName+'.dbo.[DAY_MOVEMENTS] [DM] with(nolock)
+		on [DM].[IDENT] = [ACC].[PART_ID]
+
+	left outer join '+@SqlFullDBName+'.dbo.[FUTURE_MOVEMENTS] [FM] with(nolock)
+		on [FM].[IDENT] = [ACC].[PART_ID]
+
 	inner join [X] 
 		on  [X].[CUST_CND_SECTOR]			= [REG].[KL_SECTOR]
 		and [X].[DEAL_CND_UI_CURRENCY_CODE] = [CCY].[INI]
@@ -215,6 +222,22 @@ begin
 			,	CAST( [REG].INDIVIDUAL_PROGRAM_GS_FLAG AS bit ) 
 														AS [IS_INDIVIDUAL_PROG]
 	) [EXT]
+	cross apply (
+		select	CASE WHEN [ACC].[PART_TYPE] IN (1,2,5)
+					THEN [ACC].[BDAY_CURRENCY_DT] - [ACC].[BDAY_CURRENCY_KT]
+					ELSE [ACC].[BDAY_CURRENCY_KT] - [ACC].[BDAY_CURRENCY_DT] 
+				END AS [BEG_SALDO]
+
+			,	CASE WHEN [ACC].[PART_TYPE] IN (1,2, 5)
+					THEN IsNull([DM].[VP_DBT], 0) - IsNull([DM].[VP_KRT], 0)
+							-	( IsNull(-[DM].[VNR_DBT], 0) + IsNull(-[FM].[VNR_DBT], 0) 
+								+ IsNull( [DM].[VNB_KRT], 0) + IsNull( [FM].[VNB_KRT], 0) )
+
+					ELSE IsNull([DM].[VP_KRT], 0) - IsNull([DM].[VP_DBT], 0)
+							-	( IsNull(-[DM].[VNR_KRT], 0) + IsNull(-[FM].[VNR_KRT], 0) 
+								+ IsNull( [DM].[VNB_DBT], 0) + IsNull( [FM].[VNB_DBT], 0) )
+				END AS [DAY_SALDO] 	
+	) [BAL]
 	cross apply (
 		select 	CAST( 0 AS bit ) 						AS [DEAL_IS_USED]
 			,	CAST( 0 AS bit ) 						AS [HAS_TAX_UNCOLECTED]
@@ -338,6 +361,7 @@ begin
 		,	[ACC].[PART_CURRENCY]
 		,	[BAL].[ACCOUNT_BEG_DAY_BALANCE]
 		,	[ACC].[BLK_SUMA_MIN]
+		,	[BAL].[DAY_SALDO] 				AS [DAY_OPERATION_BALANCE] /* Day operation balance */
 
 	into dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_OTHER_TAX_ACCOUNT]
 	from DBO.[AGR_CASH_PAYMENTS_DEALS] [REG] with(nolock)
@@ -347,11 +371,25 @@ begin
 		and [C].[DEAL_NUMBER]	= [REG].[DEAL_NUM]
 	inner join '+@SqlFullDBName+'.dbo.[PARTS] [ACC] with(nolock)
 		on  [ACC].[PART_ID]	= [C].[CORR_ACCOUNT]
+	left outer join '+@SqlFullDBName+'.dbo.[DAY_MOVEMENTS] [DM] with(nolock)
+		on [DM].[IDENT] = [ACC].[PART_ID]
+	left outer join '+@SqlFullDBName+'.dbo.[FUTURE_MOVEMENTS] [FM] with(nolock)
+		on [FM].[IDENT] = [ACC].[PART_ID]	
 	cross apply (
 		select CASE WHEN [ACC].[PART_TYPE] IN ( 1, 2, 5 )
-				THEN [ACC].[BDAY_CURRENCY_DT] - [ACC].[BDAY_CURRENCY_KT]
-				ELSE [ACC].[BDAY_CURRENCY_KT] - [ACC].[BDAY_CURRENCY_DT] 
+					THEN [ACC].[BDAY_CURRENCY_DT] - [ACC].[BDAY_CURRENCY_KT]
+					ELSE [ACC].[BDAY_CURRENCY_KT] - [ACC].[BDAY_CURRENCY_DT] 
 				END AS [ACCOUNT_BEG_DAY_BALANCE]
+
+			,	CASE WHEN [ACC].[PART_TYPE] IN (1,2, 5)
+					THEN IsNull([DM].[VP_DBT], 0) - IsNull([DM].[VP_KRT], 0)
+							-	( IsNull(-[DM].[VNR_DBT], 0) + IsNull(-[FM].[VNR_DBT], 0) 
+								+ IsNull( [DM].[VNB_KRT], 0) + IsNull( [FM].[VNB_KRT], 0) )
+
+					ELSE IsNull([DM].[VP_KRT], 0) - IsNull([DM].[VP_DBT], 0)
+							-	( IsNull(-[DM].[VNR_KRT], 0) + IsNull(-[FM].[VNR_KRT], 0) 
+								+ IsNull( [DM].[VNB_DBT], 0) + IsNull( [FM].[VNB_DBT], 0) )
+				END AS [DAY_SALDO]
 	) [BAL]
 	';
 

@@ -585,7 +585,7 @@ begin
 	-- 0 или долна граница на разполагаемостта ( '<0', '>0' )
 	if Left(ltrim(IsNull(@LIMIT_AVAILABILITY,'0')),1) in ('<', '>', '=')
 	begin 
-		select @Sql2 = ' AND ([DEAL].[ACCOUNT_BEG_DAY_BALANCE] - [DEAL].[BLK_SUMA_MIN]) ' + REPLACE(@LIMIT_AVAILABILITY, ' ','') + @CrLf;
+		select @Sql2 = ' AND ([DEAL].[ACCOUNT_BEG_DAY_BALANCE] - [DEAL].[BLK_SUMA_MIN] + [DEAL].[DAY_OPERATION_BALANCE]) ' + REPLACE(@LIMIT_AVAILABILITY, ' ','') + @CrLf;
 
 		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 		select	@Sql2, '[LIMIT_AVAILABILITY] : ' + @LIMIT_AVAILABILITY;
@@ -712,11 +712,11 @@ begin
 	begin 
 		select @Sql2 = ' AND '+CASE WHEN @IS_CORR = 0 THEN 'NOT' ELSE '' END+ ' EXISTS (
 			select * FROM dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_OTHER_TAX_ACCOUNT] [TAX] with(nolock)
-			where  [TAX].[CORR_ACCOUNT] =  [DEAL].[DEAL_ACCOUNT] ' + @CrLf;
+			where  [TAX].[CORR_ACCOUNT] = [DEAL].[DEAL_ACCOUNT] ' + @CrLf;
 
 		-- Разполагаемост по сделката 
 		if left(ltrim(IsNull(@LIMIT_AVAILABILITY_CORS, '0')),1) in ('<', '>', '=')
-				select @Sql2 += ' AND ([TAX].[ACCOUNT_BEG_DAY_BALANCE] - [DEAL].[BLK_SUMA_MIN]) ' + REPLACE(@LIMIT_AVAILABILITY_CORS,' ','');
+				select @Sql2 += ' AND ([TAX].[ACCOUNT_BEG_DAY_BALANCE] - [TAX].[BLK_SUMA_MIN]+ [TAX].[DAY_OPERATION_BALANCE] ) ' + REPLACE(@LIMIT_AVAILABILITY_CORS,' ','');
 
 		select @Sql2 += ')' + @CrLf;
 
