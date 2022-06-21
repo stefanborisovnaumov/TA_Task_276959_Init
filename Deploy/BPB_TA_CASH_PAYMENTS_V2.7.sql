@@ -1,7 +1,7 @@
 /***************************************************************************************************************/
 -- Име          : Янко Янков
--- Дата и час   : 16.06.2022
--- Задача       : Task 276959 (v2.7.2)
+-- Дата и час   : 17.06.2022
+-- Задача       : Task 276959 (v2.7.3)
 -- Класификация : Test Automation
 -- Описание     : Автоматизация на тестовете за вснони бележки с използване на наличните данни от Online базата
 -- Параметри    : Няма
@@ -3033,7 +3033,7 @@ begin
 	from dbo.[#TBL_ONLINE_DEAL_INFO] with(nolock)
 	;
 
-	if IsNull(@HasTaxUncollected,0) = 1 and IsNull(@Account,'') <> '' and @IS_DEAL_BEN = 0
+	if IsNull(@HasTaxUncollected,0) = 1 and IsNull(@Account,'') <> ''
 	begin
 
 		drop table if exists dbo.[#TBL_ONLINE_ACC_TAX_UNCOLECTED]
@@ -3628,7 +3628,7 @@ begin
 	end
 	;
 
-	-- @TODO: @HAVE_CREDIT:
+	-- @HAVE_CREDIT:
 	-- Дали клиента има активен кредит: ;Без допълнителни сметки - ;Всички разплащателни и влогове - 
 	-- ;Всички разплащателни - несвързани към друг кредит - ; Всички разплащателни, влогове и депозитни сметки -
 	if IsNull(@HAVE_CREDIT, -1) in ( 0, 1 )
@@ -3666,18 +3666,6 @@ begin
 
 			select @Sql += @Sql2
 		end
-
-		-- @TODO: @UI_RAZPOREDITEL: трябва да добавим нова таблица с разпоредителите към сделките !!!
-		--if  @UI_RAZPOREDITEL = 1
-		--begin 
-		--	select @Sql2 = ' AND [CUST].[CUSTOMER_ID] = [DEAL].[CUSTOMER_ID] AND [DEAL].[CLIENT_SECTOR] IN ( 5000, 9400 ) ' + @CrLf;
-
-		--	insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
-		--	select	@Sql2
-		--		,	'[UI_RAZPOREDITEL] : ' + str(@UI_RAZPOREDITEL,len(@UI_RAZPOREDITEL),0 )
-
-		--	select @Sql += @Sql2
-		--end 
 	end
 
 	-- 1 - безсрочен; 0 - с крайна дата
@@ -3923,8 +3911,8 @@ begin
 	begin 
 		select @Sql2 = ' AND NOT EXISTS (
 			select * FROM dbo.[RAZPREG_TA] [TA] with(nolock)
-			where  [TA].[UI_DEAL_NUM] = [DEAL].[DEAL_NUM]
-				/* and [TA].[TA_TYPE] like '+@TA_TYPE+' */
+			where	[TA].[UI_DEAL_NUM] = [DEAL].[DEAL_NUM]
+				and ( [TA].[IS_BEN] IS NULL OR [TA].[IS_BEN] <> 1 )  
 		)' + @CrLf;
 
 		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )

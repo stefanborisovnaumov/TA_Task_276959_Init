@@ -106,7 +106,7 @@ begin
 	from dbo.[#TBL_ONLINE_DEAL_INFO] with(nolock)
 	;
 
-	if IsNull(@HasTaxUncollected,0) = 1 and IsNull(@Account,'') <> '' and @IS_DEAL_BEN = 0
+	if IsNull(@HasTaxUncollected,0) = 1 and IsNull(@Account,'') <> ''
 	begin
 
 		drop table if exists dbo.[#TBL_ONLINE_ACC_TAX_UNCOLECTED]
