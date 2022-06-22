@@ -69,9 +69,10 @@ AS
 	SELECT	DISTINCT
 			[PREV].[ROW_ID]									AS [ROW_ID]
 		,	[PREV].[TA_TYPE]								AS [TA_TYPE]
+		,	[PREV].[DB_TYPE]								AS [DB_TYPE]
 		,	[CUST].[ROW_ID]									AS [CUST_ROW_ID]
 		,	[DREG].[ROW_ID]									AS [DEAL_ROW_ID]
-		,	[CORS].[ROW_ID]									AS [CORS_ROW_ID]		
+		,	[CORS].[ROW_ID]									AS [CORS_ROW_ID]
 		,	[PSPEC].[ROW_ID]								AS [PSPEC_ROW_ID]
 		,	[PROXY].[ROW_ID]								AS [PROXY_ROW_ID]
 		,	[DBEN].[ROW_ID]									AS [DEAL_BEN_ROW_ID]

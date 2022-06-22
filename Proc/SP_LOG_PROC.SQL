@@ -138,7 +138,7 @@ CREATE PROCEDURE dbo.[SP_SYS_GET_ACCOUNT_DATE_FROM_DB]
 AS 
 BEGIN 
 
-	DECLARE @SqlStms NVARCHAR(4000) = N''
+	DECLARE @SqlStms NVARCHAR(4000) = N'', @Msg nvarchar(max) = N'', @Ret int = -1
 		,	@StmsParmams NVARCHAR(500) = N'@CUR_DATE_OUT datetime OUTPUT'
 	;
 
@@ -146,7 +146,16 @@ BEGIN
 		,	@SqlStms = N'SELECT @CUR_DATE_OUT = CAST( CAST( CAST( REVERSE( SUBSTRING( DATA, 5, 4 ) ) AS BINARY(4) ) AS INT ) AS CHAR(8) )
 	FROM ' + @SqlServerName + '.' + @SqlDatabase + '.dbo.CSOFT_SYS	WHERE CODE = 1'
 	
-	EXEC sys.sp_executesql @SqlStms, @StmsParmams, @CUR_DATE_OUT = @CUR_ACCOUNT_DATE OUTPUT
+	begin try
+		exec @Ret = sp_executesql @SqlStms, @StmsParmams, @CUR_DATE_OUT = @CUR_ACCOUNT_DATE OUTPUT
+	end try
+	begin catch
+    		select @Msg = dbo.FN_GET_EXCEPTION_INFO();
+	    	exec dbo.SP_SYS_LOG_PROC @@PROCID, @SqlStms, @Msg
+			return 1;
+	end catch
+
+	return @Ret;
 END
 GO
 

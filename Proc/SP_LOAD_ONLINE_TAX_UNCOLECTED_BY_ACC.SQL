@@ -77,7 +77,7 @@ begin
 	begin try
 		exec @Ret = sp_executeSql @Sql1
 	end try
-	begin CATCH 
+	begin catch
 		select  @Msg = dbo.FN_GET_EXCEPTION_INFO()
 		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg
 		return 2;

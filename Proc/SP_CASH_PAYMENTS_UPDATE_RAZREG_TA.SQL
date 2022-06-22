@@ -184,7 +184,7 @@ begin
 	/* Log End Of Procedure */
 	if @LogBegEndProc = 1
 	begin 
-		select @Msg = 'Duration: '+ dbo.FN_GET_TIME_DIFF(@TimeBeg, GetDate()) + 
+		select @Msg = 'Duration: '+ dbo.FN_GET_TIME_DIFF(@TimeBeg, GetDate())
 			 + ', TA Row ID: ' + @TestCaseRowID 
 			 + ', Deal num: ' + str(@DEAL_NUM,len(@DEAL_NUM),0)
 			 + ', Is Ben deal: ' + str(@IS_DEAL_BEN,len(@IS_DEAL_BEN),0)
