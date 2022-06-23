@@ -98,3 +98,200 @@ create table dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_COUNT_DEAL_BY_CURRENCY]
 ,	[DEAL_COUNT]	int
 )
 go
+
+
+/*****************************************************************************/
+-- Create table dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_WNOS_BEL]
+drop table if exists dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_WNOS_BEL]
+go
+
+create table dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_WNOS_BEL]
+(
+	[DEAL_TYPE] 	smallint
+,	[DEAL_NUM]	int
+)
+go
+
+/*****************************************************************************/
+-- Create table dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_NAR_RAZP]
+drop table if exists dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_NAR_RAZP]
+go
+
+create table dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_NAR_RAZP]
+(
+	[DEAL_TYPE] smallint
+,	[DEAL_NUM]	int
+)
+go
+
+
+/*****************************************************************************/
+-- Create table dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_GS_INDIVIDUAL_PROGRAMME]
+drop table if exists dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_GS_INDIVIDUAL_PROGRAMME]
+go
+
+create table dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_GS_INDIVIDUAL_PROGRAMME]
+(
+	[DEAL_TYPE] smallint
+,	[DEAL_NUM]	int
+,	[DEAL_GS_INDIVIDUAL_PROGRAM_CODE]	int 
+,	[DEAL_GS_INDIVIDUAL_PRODUCT_CODE]	int 
+,	[DEAL_GS_INDIVIDUAL_CARD_PRODUCT]	int
+
+)
+go
+
+/*****************************************************************************/
+-- Create table dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_OTHER_TAX_ACCOUNT]
+drop table if exists dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_OTHER_TAX_ACCOUNT]
+go
+
+create table dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_OTHER_TAX_ACCOUNT]
+(
+	[DEAL_TYPE] 		smallint
+,	[DEAL_NUM]			int
+,	[CORR_ACCOUNT]		varchar(64)
+,	[PART_CURRENCY]		int
+,	[ACCOUNT_BEG_DAY_BALANCE]	float
+,	[BLK_SUMA_MIN]				float
+,	[DAY_OPERATION_BALANCE]		float
+)
+go
+
+/*****************************************************************************/
+-- Create table dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_TAX_UNCOLECTED]
+drop table if exists dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_TAX_UNCOLECTED]
+go
+
+create table dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_TAX_UNCOLECTED]
+(
+	[DEAL_TYPE] smallint
+,	[DEAL_NUM]	int
+)
+go
+
+/*****************************************************************************/
+-- Create table dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_DISTRAINT]
+drop table if exists dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_DISTRAINT]
+go
+
+create table dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_DISTRAINT]
+(
+	[DEAL_TYPE] smallint
+,	[DEAL_NUM]	int
+)
+go
+
+/*****************************************************************************/
+-- Create table dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_DORMUNT_ACCOUNT]
+drop table if exists dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_DORMUNT_ACCOUNT]
+go
+
+create table dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_DORMUNT_ACCOUNT]
+(
+	[DEAL_TYPE] smallint
+,	[DEAL_NUM]	int
+)
+go
+
+/*****************************************************************************/
+-- Create table dbo.[AGR_CASH_PAYMENTS_DEALS_LEGAL_REPRESENTATIVE]
+drop table if exists dbo.[AGR_CASH_PAYMENTS_DEALS_LEGAL_REPRESENTATIVE]
+go
+
+create table dbo.[AGR_CASH_PAYMENTS_DEALS_LEGAL_REPRESENTATIVE]
+(
+	[DEAL_TYPE]						smallint
+,	[DEAL_NUM]						int
+,	[REPRESENTED_CUSTOMER_ID] 		int 
+,	[REPRESENTATIVE_CUSTOMER_ID] 	int 
+,	[CUSTOMER_ROLE_TYPE] 			int
+)
+go
+
+/*****************************************************************************/
+-- Create table dbo.[AGR_CASH_PAYMENTS_DEALS_ACTIVE_PROXY_CUSTOMERS]
+drop table if exists dbo.[AGR_CASH_PAYMENTS_DEALS_ACTIVE_PROXY_CUSTOMERS]
+go
+
+create table dbo.[AGR_CASH_PAYMENTS_DEALS_ACTIVE_PROXY_CUSTOMERS]
+(
+	[DEAL_TYPE]						smallint
+,	[DEAL_NUM]						int
+,	[REPRESENTATIVE_CUSTOMER_ID]	int 
+,	[CUSTOMER_ROLE_TYPE] 			int
+)
+go
+
+
+/*****************************************************************************/
+-- Create table dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_DUBL_EGFN]
+drop table if exists dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_DUBL_EGFN]
+go
+
+create table dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_DUBL_EGFN]
+(
+	[EGFN] 		BIGINT
+)
+go
+
+
+/*****************************************************************************/
+-- Create table dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_MANY_CLIENT_CODES]
+drop table if exists dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_MANY_CLIENT_CODES]
+go
+
+create table dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_MANY_CLIENT_CODES]
+(
+	[CUSTOMER_ID] int 
+)
+go
+
+
+/*****************************************************************************/
+-- Create table dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_DUBL_EGFN]
+drop table if exists dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_DUBL_EGFN]
+go
+
+create table dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_DUBL_EGFN]
+(
+	[CUSTOMER_ID] int 
+,	[IS_ORIGINAL_EGFN] bit
+)
+go
+
+/*****************************************************************************/
+-- Create table dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_ARE_PROXIES]
+drop table if exists dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_ARE_PROXIES]
+go
+
+create table dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_ARE_PROXIES]
+(
+	[CUSTOMER_ID] int 
+)
+go
+
+
+/*****************************************************************************/
+-- Create table dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_VALID_IDENTITY_DOCUMENTS]
+drop table if exists dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_VALID_IDENTITY_DOCUMENTS]
+go
+
+create table dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_VALID_IDENTITY_DOCUMENTS]
+(
+	[CUSTOMER_ID] int 
+)
+go
+
+/*****************************************************************************/
+-- Create table dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_LOANS]
+drop table if exists dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_LOANS]
+go
+
+create table dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_LOANS]
+(
+	[CUSTOMER_ID] int 
+)
+go
+
+

@@ -643,17 +643,29 @@ begin
 		end 
 	end
 
-	-- Да няма осчетоводено вносни бележки по сделката: @RUNNING_ORDER = 1 and @TYPE_ACTION = ''
+	-- Да няма осчетоводено 'Вносни Бележки' по сделката: @RUNNING_ORDER = 1 and @TYPE_ACTION = ''
 	if @TYPE_ACTION = 'CashPayment' and IsNull(@RUNNING_ORDER,-1) = 1
 	begin
 		select @Sql2 = ' AND [DEAL].[HAS_WNOS_BEL] = ' + (case when @RUNNING_ORDER > 1 then '1' else '0' end)  + @CrLf;
 
 		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 		select	@Sql2
-			,	'[TYPE_ACTION] = CashPayment and [RUNNING_ORDER] : ' + str(@RUNNING_ORDER,len(@RUNNING_ORDER),0);
+			,	'[TYPE_ACTION] = ''CashPayment'' and [RUNNING_ORDER] : ' + str(@RUNNING_ORDER,len(@RUNNING_ORDER),0);
 
 		select @Sql += @Sql2
 	end
+
+	-- Да няма осчетоводено 'Нареждане Разписка' по сделката: @RUNNING_ORDER = 1 and @TYPE_ACTION = ''
+	if @TYPE_ACTION = 'CashW' and IsNull(@RUNNING_ORDER,-1) = 1
+	begin
+		select @Sql2 = ' AND [DEAL].[HAS_NAR_RAZP] = ' + (case when @RUNNING_ORDER > 1 then '1' else '0' end)  + @CrLf;
+
+		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
+		select	@Sql2
+			,	'[TYPE_ACTION] = ''CashW'' and [RUNNING_ORDER] : ' + str(@RUNNING_ORDER,len(@RUNNING_ORDER),0);
+
+		select @Sql += @Sql2
+	end	
 
 	-- Да укаже дали сметката е кореспондираща до други сделки: -1 няма значение; 0 не е; 1 да , кореспондираща е
 	if IsNull(@IS_CORR,-1) in ( 0, 1 )

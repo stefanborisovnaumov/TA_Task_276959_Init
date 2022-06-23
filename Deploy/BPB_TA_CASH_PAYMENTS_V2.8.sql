@@ -1,7 +1,7 @@
 /***************************************************************************************************************/
 -- Име          : Янко Янков
--- Дата и час   : 17.06.2022
--- Задача       : Task 276959 (v2.8.2)
+-- Дата и час   : 23.06.2022
+-- Задача       : Task 276959 (v2.8.3)
 -- Класификация : Test Automation
 -- Описание     : Автоматизация на тестовете за вснони бележки с използване на наличните данни от Online базата
 -- Параметри    : Няма
@@ -106,6 +106,203 @@ create table dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_COUNT_DEAL_BY_CURRENCY]
 ,	[DEAL_COUNT]	int
 )
 go
+
+
+/*****************************************************************************/
+-- Create table dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_WNOS_BEL]
+drop table if exists dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_WNOS_BEL]
+go
+
+create table dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_WNOS_BEL]
+(
+	[DEAL_TYPE] 	smallint
+,	[DEAL_NUM]	int
+)
+go
+
+/*****************************************************************************/
+-- Create table dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_NAR_RAZP]
+drop table if exists dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_NAR_RAZP]
+go
+
+create table dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_NAR_RAZP]
+(
+	[DEAL_TYPE] smallint
+,	[DEAL_NUM]	int
+)
+go
+
+
+/*****************************************************************************/
+-- Create table dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_GS_INDIVIDUAL_PROGRAMME]
+drop table if exists dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_GS_INDIVIDUAL_PROGRAMME]
+go
+
+create table dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_GS_INDIVIDUAL_PROGRAMME]
+(
+	[DEAL_TYPE] smallint
+,	[DEAL_NUM]	int
+,	[DEAL_GS_INDIVIDUAL_PROGRAM_CODE]	int 
+,	[DEAL_GS_INDIVIDUAL_PRODUCT_CODE]	int 
+,	[DEAL_GS_INDIVIDUAL_CARD_PRODUCT]	int
+
+)
+go
+
+/*****************************************************************************/
+-- Create table dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_OTHER_TAX_ACCOUNT]
+drop table if exists dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_OTHER_TAX_ACCOUNT]
+go
+
+create table dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_OTHER_TAX_ACCOUNT]
+(
+	[DEAL_TYPE] 		smallint
+,	[DEAL_NUM]			int
+,	[CORR_ACCOUNT]		varchar(64)
+,	[PART_CURRENCY]		int
+,	[ACCOUNT_BEG_DAY_BALANCE]	float
+,	[BLK_SUMA_MIN]				float
+,	[DAY_OPERATION_BALANCE]		float
+)
+go
+
+/*****************************************************************************/
+-- Create table dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_TAX_UNCOLECTED]
+drop table if exists dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_TAX_UNCOLECTED]
+go
+
+create table dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_TAX_UNCOLECTED]
+(
+	[DEAL_TYPE] smallint
+,	[DEAL_NUM]	int
+)
+go
+
+/*****************************************************************************/
+-- Create table dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_DISTRAINT]
+drop table if exists dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_DISTRAINT]
+go
+
+create table dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_DISTRAINT]
+(
+	[DEAL_TYPE] smallint
+,	[DEAL_NUM]	int
+)
+go
+
+/*****************************************************************************/
+-- Create table dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_DORMUNT_ACCOUNT]
+drop table if exists dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_DORMUNT_ACCOUNT]
+go
+
+create table dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_DORMUNT_ACCOUNT]
+(
+	[DEAL_TYPE] smallint
+,	[DEAL_NUM]	int
+)
+go
+
+/*****************************************************************************/
+-- Create table dbo.[AGR_CASH_PAYMENTS_DEALS_LEGAL_REPRESENTATIVE]
+drop table if exists dbo.[AGR_CASH_PAYMENTS_DEALS_LEGAL_REPRESENTATIVE]
+go
+
+create table dbo.[AGR_CASH_PAYMENTS_DEALS_LEGAL_REPRESENTATIVE]
+(
+	[DEAL_TYPE]						smallint
+,	[DEAL_NUM]						int
+,	[REPRESENTED_CUSTOMER_ID] 		int 
+,	[REPRESENTATIVE_CUSTOMER_ID] 	int 
+,	[CUSTOMER_ROLE_TYPE] 			int
+)
+go
+
+/*****************************************************************************/
+-- Create table dbo.[AGR_CASH_PAYMENTS_DEALS_ACTIVE_PROXY_CUSTOMERS]
+drop table if exists dbo.[AGR_CASH_PAYMENTS_DEALS_ACTIVE_PROXY_CUSTOMERS]
+go
+
+create table dbo.[AGR_CASH_PAYMENTS_DEALS_ACTIVE_PROXY_CUSTOMERS]
+(
+	[DEAL_TYPE]						smallint
+,	[DEAL_NUM]						int
+,	[REPRESENTATIVE_CUSTOMER_ID]	int 
+,	[CUSTOMER_ROLE_TYPE] 			int
+)
+go
+
+
+/*****************************************************************************/
+-- Create table dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_DUBL_EGFN]
+drop table if exists dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_DUBL_EGFN]
+go
+
+create table dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_DUBL_EGFN]
+(
+	[EGFN] 		BIGINT
+)
+go
+
+
+/*****************************************************************************/
+-- Create table dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_MANY_CLIENT_CODES]
+drop table if exists dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_MANY_CLIENT_CODES]
+go
+
+create table dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_MANY_CLIENT_CODES]
+(
+	[CUSTOMER_ID] int 
+)
+go
+
+
+/*****************************************************************************/
+-- Create table dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_DUBL_EGFN]
+drop table if exists dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_DUBL_EGFN]
+go
+
+create table dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_DUBL_EGFN]
+(
+	[CUSTOMER_ID] int 
+,	[IS_ORIGINAL_EGFN] bit
+)
+go
+
+/*****************************************************************************/
+-- Create table dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_ARE_PROXIES]
+drop table if exists dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_ARE_PROXIES]
+go
+
+create table dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_ARE_PROXIES]
+(
+	[CUSTOMER_ID] int 
+)
+go
+
+
+/*****************************************************************************/
+-- Create table dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_VALID_IDENTITY_DOCUMENTS]
+drop table if exists dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_VALID_IDENTITY_DOCUMENTS]
+go
+
+create table dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_VALID_IDENTITY_DOCUMENTS]
+(
+	[CUSTOMER_ID] int 
+)
+go
+
+/*****************************************************************************/
+-- Create table dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_LOANS]
+drop table if exists dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_LOANS]
+go
+
+create table dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_LOANS]
+(
+	[CUSTOMER_ID] int 
+)
+go
+
+
 
 /********************************************************************************************************/
 /* Създаване на помощно view за Условията към тестовите сценарии */
@@ -928,6 +1125,7 @@ begin
 			,	CAST( 0 AS bit ) 						AS [HAS_DISTRAINT]
 			,	CAST( 0 AS bit ) 						AS [HAS_GS_INDIVIDUAL_PROGRAMME]
 			,	CAST( 0 AS bit ) 						AS [HAS_WNOS_BEL]
+			,	CAST( 0 AS bit ) 						AS [HAS_NAR_RAZP]
 			,	CAST( 0 AS bit ) 						AS [IS_DORMUNT_ACCOUNT]
 	) [EX_BITS]
 	cross apply (
@@ -989,7 +1187,7 @@ begin
 	;	
 
 	/* 1.3. Prepare TAX UNCOLECTED  */
-	drop table if exists dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_TAX_UNCOLECTED]
+	truncate table dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_TAX_UNCOLECTED]
 	;
 
 	select @Sql1 = N';
@@ -997,10 +1195,10 @@ begin
 		,	@TaxActive int = 0 /* enum eTaxUncollectedStatus: eTaxActive = 1*/
 	;
 
+	insert into dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_TAX_UNCOLECTED]
 	select	[REG].[DEAL_TYPE]
 		,	[REG].[DEAL_NUM]
 
-	into dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_TAX_UNCOLECTED]
 	from DBO.[AGR_CASH_PAYMENTS_DEALS] [REG] with(nolock)
 	where EXISTS (
 		select	*
@@ -1028,14 +1226,16 @@ begin
 	end
 
 	/* 1.4. Prepare Deal with Other Tax Account */
-	drop table if exists dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_OTHER_TAX_ACCOUNT]
+	truncate table dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_OTHER_TAX_ACCOUNT]
 	;
 
 	select @Sql1 = N';
 	declare @DealType int = 1
 		,	@CorreCapitAccount int = 1 /* eCapitAccount (1) */
 		,	@CorrTaxServices int = 3 /* eTaxServices (3) */
+	;
 
+	insert into dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_OTHER_TAX_ACCOUNT]
 	select	[REG].[DEAL_TYPE]
 		,	[REG].[DEAL_NUM]
 		,	[C].[CORR_ACCOUNT]
@@ -1044,7 +1244,6 @@ begin
 		,	[ACC].[BLK_SUMA_MIN]
 		,	[BAL].[DAY_SALDO] 				AS [DAY_OPERATION_BALANCE] /* Day operation balance */
 
-	into dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_OTHER_TAX_ACCOUNT]
 	from DBO.[AGR_CASH_PAYMENTS_DEALS] [REG] with(nolock)
 	inner join '+@SqlFullDBName+'.dbo.[DEALS_CORR] [C] with(nolock)
 		on  [C].[CORR_TYPE]		= @CorrTaxServices
@@ -1091,20 +1290,20 @@ begin
 	end
 
 	/* 1.5. Prepare Deal with Group Sales INDIVIDUAL PROGRAMME */
-	drop table if exists dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_GS_INDIVIDUAL_PROGRAMME]
+	truncate table dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_GS_INDIVIDUAL_PROGRAMME]
 	;
 
 	select @Sql1 = N';
 	declare @DealType int = 1
 		,	@GSActive int = 1 /* enum eGS_STATUS: GSActive = 1 */
 	;
+	insert into dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_GS_INDIVIDUAL_PROGRAMME]	
 	select	[REG].[DEAL_TYPE]
 		,	[REG].[DEAL_NUM]	
 		,	[GSI].[PROGRAMME_CODE]					AS [DEAL_GS_INDIVIDUAL_PROGRAM_CODE]
 		,	[GSI].[PRODUCT_CODE]					AS [DEAL_GS_INDIVIDUAL_PRODUCT_CODE]
 		,	[GSI].[CARD_PRODUCT]					AS [DEAL_GS_INDIVIDUAL_CARD_PRODUCT]
 
-	into dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_GS_INDIVIDUAL_PROGRAMME]
 	from DBO.[AGR_CASH_PAYMENTS_DEALS] [REG] with(nolock)
 	inner join '+@SqlFullDBName+'.dbo.[GS_INDIVIDUAL_PROGRAMME] [GSI] with(nolock)
 		on  [GSI].[DEAL_TYPE]		= @DealType
@@ -1129,20 +1328,20 @@ begin
 	end
 
 	/* 1.6. Prepare Deal with WNOS BEL*/
-	drop table if exists dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_WNOS_BEL]
+	truncate table dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_WNOS_BEL]
 	;
 
 	select @Sql1 = N';
 	declare @DealType 	int = 1
 		,	@CurrDate	date = GetDate()
 		,	@StsDeleted	int = dbo.SETBIT(cast(0 as binary(4)),  0, 1)
-		,	@REG_VNOS_BEL_BIS6 int = 63 /* #define REG_VNOS_BEL_BIS6 63 */		
+		,	@REG_VNOS_BEL_BIS6 int = 63 /* #define REG_VNOS_BEL_BIS6 63 */
 	;
 
+	insert into dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_WNOS_BEL] ( [DEAL_TYPE], [DEAL_NUM] )
 	select	[REG].[DEAL_TYPE]
 		,	[REG].[DEAL_NUM]
 
-	into dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_WNOS_BEL]
 	from dbo.[AGR_CASH_PAYMENTS_DEALS] [REG] with(nolock)
 	where EXISTS (
 		select	*
@@ -1174,7 +1373,7 @@ begin
 	end
 
 	/* 1.7. Prepare Deal with Distraint */
-	drop table if exists dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_DISTRAINT]
+	truncate table dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_DISTRAINT]
 	;
 
 	select @Sql1 = N';
@@ -1182,10 +1381,10 @@ begin
 		,	@StsBlockReasonDistraint int = dbo.SETBIT(cast(0 as binary(4)), 11, 1)	/* STS_BLOCK_REASON_DISTRAINT (11)*/ 
 	;
 
+	insert into dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_DISTRAINT] 
 	select	[REG].[DEAL_TYPE] 
 		,	[REG].[DEAL_NUM] 
 
-	into dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_DISTRAINT] 
 	from dbo.[AGR_CASH_PAYMENTS_DEALS] [REG] with(nolock) 
 	where EXISTS ( 
 		select TOP (1) *  
@@ -1216,7 +1415,7 @@ begin
 	end
 
 	/* 1.8. Prepare Deal with DORMUNT ACCOUNT */
-	drop table if exists dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_DORMUNT_ACCOUNT]
+	truncate table dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_DORMUNT_ACCOUNT]
 	;
 
 	select @Sql1 = N';
@@ -1224,10 +1423,10 @@ begin
 		,	@StsPART_IsSleepy int = dbo.SETBIT(cast(0 as binary(4)), 22, 1)	/* #define PART_IsSleepy (22) // Партидата е спяща(замразена) */
 	;
 
+	insert into dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_DORMUNT_ACCOUNT] 
 	select	[REG].[DEAL_TYPE] 
 		,	[REG].[DEAL_NUM] 
-
-	into dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_DORMUNT_ACCOUNT] 
+	
 	from dbo.[AGR_CASH_PAYMENTS_DEALS] [REG] with(nolock) 
 	where EXISTS ( 
 		select TOP (1) * 
@@ -1255,20 +1454,21 @@ begin
 	end	
 
 	/* 1.9. Prepare Deals Legal representative */
-	drop table if exists dbo.[AGR_CASH_PAYMENTS_DEALS_LEGAL_REPRESENTATIVE]
+	truncate table dbo.[AGR_CASH_PAYMENTS_DEALS_LEGAL_REPRESENTATIVE]
 	;
 
 	select @Sql1 = N';
 	declare @DealType int = 1 /* Razp deals */
 		,	@StsDeActivated int	= dbo.SETBIT(cast(0 as binary(4)), 12, 1)	/* #define STS_LIMIT_DEACTIVATED 12 (DeActivated) */
 	;
+
+	insert into dbo.[AGR_CASH_PAYMENTS_DEALS_LEGAL_REPRESENTATIVE]	
 	select	[D].[DEAL_TYPE]
 		,	[D].[DEAL_NUM]
 		,	[CRL].[REPRESENTED_CUSTOMER_ID] 
 		,	[CRL].[REPRESENTATIVE_CUSTOMER_ID] 
 		,	[CRL].[CUSTOMER_ROLE_TYPE] 
 
-	into dbo.[AGR_CASH_PAYMENTS_DEALS_LEGAL_REPRESENTATIVE]
 	from dbo.[AGR_CASH_PAYMENTS_DEALS] [D] with(nolock)
 	inner join '+@SqlFullDBName+'.dbo.[CUSTOMERS_RIGHTS_AND_LIMITS] [CRL] with(nolock) 
 		on  [CRL].[DEAL_TYPE]	= @DealType 
@@ -1305,9 +1505,9 @@ begin
 	,	@StsDeActivated int	= dbo.SETBIT(cast(0 as binary(4)), 12, 1)	/* #define STS_LIMIT_DEACTIVATED 12 (DeActivated) */
 	;
 	select	[D].[DEAL_TYPE]
-			,	[D].[DEAL_NUM]
-			,	[CRL].[REPRESENTATIVE_CUSTOMER_ID] 
-			,	[CRL].[CUSTOMER_ROLE_TYPE]
+		,	[D].[DEAL_NUM]
+		,	[CRL].[REPRESENTATIVE_CUSTOMER_ID] 
+		,	[CRL].[CUSTOMER_ROLE_TYPE]
 
 	into dbo.[AGR_CASH_PAYMENTS_DEALS_ACTIVE_PROXY_CUSTOMERS]
 	from dbo.[AGR_CASH_PAYMENTS_DEALS] [D] with(nolock)
@@ -1347,17 +1547,62 @@ begin
 	 	exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg
 	end
 
+	/* 1.11. Prepare Deal with NAR RAZP*/
+	truncate table dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_NAR_RAZP]
+	;
+
+	select @Sql1 = N';
+	declare @DealType 	int = 1
+		,	@CurrDate	date = GetDate()
+		,	@StsDeleted	int = dbo.SETBIT(cast(0 as binary(4)),  0, 1)
+		,	@REG_NAR_RAZSP_BIS6 int = 63 /* #define REG_NAR_RAZSP_BIS6 64 */		
+	;
+
+	insert into dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_NAR_RAZP] ( [DEAL_TYPE], [DEAL_NUM] )
+	select	[REG].[DEAL_TYPE]
+		,	[REG].[DEAL_NUM]
+
+	from dbo.[AGR_CASH_PAYMENTS_DEALS] [REG] with(nolock)
+	where EXISTS (
+		select	*
+		from '+@SqlFullDBName+'.dbo.[TRAITEMS_DAY] [T] with(nolock)
+		WHERE	[T].[DEAL_NUM]	= [REG].[DEAL_NUM]
+			and [T].[DEAL_TYPE] = @DealType
+			and	[T].[SUM_OPER] > 0
+			and [T].[SYS_DATE] >= @CurrDate
+			and [T].[REG_CODE_DEF] = @REG_NAR_RAZSP_BIS6
+			and ([T].[STATUS] & @StsDeleted) <> @StsDeleted
+	) '
+	;
+
+	begin try
+		exec sp_executeSql @Sql1
+	end try
+	begin catch
+		select  @Msg = dbo.FN_GET_EXCEPTION_INFO()
+		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg
+		return 2
+	end catch 
+
+	select @Rows = (select count(*) from dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_NAR_RAZP] with(nolock) ), @Err = @@ERROR;
+	if @LogTraceInfo = 1
+	begin 
+		select @Rows = IsNull(@Rows,0);
+		select @Msg = N'After: select * into dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_NAR_RAZP], Rows affected: ' + str(@Rows,len(@Rows),0);
+	 	exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg;
+	end
+
 	/**************************************************************/
 	/* 2. Prepare Customers data */
 
 	/* 2.1 Prepare all duplicate customers EGFN */
-	drop table if exists dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_DUBL_EGFN]
+	truncate table dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_DUBL_EGFN]
 	;	
 
 	select @Sql1 = N';
+	insert into dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_DUBL_EGFN] 
 	select  CAST(RIGHT(RTRIM([C].[IDENTIFIER]), 13) AS BIGINT) AS [EGFN]
 
-	into dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_DUBL_EGFN] 
 	from '+@SqlFullDBName+'.dbo.[DT015_CUSTOMERS] [C] WITH (NOLOCK)
 	where ISNUMERIC( [C].[IDENTIFIER] ) = 1 
 	group by CAST( RIGHT( RTRIM( [C].[IDENTIFIER] ), 13) AS BIGINT) 
@@ -1460,13 +1705,13 @@ begin
 	;	
 
 	/* 2.3 Prepare Customers with many client codes  */
-	drop table if exists dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_MANY_CLIENT_CODES]
+	truncate table dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_MANY_CLIENT_CODES]
 	;
 
 	select @Sql1 = N';
+	insert into dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_MANY_CLIENT_CODES]	
 	select	[CUST].[CUSTOMER_ID]
 
-	into dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_MANY_CLIENT_CODES]
 	from dbo.[AGR_CASH_PAYMENTS_CUSTOMERS] [CUST] with(nolock)
 	where EXISTS 
 	(
@@ -1495,14 +1740,14 @@ begin
 	end
 
 	/* 2.4 Prepare Customers with Dubl EGFN  */
-	drop table if exists dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_DUBL_EGFN]
+	truncate table dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_DUBL_EGFN]
 	;
 
 	select @Sql1 = N';
+	insert into dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_DUBL_EGFN]	
 	select	[C].[CUSTOMER_ID]
 		,	[X].[IS_ORIGINAL_EGFN]
 
-	into dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_DUBL_EGFN]
 	from dbo.[AGR_CASH_PAYMENTS_CUSTOMERS] [C] with(nolock)
 	inner join dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_DUBL_EGFN] [DUBL] with(nolock)
 		on [DUBL].[EGFN] = CAST(RIGHT(RTRIM([C].[CLIENT_IDENTIFIER]), 13) AS BIGINT)
@@ -1529,13 +1774,13 @@ begin
 	end
 
 	/* 2.5 Prepare Customers are proxies */
-	drop table if exists dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_ARE_PROXIES]
+	truncate table dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_ARE_PROXIES]
 	;
 
 	select @Sql1 = N';
+	insert into dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_ARE_PROXIES]	
 	select	[C].[CUSTOMER_ID]
 
-	into dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_ARE_PROXIES]
 	from dbo.[AGR_CASH_PAYMENTS_CUSTOMERS] [C] with(nolock)
 	where EXISTS 
 	(
@@ -1564,16 +1809,16 @@ begin
 	end
 
 	/* 2.6 Prepare Customers with valid IDENTITY DOCUMENTS */
-	drop table if exists dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_VALID_IDENTITY_DOCUMENTS]
+	truncate table dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_VALID_IDENTITY_DOCUMENTS]
 	;
 
 	set @Sql1 = N'
 	declare @DateAcc date = '+@AccountDate+'
 	;
 
+	insert into dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_VALID_IDENTITY_DOCUMENTS]
 	select	[C].[CUSTOMER_ID]
 
-	into dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_VALID_IDENTITY_DOCUMENTS]
 	from dbo.[AGR_CASH_PAYMENTS_CUSTOMERS] [C] with(nolock)
 	where EXISTS 
 	(
@@ -1605,13 +1850,13 @@ begin
 	end	
 
 	/* 2.7 Prepare Customers with Active Loas */
-	drop table if exists dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_LOANS]
+	truncate table dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_LOANS]
 	;
 
 	select @Sql1 = N';
+	insert into dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_LOANS]	
 	select	[CUST].[CUSTOMER_ID]
 
-	into dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_LOANS]
 	from dbo.[AGR_CASH_PAYMENTS_CUSTOMERS] [CUST] with(nolock)
 	where EXISTS 
 	(
@@ -1794,6 +2039,14 @@ begin
 	;
 
 	update [D]
+	set [HAS_NAR_RAZP] = 1
+	from dbo.[AGR_CASH_PAYMENTS_DEALS] [D]
+	inner join dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_NAR_RAZP] [S] with(nolock)
+		on [S].[DEAL_NUM] = [D].[DEAL_NUM]
+		and [S].[DEAL_TYPE] = 1
+	;
+
+	update [D]
 	set [IS_DORMUNT_ACCOUNT] = 1
 	from dbo.[AGR_CASH_PAYMENTS_DEALS] [D]
 	inner join dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_DORMUNT_ACCOUNT] [S] with(nolock)
@@ -1848,6 +2101,290 @@ end
 go
 
 
+/********************************************************************************************************/
+/* Процедура за актуализация на дневните салда в TA базата, след обработка на тестови случай */
+DROP PROCEDURE IF EXISTS dbo.[SP_CASH_PAYMENTS_UPDATE_ACCOUNTS_DAY_OPERATION_BAL]
+GO
+
+CREATE PROCEDURE dbo.[SP_CASH_PAYMENTS_UPDATE_ACCOUNTS_DAY_OPERATION_BAL]
+(
+	@TestCaseRowID  int
+,   @UpdateMode     int = 1
+)
+AS 
+begin
+
+	declare @LogBegEndProc int = 1,	@TimeBeg datetime = GetDate();
+	;
+	declare @Msg nvarchar(max) = N'', @Sql nvarchar(4000) = N'', @Ret int = 0
+        ,	@RowIdStr nvarchar(8) = STR(@TestCaseRowID,LEN(@TestCaseRowID),0)
+	;
+	/************************************************************************************************************/
+	/* 1. Log Begining of Procedure execution */
+	if @LogBegEndProc = 1 
+	begin	
+		select @Sql = 'dbo.[SP_CASH_PAYMENTS_UPDATE_ACCOUNTS_DAY_OPERATION_BAL] @RowIdStr = '+@RowIdStr
+					+', @UpdateMode = '+str(@UpdateMode, len(@UpdateMode),0)
+			,  @Msg =  '*** Begin Execute Proc ***: dbo.[SP_CASH_PAYMENTS_UPDATE_ACCOUNTS_DAY_OPERATION_BAL]'
+		;
+		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql, @Msg
+	end
+
+	/************************************************************************************************************/
+	/* 2. Find TA Conditions: */
+	if not exists (select * from dbo.[VIEW_CASH_PAYMENTS_CONDITIONS] with(nolock) where [ROW_ID] = IsNull(@TestCaseRowID, -1))
+	begin 
+		select  @Msg = N'Error not found condition with [ROW_ID] :' + @RowIdStr
+			,	@Sql = N'select * from dbo.[VIEW_CASH_PAYMENTS_CONDITIONS] with(nolock) where [ROW_ID] = IsNull('+@RowIdStr+', -1)'
+		;
+		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql, @Msg
+		return -1;
+	end
+	
+    declare @DB_TYPE         varchar(256) = N''
+        ,   @DEAL_ROW_ID     int = -1 /* Main accoutn row id */
+        ,   @CORS_ROW_ID     int = -1 /* Tax accoutn row id */
+        ,   @DEAL_BEN_ROW_ID int = -1 /* Ben accoutn row id */
+    ;
+	select	@DB_TYPE            = [DB_TYPE]
+        ,   @DEAL_ROW_ID        = IsNull([DEAL_ROW_ID], -1)
+		,	@CORS_ROW_ID        = IsNull([CORS_ROW_ID], -1)
+        ,   @DEAL_BEN_ROW_ID    = IsNull([DEAL_BEN_ROW_ID],-1)
+	from dbo.[VIEW_CASH_PAYMENTS_CONDITIONS] with(nolock) where [ROW_ID] = IsNull(@TestCaseRowID, -1)
+	;
+
+	/************************************************************************************************************/
+	/* 3. Get Datasources: */
+	declare @OnlineSqlServerName sysname = N'',	@OnlineSqlDataBaseName sysname = N'', @DB_ALIAS sysname = N'VCS_OnlineDB'
+	;
+	exec @Ret = dbo.[SP_CASH_PAYMENTS_GET_DATASOURCE] @DB_TYPE, @DB_ALIAS, @OnlineSqlServerName out, @OnlineSqlDataBaseName out
+	if @Ret <> 0
+	begin
+		select  @Msg = N'Error execute proc, Error code: '+str(@Ret,len(@Ret),0)
+					+' ; Result: @OnlineSqlServerName = "'+@OnlineSqlServerName+'", @OnlineSqlDataBaseName = "'+@OnlineSqlDataBaseName+'"'
+			,	@Sql = N'exec dbo.[SP_SYS_GET_ACCOUNT_DATE_FROM_DB] @DB_TYPE = '
+					+ @DB_TYPE  +N', @DB_ALIAS = '+ @DB_ALIAS +N', @OnlineSqlServerName OUT, @OnlineSqlDataBaseName OUT'
+		;
+		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql, @Msg
+		return -2;
+	end
+
+	/************************************************************************************************************/
+	/* 4. Load Accounts from test cases and Update day operation balance : */
+	create table #TBL_RESULT
+	(
+		[ACCOUNT]		varchar(64)
+	,	[PART_TYPE]		int
+	,	[DAY_SALDO]		float
+    );
+
+    declare @Row_id     int = -1
+        ,   @Deal_Type  int = 1
+        ,   @Deal_Num   int = -1
+        ,   @Account    varchar(64) = N''
+        ,   @Acc_Type   int = 3 /* Pasive */
+        ,   @UpdAccont  int = IsNull(@UpdateMode,0);
+    ;
+
+    /******************************************************************/
+    /* 4.1. Main Account: */
+    if IsNull(@DEAL_ROW_ID,-1) > 0 
+    begin 
+		begin try
+			exec @Ret = dbo.[SP_CASH_PAYMENTS_UPDATE_ACCOUNT_DAY_OPERATION_BALANCE] @OnlineSqlServerName 
+				, @OnlineSqlDataBaseName, @TestCaseRowID, @DEAL_ROW_ID, N'RAZPREG_TA', @UpdAccont
+		end try
+		begin catch
+    		select @Msg = dbo.FN_GET_EXCEPTION_INFO();
+	    	exec dbo.SP_SYS_LOG_PROC @@PROCID, 'dbo.[SP_CASH_PAYMENTS_UPDATE_ACCOUNT_DAY_OPERATION_BALANCE] @MainAccount', @Msg
+		    return 1;
+		end catch
+    end
+
+    /******************************************************************/
+    /* 4.2. Ben Account: */    
+    if IsNull(@DEAL_BEN_ROW_ID,-1) > 0 and (IsNull(@DEAL_ROW_ID,-1) != IsNull(@DEAL_BEN_ROW_ID,-2))
+    begin 
+		begin try
+			exec @Ret = dbo.[SP_CASH_PAYMENTS_UPDATE_ACCOUNT_DAY_OPERATION_BALANCE] @OnlineSqlServerName 
+				, @OnlineSqlDataBaseName, @TestCaseRowID, @DEAL_BEN_ROW_ID, N'RAZPREG_TA', @UpdAccont
+		end try
+		begin catch
+    		select @Msg = dbo.FN_GET_EXCEPTION_INFO();
+	    	exec dbo.SP_SYS_LOG_PROC @@PROCID, 'dbo.[SP_CASH_PAYMENTS_UPDATE_ACCOUNT_DAY_OPERATION_BALANCE] @BenAccount', @Msg
+		    return 2;
+		end catch
+    end
+
+    /******************************************************************/
+    /* 4.3. Corespondent Account: */
+    if IsNull(@CORS_ROW_ID,-1) > 0
+    begin 
+		begin try
+			exec @Ret = dbo.[SP_CASH_PAYMENTS_UPDATE_ACCOUNT_DAY_OPERATION_BALANCE] @OnlineSqlServerName 
+				, @OnlineSqlDataBaseName, @TestCaseRowID, @CORS_ROW_ID, N'DEALS_CORR_TA', @UpdAccont
+		end try
+		begin catch
+    		select @Msg = dbo.FN_GET_EXCEPTION_INFO();
+	    	exec dbo.SP_SYS_LOG_PROC @@PROCID, 'dbo.[SP_CASH_PAYMENTS_UPDATE_ACCOUNT_DAY_OPERATION_BALANCE] @CorespondentAccount', @Msg
+		    return 3;
+		end catch
+    end
+
+	/************************************************************************************************************/
+	/* Log End Of Procedure */
+	if @LogBegEndProc = 1
+	begin 
+		select @Msg = 'Duration: '+ dbo.FN_GET_TIME_DIFF(@TimeBeg, GetDate()) + '; TA Row ID: ' + @RowIdStr;
+		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Msg, '*** End Execute Proc ***: dbo.dbo.[SP_CASH_PAYMENTS_UPDATE_ACCOUNTS_DAY_OPERATION_BAL]'
+	end
+
+    return 0;
+end    
+GO
+/********************************************************************************************************/
+/* Процедура за актуализация на дневните салда в TA базата, след обработка на тестови случай */
+DROP PROCEDURE IF EXISTS dbo.[SP_CASH_PAYMENTS_UPDATE_ACCOUNT_DAY_OPERATION_BALANCE]
+GO
+
+CREATE PROCEDURE dbo.[SP_CASH_PAYMENTS_UPDATE_ACCOUNT_DAY_OPERATION_BALANCE]
+(
+    @OnlineSqlServerName    sysname
+,	@OnlineSqlDataBaseName  sysname    
+,	@TestCaseRowID          int
+,   @DEAL_ROW_ID            int 
+,   @REG_NAME               sysname = N''
+,   @UPDATE_MODE            int = 1
+)
+AS 
+begin
+
+	declare @LogTraceInfo int = 0,	@LogBegEndProc int = 1,	@TimeBeg datetime = GetDate();
+	;
+	declare @Msg nvarchar(max) = N'', @Sql nvarchar(4000) = N'', @Ret int = 0
+        ,	@RowIdStr nvarchar(8) = STR(@TestCaseRowID,LEN(@TestCaseRowID),0)
+	;
+	/************************************************************************************************************/
+	/* 1. Log Begining of Procedure execution */
+	if @LogBegEndProc = 1 
+	begin	
+		select @Sql = 'dbo.[SP_CASH_PAYMENTS_UPDATE_ACCOUNT_DAY_OPERATION_BALANCE] @OnlineSqlServerName = '''+@OnlineSqlServerName+''''
+				+ N', @OnlineSqlDataBaseName = '''+@OnlineSqlDataBaseName+''''
+				+ N', @TestCaseRowID = '+@RowIdStr
+				+ N', @DEAL_ROW_ID = ' + str(@DEAL_ROW_ID,len(@DEAL_ROW_ID), 0)
+				+ N', @REG_NAME = ''' + @REG_NAME +''''
+				+ N', @UPDATE_MODE = ' + str(@UPDATE_MODE,len(@UPDATE_MODE), 0)
+			,  @Msg =  '*** Begin Execute Proc ***: dbo.[SP_CASH_PAYMENTS_UPDATE_ACCOUNT_DAY_OPERATION_BALANCE]'
+		;
+		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql, @Msg
+	end
+
+	/************************************************************************************************************/
+	/* 2. Load Account from ROW_ID */
+    declare @Row_id     int = -1
+        ,   @Deal_Type  int = 1
+        ,   @Deal_Num   int = -1
+        ,   @Account    varchar(64) = N''
+        ,   @Acc_Type   int = 3 /* Pasive */
+        ,   @UpdAccont  int = @UPDATE_MODE
+		,	@DayAccBal	float = 0.0;
+    ;
+
+    declare @OutputUpdateTbl Table ( [ACCOUNT] varchar(64), [DAY_SALDO] float )
+    ;
+
+    /* 2.1. Find Account by ROW_ID */
+    if IsNull(@DEAL_ROW_ID,-1) > 0
+    begin
+        if @REG_NAME = N'RAZPREG_TA'
+        begin
+            select  @Row_id     = [ROW_ID] 
+                ,   @Deal_Type  = 1
+                ,   @Deal_Num   = [UI_DEAL_NUM]
+                ,   @Account    = replace([DB_ACCOUNT], ' ','')
+                ,   @Acc_Type   = 3 /* Pasive */
+            from dbo.[RAZPREG_TA] [REG] with(nolock)
+            where [REG].[ROW_ID] in ( @DEAL_ROW_ID )
+            ;
+        end
+        else if @REG_NAME = N'DEALS_CORR_TA'
+        begin
+            select  @Row_id     = [ROW_ID] 
+                ,   @Deal_Type  = [UI_DEAL_TYPE]
+                ,   @Deal_Num   = [DEAL_NUM]
+                ,   @Account    = replace([UI_CORR_ACCOUNT], ' ','')
+                ,   @Acc_Type   = 3 /* Pasive */
+            from dbo.[DEALS_CORR_TA] [REG] with(nolock)
+            where [REG].[ROW_ID] in ( @DEAL_ROW_ID )
+            ;
+        end
+    end
+
+    if IsNull(@Row_id,-1) <= 0
+    begin
+        select  @Msg = 'Can''t find account by ROW_ID: '+str(@Row_id,len(@Row_id),0)+', Register: '+ @REG_NAME +'.'
+            ,   @Sql = 'select  @Account = .. from '+@REG_NAME+' where [ROW_ID] IN ('+str(@Row_id,len(@Row_id),0)+') '
+        exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql, @Msg;
+        return 1;
+    end
+
+    /* 2.2. Get day operation balance from OnlineDb: */
+    begin try 
+        insert into #TBL_RESULT ( [ACCOUNT], [PART_TYPE], [DAY_SALDO] )
+        exec @Ret = dbo.[SP_LOAD_ONLINE_ACCOUNT_DAY_OPERATION_BALANCE] @OnlineSqlServerName
+            , @OnlineSqlDataBaseName
+            , @Account
+            , @Acc_Type
+    end try 
+    begin catch 
+        select @Msg = dbo.FN_GET_EXCEPTION_INFO();
+        exec dbo.SP_SYS_LOG_PROC @@PROCID, 'insert into #TBL_RESULT  ... for Main account', @Msg;
+        return 2;
+    end catch 
+
+    if @Ret <> 0
+    begin 
+        select @Sql = 'exec @Ret = Sql: dbo.[SP_LOAD_ONLINE_ACCOUNT_DAY_OPERATION_BALANCE] '
+                + '@OnlineSqlServerName = '+ @OnlineSqlServerName
+                + '@OnlineSqlDataBaseName = '+ @OnlineSqlDataBaseName
+                + '@Account = '+ @Account
+                + '@AccType = '+ str(@Acc_Type,len(@Acc_Type), 0)
+                + '@LogTrace = 1'
+            , @Msg = 'Error '+str(@Ret,len(@Ret),0)+' execute sql for test case ID: '+@RowIdStr
+                + ', Account: '+@Account 
+                + ', @DEAL_ROW_ID = '+str(@DEAL_ROW_ID,len(@DEAL_ROW_ID),0)
+        ;
+        exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql, @Msg
+        return 2;
+    end
+
+    /* 2.3. Update Account day operation balance in table: */
+    if @UpdAccont = 1 and exists (select * from #TBL_RESULT  where [ACCOUNT] = @Account)
+        update [D]
+            set [DAY_OPERATION_BALANCE] = [S].[DAY_SALDO]
+            output [S].[ACCOUNT], INSERTED.[DAY_OPERATION_BALANCE] into @OutputUpdateTbl
+        from dbo.[AGR_CASH_PAYMENTS_DEALS] [D]
+        inner join #TBL_RESULT  [S]
+            on [S].[ACCOUNT] = [D].[DEAL_ACCOUNT]
+    ;
+
+	/************************************************************************************************************/
+	/* Log End Of Procedure */
+	if @LogBegEndProc = 1
+	begin
+		select @DayAccBal = [DAY_SALDO] from #TBL_RESULT where [ACCOUNT] = @Account;
+		select @Msg = 'Duration: '+ dbo.FN_GET_TIME_DIFF(@TimeBeg, GetDate())
+			+ '; TA Row ID: ' + @RowIdStr
+			+ '; Account: '+ @Account
+			+ '; balance: '+str(@DayAccBal, 12,2)
+			+ '; Upate mode: '+str(@UpdAccont, len(@UpdAccont),0)
+		;
+		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Msg, '*** End Execute Proc ***: dbo.dbo.[SP_CASH_PAYMENTS_UPDATE_ACCOUNT_DAY_OPERATION_BALANCE]'
+	end
+
+    return 0;
+end    
+GO
 /**********************************************************************************************************/
 /* Процедура за актуализация данните в на Таблица dbo.[DT015_CUSTOMERS_ACTIONS_TA] за титуляра и Proxy-то*/
 DROP PROCEDURE IF EXISTS dbo.[SP_CASH_PAYMENTS_UPDATE_CLIENT_DATA]
@@ -3417,17 +3954,29 @@ begin
 		end 
 	end
 
-	-- Да няма осчетоводено вносни бележки по сделката: @RUNNING_ORDER = 1 and @TYPE_ACTION = ''
+	-- Да няма осчетоводено 'Вносни Бележки' по сделката: @RUNNING_ORDER = 1 and @TYPE_ACTION = ''
 	if @TYPE_ACTION = 'CashPayment' and IsNull(@RUNNING_ORDER,-1) = 1
 	begin
 		select @Sql2 = ' AND [DEAL].[HAS_WNOS_BEL] = ' + (case when @RUNNING_ORDER > 1 then '1' else '0' end)  + @CrLf;
 
 		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 		select	@Sql2
-			,	'[TYPE_ACTION] = CashPayment and [RUNNING_ORDER] : ' + str(@RUNNING_ORDER,len(@RUNNING_ORDER),0);
+			,	'[TYPE_ACTION] = ''CashPayment'' and [RUNNING_ORDER] : ' + str(@RUNNING_ORDER,len(@RUNNING_ORDER),0);
 
 		select @Sql += @Sql2
 	end
+
+	-- Да няма осчетоводено 'Нареждане Разписка' по сделката: @RUNNING_ORDER = 1 and @TYPE_ACTION = ''
+	if @TYPE_ACTION = 'CashW' and IsNull(@RUNNING_ORDER,-1) = 1
+	begin
+		select @Sql2 = ' AND [DEAL].[HAS_NAR_RAZP] = ' + (case when @RUNNING_ORDER > 1 then '1' else '0' end)  + @CrLf;
+
+		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
+		select	@Sql2
+			,	'[TYPE_ACTION] = ''CashW'' and [RUNNING_ORDER] : ' + str(@RUNNING_ORDER,len(@RUNNING_ORDER),0);
+
+		select @Sql += @Sql2
+	end	
 
 	-- Да укаже дали сметката е кореспондираща до други сделки: -1 няма значение; 0 не е; 1 да , кореспондираща е
 	if IsNull(@IS_CORR,-1) in ( 0, 1 )
@@ -3574,7 +4123,11 @@ begin
 	;
 	/************************************************************************************************************/
 	/* Log Begining of Procedure execution */
-	if @LogBegEndProc = 1 exec dbo.SP_SYS_LOG_PROC @@PROCID, '', N'*** Begin Execute Proc ***: dbo.[SP_CASH_PAYMENTS_GET_DATASOURCE]'
+	if @LogBegEndProc = 1 
+	begin
+		select @Sql = 'dbo.[SP_CASH_PAYMENTS_GET_DATASOURCE] @DB_TYPE = '''+@DB_TYPE+''', @DB_ALIAS = '''+@DB_ALIAS+''''
+		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql, N'*** Begin Execute Proc ***: dbo.[SP_CASH_PAYMENTS_GET_DATASOURCE]'
+	end 
 	;
 
 	/************************************************************************************************************/
@@ -3606,6 +4159,8 @@ begin
 	if @LogBegEndProc = 1
 	begin 
 		select @Msg = N'Duration: '+ dbo.FN_GET_TIME_DIFF(@TimeBeg, GetDate())
+			+ N'; @OnlineSqlServerName = '''+ @OnlineSqlServerName+''' out '
+			+ N'; @OnlineSqlDataBaseName = '''+ @OnlineSqlDataBaseName+''' out ';
 		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Msg, N'*** End Execute Proc ***: dbo.dbo.[SP_CASH_PAYMENTS_GET_DATASOURCE]'
 	end
 
@@ -3613,6 +4168,112 @@ begin
 end 
 go
 
+/********************************************************************************************************/
+/* Процедура за зареждане на дневните обороти от OnLineDB по сметка */
+DROP PROCEDURE IF EXISTS dbo.[SP_LOAD_ONLINE_ACCOUNT_DAY_OPERATION_BALANCE]
+GO
+
+CREATE PROCEDURE dbo.[SP_LOAD_ONLINE_ACCOUNT_DAY_OPERATION_BALANCE]
+(
+	@OnlineSqlServerName	sysname
+,	@OnlineSqlDataBaseName	sysname
+,	@Account                varchar(64)
+,	@PartType               tinyint = 3
+)
+AS 
+begin
+
+	declare @LogBegEndProc int = 1,	@TimeBeg datetime = GetDate();
+	;
+	declare @Msg nvarchar(max) = N'', @Sql1 nvarchar(4000) = N'', @Ret int = 0
+	;
+	/************************************************************************************************************/
+	/* 1. Log Begining of Procedure execution */
+	if @LogBegEndProc = 1 
+	begin	
+		select @Sql1 = 'dbo.[SP_LOAD_ONLINE_ACCOUNT_DAY_OPERATION_BALANCE] @OnlineSqlServerName = '''+@OnlineSqlServerName+''''
+					+', @OnlineSqlDataBaseName = '''+@OnlineSqlDataBaseName+''''
+                    +', @Account = ''' + @Account+'''' 
+                    +', @PartType = ' + str(@PartType,len(@PartType),0)
+			,  @Msg =  '*** Begin Execute Proc ***: dbo.[SP_LOAD_ONLINE_ACCOUNT_DAY_OPERATION_BALANCE]'
+		;
+		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg
+	end
+
+	/************************************************************************************************************/
+	/* 2. Prepare Sql Server full database name */
+	IF LEN(@OnlineSqlServerName) > 1 AND LEFT(RTRIM(@OnlineSqlServerName),1) <> N'['
+		select @OnlineSqlServerName = QUOTENAME(@OnlineSqlServerName)
+
+	IF LEN(@OnlineSqlDataBaseName) > 1 AND LEFT(RTRIM(@OnlineSqlDataBaseName),1) <> N'['
+		select @OnlineSqlDataBaseName = QUOTENAME(@OnlineSqlDataBaseName)	
+
+	declare @SqlFullDBName sysname = @OnlineSqlServerName +'.'+@OnlineSqlDataBaseName
+    ;
+	/************************************************************************************************************/
+	/* 3. Prepare Sql statement */
+    declare @AccountParam varchar(64) = ''''+ @Account+ '''';
+
+	select @Sql1 = 
+    N'DECLARE @Account varchar(32) = '+@AccountParam+'
+        ,	@PartType int = '+str(@PartType,len(@PartType),0)+'
+    ;
+    with [ACC] AS (
+        SELECT	[ACC].[ACCOUNT]
+            ,	[ACC].[PART_TYPE]
+        FROM ( VALUES (@Account, @PartType) ) as [ACC]( [ACCOUNT], [PART_TYPE] )
+    ) 
+    select	[ACC].[ACCOUNT]
+        ,	[ACC].[PART_TYPE]
+        ,	cast([BAL].[DAY_SALDO] as float)	as [DAY_OPERATION_BALANCE]
+    from [ACC] with(nolock)
+    left outer join '+@SqlFullDBName+'.dbo.[DAY_MOVEMENTS] [DM] with(nolock)
+        on	[DM].[IDENT] = [ACC].[ACCOUNT]
+    left outer join '+@SqlFullDBName+'.dbo.[FUTURE_MOVEMENTS] [FM] with(nolock)
+        on	[FM].[IDENT] = [ACC].[ACCOUNT]
+    cross apply (
+        SELECT CASE WHEN [ACC].[PART_TYPE] IN (1,2, 5)
+                        THEN IsNull([DM].[VP_DBT], 0) - IsNull([DM].[VP_KRT], 0)
+                                -	( IsNull(-[DM].[VNR_DBT], 0) + IsNull(-[FM].[VNR_DBT], 0) 
+                                    + IsNull( [DM].[VNB_KRT], 0) + IsNull( [FM].[VNB_KRT], 0) )
+
+                        ELSE IsNull([DM].[VP_KRT], 0) - IsNull([DM].[VP_DBT], 0)
+                                -	( IsNull(-[DM].[VNR_KRT], 0) + IsNull(-[FM].[VNR_KRT], 0) 
+                                    + IsNull( [DM].[VNB_DBT], 0) + IsNull( [FM].[VNB_DBT], 0) )
+                    END AS [DAY_SALDO]	
+    ) [BAL]
+    ';
+
+	/************************************************************************************************************/
+	/* 4. Execute SQL statement */
+	begin try
+		exec @Ret = sp_executeSql @Sql1
+	end try
+	begin catch 
+		select  @Msg = dbo.FN_GET_EXCEPTION_INFO()
+		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg
+		if @@TRANCOUNT > 1 ROLLBACK;
+		return 1;
+	end catch
+
+    if @Ret <> 0
+    begin 
+		select  @Msg = N'Error '+str(@Ret,len(@Ret),0)+' execute Sql';
+	 	exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg            
+		return 2;
+    end
+
+	/************************************************************************************************************/
+	/* Log End Of Procedure */
+	if @LogBegEndProc = 1
+	begin 
+		select @Msg = 'Duration: '+ dbo.FN_GET_TIME_DIFF(@TimeBeg, GetDate())+'; @Account: '+ @Account + '; @PartType = '+str(@PartType,len(@PartType),0);
+		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Msg, '*** End Execute Proc ***: dbo.dbo.[SP_LOAD_ONLINE_ACCOUNT_DAY_OPERATION_BALANCE]'
+	end
+
+	return 0;
+end
+GO
 /********************************************************************************************************/
 /* Процедура за зареждане на Клиентски данни от OnLineDB по CustomerID */
 DROP PROCEDURE IF EXISTS dbo.[SP_LOAD_ONLINE_CLIENT_DATA]
@@ -4388,10 +5049,18 @@ CREATE FUNCTION dbo.FN_GET_TIME_DIFF( @TimeBeg DateTime, @TimeEnd DateTime )
 	RETURNS VARCHAR(64)
 AS 
 BEGIN
-	DECLARE @Result varchar(32) = '', @MiliSec BigInt = DATEDIFF(ms, @TimeBeg, @TimeEnd) 
-    ;
-    select @Result = CONVERT(VARCHAR(32), (@MiliSec / 86400000)) + ':' 
-            + right(CONVERT(VARCHAR(32), DATEADD(ms, @MiliSec, 0), 121),12);
+	declare @Result		varchar(32) = ''
+		,	@MiliSec	bigint		= 0
+		,	@DiffDais	bigint		= DATEDIFF(dd, @TimeBeg, @TimeEnd)
+	;
+	if @DiffDais > 1
+		select @TimeBeg = cast(@TimeBeg as time), @TimeEnd = cast(@TimeEnd as time)
+	;
+	select @MiliSec = datediff(ms, @TimeBeg, @TimeEnd) 
+	;
+	select @Result = str(@DiffDais,len(@DiffDais),0) 
+		+ ':' + right(convert(varchar(32), dateadd(ms, @MiliSec, 0), 121),12)
+	;
 
     return @Result;
 END

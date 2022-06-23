@@ -20,7 +20,11 @@ begin
 	;
 	/************************************************************************************************************/
 	/* Log Begining of Procedure execution */
-	if @LogBegEndProc = 1 exec dbo.SP_SYS_LOG_PROC @@PROCID, '', N'*** Begin Execute Proc ***: dbo.[SP_CASH_PAYMENTS_GET_DATASOURCE]'
+	if @LogBegEndProc = 1 
+	begin
+		select @Sql = 'dbo.[SP_CASH_PAYMENTS_GET_DATASOURCE] @DB_TYPE = '''+@DB_TYPE+''', @DB_ALIAS = '''+@DB_ALIAS+''''
+		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql, N'*** Begin Execute Proc ***: dbo.[SP_CASH_PAYMENTS_GET_DATASOURCE]'
+	end 
 	;
 
 	/************************************************************************************************************/
@@ -52,6 +56,8 @@ begin
 	if @LogBegEndProc = 1
 	begin 
 		select @Msg = N'Duration: '+ dbo.FN_GET_TIME_DIFF(@TimeBeg, GetDate())
+			+ N'; @OnlineSqlServerName = '''+ @OnlineSqlServerName+''' out '
+			+ N'; @OnlineSqlDataBaseName = '''+ @OnlineSqlDataBaseName+''' out ';
 		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Msg, N'*** End Execute Proc ***: dbo.dbo.[SP_CASH_PAYMENTS_GET_DATASOURCE]'
 	end
 

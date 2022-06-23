@@ -247,6 +247,7 @@ begin
 			,	CAST( 0 AS bit ) 						AS [HAS_DISTRAINT]
 			,	CAST( 0 AS bit ) 						AS [HAS_GS_INDIVIDUAL_PROGRAMME]
 			,	CAST( 0 AS bit ) 						AS [HAS_WNOS_BEL]
+			,	CAST( 0 AS bit ) 						AS [HAS_NAR_RAZP]
 			,	CAST( 0 AS bit ) 						AS [IS_DORMUNT_ACCOUNT]
 	) [EX_BITS]
 	cross apply (
@@ -308,7 +309,7 @@ begin
 	;	
 
 	/* 1.3. Prepare TAX UNCOLECTED  */
-	drop table if exists dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_TAX_UNCOLECTED]
+	truncate table dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_TAX_UNCOLECTED]
 	;
 
 	select @Sql1 = N';
@@ -316,10 +317,10 @@ begin
 		,	@TaxActive int = 0 /* enum eTaxUncollectedStatus: eTaxActive = 1*/
 	;
 
+	insert into dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_TAX_UNCOLECTED]
 	select	[REG].[DEAL_TYPE]
 		,	[REG].[DEAL_NUM]
 
-	into dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_TAX_UNCOLECTED]
 	from DBO.[AGR_CASH_PAYMENTS_DEALS] [REG] with(nolock)
 	where EXISTS (
 		select	*
@@ -347,14 +348,16 @@ begin
 	end
 
 	/* 1.4. Prepare Deal with Other Tax Account */
-	drop table if exists dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_OTHER_TAX_ACCOUNT]
+	truncate table dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_OTHER_TAX_ACCOUNT]
 	;
 
 	select @Sql1 = N';
 	declare @DealType int = 1
 		,	@CorreCapitAccount int = 1 /* eCapitAccount (1) */
 		,	@CorrTaxServices int = 3 /* eTaxServices (3) */
+	;
 
+	insert into dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_OTHER_TAX_ACCOUNT]
 	select	[REG].[DEAL_TYPE]
 		,	[REG].[DEAL_NUM]
 		,	[C].[CORR_ACCOUNT]
@@ -363,7 +366,6 @@ begin
 		,	[ACC].[BLK_SUMA_MIN]
 		,	[BAL].[DAY_SALDO] 				AS [DAY_OPERATION_BALANCE] /* Day operation balance */
 
-	into dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_OTHER_TAX_ACCOUNT]
 	from DBO.[AGR_CASH_PAYMENTS_DEALS] [REG] with(nolock)
 	inner join '+@SqlFullDBName+'.dbo.[DEALS_CORR] [C] with(nolock)
 		on  [C].[CORR_TYPE]		= @CorrTaxServices
@@ -410,20 +412,20 @@ begin
 	end
 
 	/* 1.5. Prepare Deal with Group Sales INDIVIDUAL PROGRAMME */
-	drop table if exists dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_GS_INDIVIDUAL_PROGRAMME]
+	truncate table dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_GS_INDIVIDUAL_PROGRAMME]
 	;
 
 	select @Sql1 = N';
 	declare @DealType int = 1
 		,	@GSActive int = 1 /* enum eGS_STATUS: GSActive = 1 */
 	;
+	insert into dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_GS_INDIVIDUAL_PROGRAMME]	
 	select	[REG].[DEAL_TYPE]
 		,	[REG].[DEAL_NUM]	
 		,	[GSI].[PROGRAMME_CODE]					AS [DEAL_GS_INDIVIDUAL_PROGRAM_CODE]
 		,	[GSI].[PRODUCT_CODE]					AS [DEAL_GS_INDIVIDUAL_PRODUCT_CODE]
 		,	[GSI].[CARD_PRODUCT]					AS [DEAL_GS_INDIVIDUAL_CARD_PRODUCT]
 
-	into dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_GS_INDIVIDUAL_PROGRAMME]
 	from DBO.[AGR_CASH_PAYMENTS_DEALS] [REG] with(nolock)
 	inner join '+@SqlFullDBName+'.dbo.[GS_INDIVIDUAL_PROGRAMME] [GSI] with(nolock)
 		on  [GSI].[DEAL_TYPE]		= @DealType
@@ -448,20 +450,20 @@ begin
 	end
 
 	/* 1.6. Prepare Deal with WNOS BEL*/
-	drop table if exists dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_WNOS_BEL]
+	truncate table dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_WNOS_BEL]
 	;
 
 	select @Sql1 = N';
 	declare @DealType 	int = 1
 		,	@CurrDate	date = GetDate()
 		,	@StsDeleted	int = dbo.SETBIT(cast(0 as binary(4)),  0, 1)
-		,	@REG_VNOS_BEL_BIS6 int = 63 /* #define REG_VNOS_BEL_BIS6 63 */		
+		,	@REG_VNOS_BEL_BIS6 int = 63 /* #define REG_VNOS_BEL_BIS6 63 */
 	;
 
+	insert into dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_WNOS_BEL] ( [DEAL_TYPE], [DEAL_NUM] )
 	select	[REG].[DEAL_TYPE]
 		,	[REG].[DEAL_NUM]
 
-	into dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_WNOS_BEL]
 	from dbo.[AGR_CASH_PAYMENTS_DEALS] [REG] with(nolock)
 	where EXISTS (
 		select	*
@@ -493,7 +495,7 @@ begin
 	end
 
 	/* 1.7. Prepare Deal with Distraint */
-	drop table if exists dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_DISTRAINT]
+	truncate table dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_DISTRAINT]
 	;
 
 	select @Sql1 = N';
@@ -501,10 +503,10 @@ begin
 		,	@StsBlockReasonDistraint int = dbo.SETBIT(cast(0 as binary(4)), 11, 1)	/* STS_BLOCK_REASON_DISTRAINT (11)*/ 
 	;
 
+	insert into dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_DISTRAINT] 
 	select	[REG].[DEAL_TYPE] 
 		,	[REG].[DEAL_NUM] 
 
-	into dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_DISTRAINT] 
 	from dbo.[AGR_CASH_PAYMENTS_DEALS] [REG] with(nolock) 
 	where EXISTS ( 
 		select TOP (1) *  
@@ -535,7 +537,7 @@ begin
 	end
 
 	/* 1.8. Prepare Deal with DORMUNT ACCOUNT */
-	drop table if exists dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_DORMUNT_ACCOUNT]
+	truncate table dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_DORMUNT_ACCOUNT]
 	;
 
 	select @Sql1 = N';
@@ -543,10 +545,10 @@ begin
 		,	@StsPART_IsSleepy int = dbo.SETBIT(cast(0 as binary(4)), 22, 1)	/* #define PART_IsSleepy (22) // Партидата е спяща(замразена) */
 	;
 
+	insert into dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_DORMUNT_ACCOUNT] 
 	select	[REG].[DEAL_TYPE] 
 		,	[REG].[DEAL_NUM] 
-
-	into dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_DORMUNT_ACCOUNT] 
+	
 	from dbo.[AGR_CASH_PAYMENTS_DEALS] [REG] with(nolock) 
 	where EXISTS ( 
 		select TOP (1) * 
@@ -574,20 +576,21 @@ begin
 	end	
 
 	/* 1.9. Prepare Deals Legal representative */
-	drop table if exists dbo.[AGR_CASH_PAYMENTS_DEALS_LEGAL_REPRESENTATIVE]
+	truncate table dbo.[AGR_CASH_PAYMENTS_DEALS_LEGAL_REPRESENTATIVE]
 	;
 
 	select @Sql1 = N';
 	declare @DealType int = 1 /* Razp deals */
 		,	@StsDeActivated int	= dbo.SETBIT(cast(0 as binary(4)), 12, 1)	/* #define STS_LIMIT_DEACTIVATED 12 (DeActivated) */
 	;
+
+	insert into dbo.[AGR_CASH_PAYMENTS_DEALS_LEGAL_REPRESENTATIVE]	
 	select	[D].[DEAL_TYPE]
 		,	[D].[DEAL_NUM]
 		,	[CRL].[REPRESENTED_CUSTOMER_ID] 
 		,	[CRL].[REPRESENTATIVE_CUSTOMER_ID] 
 		,	[CRL].[CUSTOMER_ROLE_TYPE] 
 
-	into dbo.[AGR_CASH_PAYMENTS_DEALS_LEGAL_REPRESENTATIVE]
 	from dbo.[AGR_CASH_PAYMENTS_DEALS] [D] with(nolock)
 	inner join '+@SqlFullDBName+'.dbo.[CUSTOMERS_RIGHTS_AND_LIMITS] [CRL] with(nolock) 
 		on  [CRL].[DEAL_TYPE]	= @DealType 
@@ -624,9 +627,9 @@ begin
 	,	@StsDeActivated int	= dbo.SETBIT(cast(0 as binary(4)), 12, 1)	/* #define STS_LIMIT_DEACTIVATED 12 (DeActivated) */
 	;
 	select	[D].[DEAL_TYPE]
-			,	[D].[DEAL_NUM]
-			,	[CRL].[REPRESENTATIVE_CUSTOMER_ID] 
-			,	[CRL].[CUSTOMER_ROLE_TYPE]
+		,	[D].[DEAL_NUM]
+		,	[CRL].[REPRESENTATIVE_CUSTOMER_ID] 
+		,	[CRL].[CUSTOMER_ROLE_TYPE]
 
 	into dbo.[AGR_CASH_PAYMENTS_DEALS_ACTIVE_PROXY_CUSTOMERS]
 	from dbo.[AGR_CASH_PAYMENTS_DEALS] [D] with(nolock)
@@ -666,17 +669,62 @@ begin
 	 	exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg
 	end
 
+	/* 1.11. Prepare Deal with NAR RAZP*/
+	truncate table dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_NAR_RAZP]
+	;
+
+	select @Sql1 = N';
+	declare @DealType 	int = 1
+		,	@CurrDate	date = GetDate()
+		,	@StsDeleted	int = dbo.SETBIT(cast(0 as binary(4)),  0, 1)
+		,	@REG_NAR_RAZSP_BIS6 int = 63 /* #define REG_NAR_RAZSP_BIS6 64 */		
+	;
+
+	insert into dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_NAR_RAZP] ( [DEAL_TYPE], [DEAL_NUM] )
+	select	[REG].[DEAL_TYPE]
+		,	[REG].[DEAL_NUM]
+
+	from dbo.[AGR_CASH_PAYMENTS_DEALS] [REG] with(nolock)
+	where EXISTS (
+		select	*
+		from '+@SqlFullDBName+'.dbo.[TRAITEMS_DAY] [T] with(nolock)
+		WHERE	[T].[DEAL_NUM]	= [REG].[DEAL_NUM]
+			and [T].[DEAL_TYPE] = @DealType
+			and	[T].[SUM_OPER] > 0
+			and [T].[SYS_DATE] >= @CurrDate
+			and [T].[REG_CODE_DEF] = @REG_NAR_RAZSP_BIS6
+			and ([T].[STATUS] & @StsDeleted) <> @StsDeleted
+	) '
+	;
+
+	begin try
+		exec sp_executeSql @Sql1
+	end try
+	begin catch
+		select  @Msg = dbo.FN_GET_EXCEPTION_INFO()
+		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg
+		return 2
+	end catch 
+
+	select @Rows = (select count(*) from dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_NAR_RAZP] with(nolock) ), @Err = @@ERROR;
+	if @LogTraceInfo = 1
+	begin 
+		select @Rows = IsNull(@Rows,0);
+		select @Msg = N'After: select * into dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_NAR_RAZP], Rows affected: ' + str(@Rows,len(@Rows),0);
+	 	exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg;
+	end
+
 	/**************************************************************/
 	/* 2. Prepare Customers data */
 
 	/* 2.1 Prepare all duplicate customers EGFN */
-	drop table if exists dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_DUBL_EGFN]
+	truncate table dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_DUBL_EGFN]
 	;	
 
 	select @Sql1 = N';
+	insert into dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_DUBL_EGFN] 
 	select  CAST(RIGHT(RTRIM([C].[IDENTIFIER]), 13) AS BIGINT) AS [EGFN]
 
-	into dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_DUBL_EGFN] 
 	from '+@SqlFullDBName+'.dbo.[DT015_CUSTOMERS] [C] WITH (NOLOCK)
 	where ISNUMERIC( [C].[IDENTIFIER] ) = 1 
 	group by CAST( RIGHT( RTRIM( [C].[IDENTIFIER] ), 13) AS BIGINT) 
@@ -779,13 +827,13 @@ begin
 	;	
 
 	/* 2.3 Prepare Customers with many client codes  */
-	drop table if exists dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_MANY_CLIENT_CODES]
+	truncate table dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_MANY_CLIENT_CODES]
 	;
 
 	select @Sql1 = N';
+	insert into dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_MANY_CLIENT_CODES]	
 	select	[CUST].[CUSTOMER_ID]
 
-	into dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_MANY_CLIENT_CODES]
 	from dbo.[AGR_CASH_PAYMENTS_CUSTOMERS] [CUST] with(nolock)
 	where EXISTS 
 	(
@@ -814,14 +862,14 @@ begin
 	end
 
 	/* 2.4 Prepare Customers with Dubl EGFN  */
-	drop table if exists dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_DUBL_EGFN]
+	truncate table dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_DUBL_EGFN]
 	;
 
 	select @Sql1 = N';
+	insert into dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_DUBL_EGFN]	
 	select	[C].[CUSTOMER_ID]
 		,	[X].[IS_ORIGINAL_EGFN]
 
-	into dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_DUBL_EGFN]
 	from dbo.[AGR_CASH_PAYMENTS_CUSTOMERS] [C] with(nolock)
 	inner join dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_DUBL_EGFN] [DUBL] with(nolock)
 		on [DUBL].[EGFN] = CAST(RIGHT(RTRIM([C].[CLIENT_IDENTIFIER]), 13) AS BIGINT)
@@ -848,13 +896,13 @@ begin
 	end
 
 	/* 2.5 Prepare Customers are proxies */
-	drop table if exists dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_ARE_PROXIES]
+	truncate table dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_ARE_PROXIES]
 	;
 
 	select @Sql1 = N';
+	insert into dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_ARE_PROXIES]	
 	select	[C].[CUSTOMER_ID]
 
-	into dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_ARE_PROXIES]
 	from dbo.[AGR_CASH_PAYMENTS_CUSTOMERS] [C] with(nolock)
 	where EXISTS 
 	(
@@ -883,16 +931,16 @@ begin
 	end
 
 	/* 2.6 Prepare Customers with valid IDENTITY DOCUMENTS */
-	drop table if exists dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_VALID_IDENTITY_DOCUMENTS]
+	truncate table dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_VALID_IDENTITY_DOCUMENTS]
 	;
 
 	set @Sql1 = N'
 	declare @DateAcc date = '+@AccountDate+'
 	;
 
+	insert into dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_VALID_IDENTITY_DOCUMENTS]
 	select	[C].[CUSTOMER_ID]
 
-	into dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_VALID_IDENTITY_DOCUMENTS]
 	from dbo.[AGR_CASH_PAYMENTS_CUSTOMERS] [C] with(nolock)
 	where EXISTS 
 	(
@@ -924,13 +972,13 @@ begin
 	end	
 
 	/* 2.7 Prepare Customers with Active Loas */
-	drop table if exists dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_LOANS]
+	truncate table dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_LOANS]
 	;
 
 	select @Sql1 = N';
+	insert into dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_LOANS]	
 	select	[CUST].[CUSTOMER_ID]
 
-	into dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_LOANS]
 	from dbo.[AGR_CASH_PAYMENTS_CUSTOMERS] [CUST] with(nolock)
 	where EXISTS 
 	(
@@ -1108,6 +1156,14 @@ begin
 	set [HAS_WNOS_BEL] = 1
 	from dbo.[AGR_CASH_PAYMENTS_DEALS] [D]
 	inner join dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_WNOS_BEL] [S] with(nolock)
+		on [S].[DEAL_NUM] = [D].[DEAL_NUM]
+		and [S].[DEAL_TYPE] = 1
+	;
+
+	update [D]
+	set [HAS_NAR_RAZP] = 1
+	from dbo.[AGR_CASH_PAYMENTS_DEALS] [D]
+	inner join dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_NAR_RAZP] [S] with(nolock)
 		on [S].[DEAL_NUM] = [D].[DEAL_NUM]
 		and [S].[DEAL_TYPE] = 1
 	;

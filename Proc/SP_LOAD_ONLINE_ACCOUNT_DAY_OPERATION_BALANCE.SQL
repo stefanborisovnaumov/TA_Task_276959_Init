@@ -10,12 +10,11 @@ CREATE PROCEDURE dbo.[SP_LOAD_ONLINE_ACCOUNT_DAY_OPERATION_BALANCE]
 ,	@OnlineSqlDataBaseName	sysname
 ,	@Account                varchar(64)
 ,	@PartType               tinyint = 3
-,	@LogTrace               tinyint = 0
 )
 AS 
 begin
 
-	declare @LogTraceInfo int = @LogTrace,	@LogBegEndProc int = 1,	@TimeBeg datetime = GetDate();
+	declare @LogBegEndProc int = 1,	@TimeBeg datetime = GetDate();
 	;
 	declare @Msg nvarchar(max) = N'', @Sql1 nvarchar(4000) = N'', @Ret int = 0
 	;
@@ -23,10 +22,10 @@ begin
 	/* 1. Log Begining of Procedure execution */
 	if @LogBegEndProc = 1 
 	begin	
-		select @Sql1 = 'dbo.[SP_LOAD_ONLINE_ACCOUNT_DAY_OPERATION_BALANCE] @OnlineSqlServerName ='+@OnlineSqlServerName
-					+', @OnlineSqlDataBaseName = '+@OnlineSqlDataBaseName
-                    +', @ACCOUT = ' + @Account 
-                    +', PART TYPE = ' + str(@PartType,len(@PartType),0)
+		select @Sql1 = 'dbo.[SP_LOAD_ONLINE_ACCOUNT_DAY_OPERATION_BALANCE] @OnlineSqlServerName = '''+@OnlineSqlServerName+''''
+					+', @OnlineSqlDataBaseName = '''+@OnlineSqlDataBaseName+''''
+                    +', @Account = ''' + @Account+'''' 
+                    +', @PartType = ' + str(@PartType,len(@PartType),0)
 			,  @Msg =  '*** Begin Execute Proc ***: dbo.[SP_LOAD_ONLINE_ACCOUNT_DAY_OPERATION_BALANCE]'
 		;
 		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg
@@ -95,26 +94,12 @@ begin
 		return 2;
     end
 
-	if @LogTraceInfo = 1
-	begin
-		select  @Msg = N'Trace: After: Load Account day operation balance from OnLineDB, Account: '
-			+ @AccountParam	+ '; Part type:' + str(@PartType,len(@PartType),0)
-
-	 	exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg
-	end
-
 	/************************************************************************************************************/
 	/* Log End Of Procedure */
 	if @LogBegEndProc = 1
 	begin 
-		select  @Sql1 = 'dbo.[SP_LOAD_ONLINE_ACCOUNT_DAY_OPERATION_BALANCE] @OnlineSqlServerName ='+@OnlineSqlServerName
-					+', @OnlineSqlDataBaseName = '+@OnlineSqlDataBaseName
-                    +', @ACCOUT = ' + @Account 
-                    +', @PART TYPE = ' + str(@PartType,len(@PartType),0)
-			,	@Msg = '*** End Execute Proc ***: dbo.[SP_LOAD_ONLINE_ACCOUNT_DAY_OPERATION_BALANCE], Duration: '
-					+ dbo.FN_GET_TIME_DIFF(@TimeBeg, GetDate()) + ', ACCOUT: ' +  @Account
-		;
-		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg
+		select @Msg = 'Duration: '+ dbo.FN_GET_TIME_DIFF(@TimeBeg, GetDate())+'; @Account: '+ @Account + '; @PartType = '+str(@PartType,len(@PartType),0);
+		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Msg, '*** End Execute Proc ***: dbo.dbo.[SP_LOAD_ONLINE_ACCOUNT_DAY_OPERATION_BALANCE]'
 	end
 
 	return 0;
