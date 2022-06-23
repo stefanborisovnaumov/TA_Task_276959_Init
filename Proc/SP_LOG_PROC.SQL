@@ -51,10 +51,18 @@ CREATE FUNCTION dbo.FN_GET_TIME_DIFF( @TimeBeg DateTime, @TimeEnd DateTime )
 	RETURNS VARCHAR(64)
 AS 
 BEGIN
-	DECLARE @Result varchar(32) = '', @MiliSec BigInt = DATEDIFF(ms, @TimeBeg, @TimeEnd) 
-    ;
-    select @Result = CONVERT(VARCHAR(32), (@MiliSec / 86400000)) + ':' 
-            + right(CONVERT(VARCHAR(32), DATEADD(ms, @MiliSec, 0), 121),12);
+	declare @Result		varchar(32) = ''
+		,	@MiliSec	bigint		= 0
+		,	@DiffDais	bigint		= DATEDIFF(dd, @TimeBeg, @TimeEnd)
+	;
+	if @DiffDais > 1
+		select @TimeBeg = cast(@TimeBeg as time), @TimeEnd = cast(@TimeEnd as time)
+	;
+	select @MiliSec = datediff(ms, @TimeBeg, @TimeEnd) 
+	;
+	select @Result = str(@DiffDais,len(@DiffDais),0) 
+		+ ':' + right(convert(varchar(32), dateadd(ms, @MiliSec, 0), 121),12)
+	;
 
     return @Result;
 END
