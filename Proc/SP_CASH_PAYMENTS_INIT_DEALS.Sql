@@ -502,6 +502,15 @@ begin
 	declare @StsDeleted	int = dbo.SETBIT(cast(0 as binary(4)), 0, 1) 
 		,	@StsBlockReasonDistraint int = dbo.SETBIT(cast(0 as binary(4)), 11, 1)	/* STS_BLOCK_REASON_DISTRAINT (11)*/ 
 	;
+	declare @Tbl_Distraint_Codes TABLE ( [CODE] INT )
+	;
+
+	insert into @Tbl_Distraint_Codes
+	SELECT [n].[CODE]
+	from '+@SqlFullDBName+'.dbo.[NOMS] [n] with(nolock)
+	where	[n].[NOMID] = 136
+		and ([n].[sTATUS] & @StsBlockReasonDistraint) = @StsBlockReasonDistraint
+	;
 
 	insert into dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_DISTRAINT] 
 	select	[REG].[DEAL_TYPE] 
@@ -511,12 +520,11 @@ begin
 	where EXISTS ( 
 		select TOP (1) *  
 		from '+@SqlFullDBName+'.dbo.BLOCKSUM [B] with(nolock) 
-		inner join '+@SqlFullDBName+'.dbo.[NOMS] [N] with(nolock) 
-			on  [N].[NOMID] = 136 
-			and [N].[CODE]	= [B].[WHYFREEZED] 
-			and ([N].[STATUS] & @StsBlockReasonDistraint) = @StsBlockReasonDistraint 
+		inner join @Tbl_Distraint_Codes [N]
+			on	[N].[CODE]	= [B].[WHYFREEZED] 
 		WHERE	[B].[PARTIDA] = [REG].[DEAL_ACCOUNT] 
-	) '
+			and [B].[CLOSED_FROZEN_SUM] = 0
+	)'
 	;
 
 	begin try

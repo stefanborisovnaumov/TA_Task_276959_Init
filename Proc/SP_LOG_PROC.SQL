@@ -55,7 +55,7 @@ BEGIN
 		,	@MiliSec	bigint		= 0
 		,	@DiffDais	bigint		= DATEDIFF(dd, @TimeBeg, @TimeEnd)
 	;
-	if @DiffDais > 1
+	if abs(@DiffDais) > 1
 		select @TimeBeg = cast(@TimeBeg as time), @TimeEnd = cast(@TimeEnd as time)
 	;
 	select @MiliSec = datediff(ms, @TimeBeg, @TimeEnd) 
