@@ -11,7 +11,7 @@ CREATE PROCEDURE dbo.[SP_CASH_PAYMENTS_UPDATE_DT015_CUSTOMERS_ACTIONS_TA]
 ,	@CurrAccountDate		datetime
 ,	@TestCaseRowID			nvarchar(16)
 ,	@OnlineDbCustomer_ID	int
-,	@IsProxy				tinyint = 0
+,	@TA_CUST_ROW_ID			int
 ,	@WithUpdate				int = 0
 )
 AS 
@@ -30,19 +30,16 @@ begin
 
 	/************************************************************************************************************/
 	-- 	Get TA Customer Row ID:
-	declare @TBL_ROW_ID			int = 0	
-	;
-	select	@TBL_ROW_ID	= case when IsNull(@IsProxy,0) = 0 then [CUST_ROW_ID] else [PROXY_ROW_ID] end
-	from dbo.[VIEW_CASH_PAYMENTS_CONDITIONS] with(nolock)
-	where [ROW_ID] = @TA_RowID
+	declare @TBL_ROW_ID int = @TA_CUST_ROW_ID	
 	;
 
 	if IsNull(@TBL_ROW_ID,0) <= 0
 	begin 
-		select @Msg = 'Not found Customer from TA ROW_ID : ' +@TestCaseRowID
-		+'; @OnlineDbCustomer_ID ='+str(@OnlineDbCustomer_ID,len(@OnlineDbCustomer_ID),0)+'; @IsProxy = '+str(@IsProxy,1,0)+' ';
+		select @Msg = 'Incorrect Customer from TA ROW_ID : ' +@TestCaseRowID
+			+'; @OnlineDbCustomer_ID ='+str(@OnlineDbCustomer_ID,len(@OnlineDbCustomer_ID),0)
+			+'; @TA_CUST_ROW_ID = '+str(@TA_CUST_ROW_ID,LEN(@TA_CUST_ROW_ID),0)+' ';
 		exec dbo.SP_SYS_LOG_PROC @@PROCID, @TestCaseRowID, @Msg
-	end 
+	end
 
 	/************************************************************************************************************/
 	-- Update table dbo.[DT015_CUSTOMERS_ACTIONS_TA]: ...
@@ -118,7 +115,7 @@ begin
 		end
 	end 
 
-	/* Update data in [RAZPREG_TA] */
+	/* Update data in [DT015_CUSTOMERS_ACTIONS_TA] */
 	if @WithUpdate = 1
 	begin 
 		UPDATE [D]

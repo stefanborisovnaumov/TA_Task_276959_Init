@@ -149,7 +149,7 @@ begin
 		,	@LIMIT_AVAILABILITY			= [LIMIT_AVAILABILITY]
 		,	@DEAL_STATUS				= [DEAL_STATUS]
 		,	@LIMIT_TAX_UNCOLLECTED		= [LIMIT_TAX_UNCOLLECTED]
-		,	@LIMIT_ZAPOR				= [LIMIT_ZAPOR]
+		,	@LIMIT_ZAPOR				= cast(FLOOR([LIMIT_ZAPOR]) as int)
 		,	@IS_CORR					= [IS_CORR]
 		,	@IS_UNIQUE_DEAL				= [IS_UNIQUE_DEAL]
 		,	@GS_PRODUCT_CODE			= [GS_PRODUCT_CODE]
@@ -633,7 +633,7 @@ begin
 
 		if @LIMIT_ZAPOR > 0
 		begin
-			select @Sql2 = ' AND [DEAL].[HAS_DISTRAINT] = 1 AND [DEAL].[BLK_SUMA_MIN] > '+ STR(@LIMIT_ZAPOR,len(@LIMIT_ZAPOR),0) + @CrLf;
+			select @Sql2 = ' AND [DEAL].[HAS_DISTRAINT] = 1 AND [DEAL].[BLK_SUMA_MIN] > 0.0' + @CrLf;
 
 			insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 			select	@Sql2

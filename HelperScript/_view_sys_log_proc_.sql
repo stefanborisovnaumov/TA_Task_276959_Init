@@ -1,7 +1,7 @@
 --truncate table sys_log_proc
 --go
 
-select top (2000) * 
+select top (4000) * 
 from sys_log_proc with(nolock) 
 --where ID > 1140 --50
 order by id desc

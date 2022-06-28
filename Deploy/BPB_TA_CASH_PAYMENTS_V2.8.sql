@@ -1,7 +1,7 @@
 /***************************************************************************************************************/
 -- Име          : Янко Янков
--- Дата и час   : 24.06.2022
--- Задача       : Task 276959 (v2.8.4)
+-- Дата и час   : 28.06.2022
+-- Задача       : Task 276959 (v2.8.5)
 -- Класификация : Test Automation
 -- Описание     : Автоматизация на тестовете за вснони бележки с използване на наличните данни от Online базата
 -- Параметри    : Няма
@@ -380,6 +380,7 @@ AS
 		,	[CORS].[ROW_ID]									AS [CORS_ROW_ID]
 		,	[PSPEC].[ROW_ID]								AS [PSPEC_ROW_ID]
 		,	[PROXY].[ROW_ID]								AS [PROXY_ROW_ID]
+		,	[CUST_BEN].[ROW_ID]								AS [CUST_BEN_ROW_ID]
 		,	[DBEN].[ROW_ID]									AS [DEAL_BEN_ROW_ID]
 
 		/* Условия за титуляра dbo.[DT015_CUSTOMERS_ACTIONS_TA] */
@@ -471,7 +472,9 @@ AS
 	LEFT JOIN dbo.[DT015_CUSTOMERS_ACTIONS_TA] [PROXY] WITH(NOLOCK)
 		on [PROXY].[ROW_ID] = [PSPEC].[PROXY_CLIENT_ID]
 	LEFT JOIN dbo.[RAZPREG_TA] [DBEN] WITH(NOLOCK)
-		on [PREV].[REF_ID_BEN] = [DBEN].[ROW_ID]	
+		on [PREV].[REF_ID_BEN] = [DBEN].[ROW_ID]
+	LEFT JOIN dbo.[DT015_CUSTOMERS_ACTIONS_TA] [CUST_BEN] WITH(NOLOCK)
+		on [CUST_BEN].[ROW_ID] = [DBEN].[REF_ID]
 	CROSS APPLY (
 		SELECT	CASE WHEN IsNumeric([DREG].[UI_NM342_CODE]) = 1
 					then cast([DREG].[UI_NM342_CODE] as int )
@@ -596,7 +599,15 @@ select 	[v].[ROW_ID]
 	,	[DBEN].[UI_ACCOUNT]				AS [UI_ACCOUNT_BEN]
 	,	[DBEN].[ZAPOR_SUM]				AS [ZAPOR_SUM_BEN]
 	,	[DBEN].[IBAN]					AS [IBAN_BEN]
-	,	[DBEN].[TAX_UNCOLLECTED_SUM]	AS [TAX_UNCOLLECTED_SUM_BEN]		
+	,	[DBEN].[TAX_UNCOLLECTED_SUM]	AS [TAX_UNCOLLECTED_SUM_BEN]
+
+	/* Данни на бенефицента - за някой от тестовите случай за кредитните преводи */
+	,	[v].[CUST_BEN_ROW_ID]
+	,	[CUST_BEN].[UI_CUSTOMER_ID]		as [UI_CUSTOMER_ID_BEN]
+	,	[CUST_BEN].[UI_EGFN]			as [UI_EGFN_BEN]
+	,	[CUST_BEN].[NAME]				as [NAME_BEN]
+	,	[CUST_BEN].[COMPANY_EFN]		as [COMPANY_EFN_BEN]
+	,	[CUST_BEN].[UI_CLIENT_CODE]		as [UI_CLIENT_CODE_BEN]
 
 from dbo.[VIEW_CASH_PAYMENTS_CONDITIONS] [v]
 
@@ -617,6 +628,9 @@ left outer join  dbo.[DT015_CUSTOMERS_ACTIONS_TA] [p]
 
 left outer join dbo.[RAZPREG_TA] [DBEN]
 	on [DBEN].[ROW_ID] = [v].[DEAL_BEN_ROW_ID]	
+
+left outer join  dbo.[DT015_CUSTOMERS_ACTIONS_TA] [CUST_BEN]
+	on [CUST_BEN].[ROW_ID] = [DBEN].[REF_ID]
 go
 
 /********************************************************************************************************/
@@ -1400,7 +1414,8 @@ begin
 		from '+@SqlFullDBName+'.dbo.BLOCKSUM [B] with(nolock) 
 		inner join @Tbl_Distraint_Codes [N]
 			on	[N].[CODE]	= [B].[WHYFREEZED] 
-		WHERE	[B].[PARTIDA] = [REG].[DEAL_ACCOUNT] 
+		WHERE	[B].[PARTIDA] = [REG].[DEAL_ACCOUNT]
+			and [B].[SUMA] > 0.0
 			and [B].[CLOSED_FROZEN_SUM] = 0
 	)'
 	;
@@ -2414,7 +2429,7 @@ begin
 	declare @LogTraceInfo int = 0,	@LogBegEndProc int = 1,	@TimeBeg datetime = GetDate();
 	;
 
-	declare @Sql2 nvarchar(4000) = N'', @Msg nvarchar(max) = N'', @Ret int = 0
+	declare @Sql2 nvarchar(4000) = N'', @Msg nvarchar(max) = N'', @Ret int = 0, @TA_RowID int = cast(@TestCaseRowID as int)
 	;
 	/************************************************************************************************************/
 	/* Log Begining of Procedure execution */
@@ -2425,15 +2440,53 @@ begin
 	-- Check customer ID
 	if IsNull(@Customer_ID,0) <= 0
 	begin  
-		select @Msg = N'Incorrect CustomerID : ' + IsNull(@Customer_ID,0) + N', TA ROW_ID : ' + @TestCaseRowID;
+		select @Msg = N'Incorrect CustomerID : ' + str(@Customer_ID,len(@Customer_ID),0) + N', TA ROW_ID : ' + @TestCaseRowID;
 		exec dbo.SP_SYS_LOG_PROC @@PROCID, @TestCaseRowID, @Msg
 		return -1;
-	end 
+	end
+
+	/************************************************************************************************************/
+	-- Find customer row id:
+	declare @CUSTOMER_ROW_ID int = 0
+		,	@CUST_PROXY_ROW_ID int = 0
+		,	@CUST_BEN_ROW_ID int = 0
+		,	@DEAL_BEN_ROW_ID int = 0
+	;
+
+	select	@CUSTOMER_ROW_ID = IsNull([CUST_ROW_ID],-1)
+		,	@CUST_PROXY_ROW_ID = IsNull([PROXY_ROW_ID],-1)
+		,	@CUST_BEN_ROW_ID = IsNull([CUST_BEN_ROW_ID],-1)
+		,	@DEAL_BEN_ROW_ID = IsNull([DEAL_BEN_ROW_ID],-1)
+	from dbo.[VIEW_CASH_PAYMENTS_CONDITIONS] with(nolock)
+	where [ROW_ID] = @TA_RowID
+	;
+
+	if IsNull(@CUSTOMER_ROW_ID,-1) <= 0 
+	begin  
+		select @Msg = N'Not found TA Customer ROW_ID : ' + str(@CUSTOMER_ROW_ID,len(@CUSTOMER_ROW_ID),0) 
+			+ N', CustomerID : ' + str(@Customer_ID,len(@Customer_ID),0)
+			+ N', TA ROW_ID : ' + @TestCaseRowID;
+		exec dbo.SP_SYS_LOG_PROC @@PROCID, @TestCaseRowID, @Msg
+		return -1;
+	end
+
+	/************************************************************************************************************/
+	-- Find customer row id:
+	declare @Ben_Customer_ID int = 0 /* Customer ID on OnlineDb for Beneficiary */
+	;
+	if @DEAL_BEN_ROW_ID > 0 
+	begin 
+		select @Ben_Customer_ID = IsNull([S].[CUSTOMER_ID],-1)
+		from dbo.[RAZPREG_TA] [R] with(nolock)
+		inner join dbo.[AGR_CASH_PAYMENTS_DEALS] [S] with(nolock)
+			on	[S].[DEAL_TYPE] = 1
+			and [R].[UI_DEAL_NUM] = [S].[DEAL_NUM] 
+	end
 
 	/************************************************************************************************************/
 	-- Актуализация на данните за титуляря и Proxy-то...
 	-- Първо актуализираме данните на Proxy-то	
-	if IsNull(@ProxyCustomer_ID,0) > 0
+	if IsNull(@ProxyCustomer_ID,0) > 0 and IsNull(@CUST_PROXY_ROW_ID,0) > 0
 	begin
 		begin try 
 			select @Sql2 = N'dbo.[SP_CASH_PAYMENTS_UPDATE_DT015_CUSTOMERS_ACTIONS_TA] @OnlineSqlServerName = '+@OnlineSqlServerName
@@ -2441,12 +2494,11 @@ begin
 						+', @CurrAccountDate = '+convert(varchar(16), @CurrAccountDate,23)
 						+', @TestCaseRowID = '+@TestCaseRowID
 						+', @OnlineDbCustomer_ID = '+str(@ProxyCustomer_ID,len(@ProxyCustomer_ID),0)
-						+', @IsProxy = 1,'
+						+', @TA_CUST_ROW_ID = ' +str(@CUST_PROXY_ROW_ID,len(@CUST_PROXY_ROW_ID),0)+ '/* for Proxy */'
 						+', @WithUpdate = '+str(@WithUpdate,len(@WithUpdate),0)
 
-
 			exec @Ret = dbo.[SP_CASH_PAYMENTS_UPDATE_DT015_CUSTOMERS_ACTIONS_TA] @OnlineSqlServerName, @OnlineSqlDataBaseName
-				, @CurrAccountDate, @TestCaseRowID, @ProxyCustomer_ID, 1, @WithUpdate;
+				, @CurrAccountDate, @TestCaseRowID, @ProxyCustomer_ID, @CUST_PROXY_ROW_ID, @WithUpdate;
 
 			if @Ret <> 0
 			begin 
@@ -2470,12 +2522,11 @@ begin
 					+', @CurrAccountDate = '+convert(varchar(16), @CurrAccountDate,23)
 					+', @TestCaseRowID = '+@TestCaseRowID
 					+', @OnlineDbCustomer_ID = '+str(@Customer_ID,len(@Customer_ID),0)
-					+', @IsProxy = 0,'
+					+', @TA_CUST_ROW_ID = ' +str(@CUSTOMER_ROW_ID,len(@CUSTOMER_ROW_ID),0)+ '/* for Main Customer */'
 					+', @WithUpdate = '+str(@WithUpdate,len(@WithUpdate),0)
 
-
 		exec @Ret = dbo.[SP_CASH_PAYMENTS_UPDATE_DT015_CUSTOMERS_ACTIONS_TA] @OnlineSqlServerName, @OnlineSqlDataBaseName
-			, @CurrAccountDate, @TestCaseRowID, @Customer_ID, 0, @WithUpdate;
+			, @CurrAccountDate, @TestCaseRowID, @Customer_ID, @CUSTOMER_ROW_ID, @WithUpdate;
 
 		if @Ret <> 0
 		begin 
@@ -2483,13 +2534,42 @@ begin
 			exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql2, @Msg
 			return 3;
 		end
-
 	end try
 	begin catch
 			select @Msg = dbo.FN_GET_EXCEPTION_INFO() 
 			exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql2, @Msg
 			return 4;
 	end catch
+
+	-- Aктуализираме данните на Бенефициента
+	if IsNull(@Ben_Customer_ID,0) > 0 and IsNull(@CUST_BEN_ROW_ID,0) > 0
+	begin
+		begin try 
+			select @Sql2 = N'dbo.[SP_CASH_PAYMENTS_UPDATE_DT015_CUSTOMERS_ACTIONS_TA] @OnlineSqlServerName = '+@OnlineSqlServerName
+						+', @OnlineSqlDataBaseName = '+@OnlineSqlDataBaseName
+						+', @CurrAccountDate = '+convert(varchar(16), @CurrAccountDate,23)
+						+', @TestCaseRowID = '+@TestCaseRowID
+						+', @OnlineDbCustomer_ID = '+str(@Ben_Customer_ID,len(@Ben_Customer_ID),0)
+						+', @TA_CUST_ROW_ID = ' +str(@CUST_BEN_ROW_ID,len(@CUST_BEN_ROW_ID),0)+ '/* for Beneficiary */'
+						+', @WithUpdate = '+str(@WithUpdate,len(@WithUpdate),0)
+
+
+			exec @Ret = dbo.[SP_CASH_PAYMENTS_UPDATE_DT015_CUSTOMERS_ACTIONS_TA] @OnlineSqlServerName, @OnlineSqlDataBaseName
+				, @CurrAccountDate, @TestCaseRowID, @Ben_Customer_ID, @CUST_BEN_ROW_ID, @WithUpdate;
+
+			if @Ret <> 0
+			begin 
+				select @Msg = N'Error exec procedure dbo.[SP_CASH_PAYMENTS_UPDATE_DT015_CUSTOMERS_ACTIONS_TA], error code:'+str(@Ret,len(@Ret),0)+ ' /* for Beneficiary */ '
+				exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql2, @Msg
+				return 5;
+			end
+		end try
+		begin catch
+				select @Msg = dbo.FN_GET_EXCEPTION_INFO() + ' /* for Beneficiary */ '
+				exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql2, @Msg
+				return 6;
+		end catch	
+	end
 
 	/************************************************************************************************************/
 	/* Log End Of Procedure */
@@ -2714,7 +2794,7 @@ CREATE PROCEDURE dbo.[SP_CASH_PAYMENTS_UPDATE_DT015_CUSTOMERS_ACTIONS_TA]
 ,	@CurrAccountDate		datetime
 ,	@TestCaseRowID			nvarchar(16)
 ,	@OnlineDbCustomer_ID	int
-,	@IsProxy				tinyint = 0
+,	@TA_CUST_ROW_ID			int
 ,	@WithUpdate				int = 0
 )
 AS 
@@ -2733,19 +2813,16 @@ begin
 
 	/************************************************************************************************************/
 	-- 	Get TA Customer Row ID:
-	declare @TBL_ROW_ID			int = 0	
-	;
-	select	@TBL_ROW_ID	= case when IsNull(@IsProxy,0) = 0 then [CUST_ROW_ID] else [PROXY_ROW_ID] end
-	from dbo.[VIEW_CASH_PAYMENTS_CONDITIONS] with(nolock)
-	where [ROW_ID] = @TA_RowID
+	declare @TBL_ROW_ID int = @TA_CUST_ROW_ID	
 	;
 
 	if IsNull(@TBL_ROW_ID,0) <= 0
 	begin 
-		select @Msg = 'Not found Customer from TA ROW_ID : ' +@TestCaseRowID
-		+'; @OnlineDbCustomer_ID ='+str(@OnlineDbCustomer_ID,len(@OnlineDbCustomer_ID),0)+'; @IsProxy = '+str(@IsProxy,1,0)+' ';
+		select @Msg = 'Incorrect Customer from TA ROW_ID : ' +@TestCaseRowID
+			+'; @OnlineDbCustomer_ID ='+str(@OnlineDbCustomer_ID,len(@OnlineDbCustomer_ID),0)
+			+'; @TA_CUST_ROW_ID = '+str(@TA_CUST_ROW_ID,LEN(@TA_CUST_ROW_ID),0)+' ';
 		exec dbo.SP_SYS_LOG_PROC @@PROCID, @TestCaseRowID, @Msg
-	end 
+	end
 
 	/************************************************************************************************************/
 	-- Update table dbo.[DT015_CUSTOMERS_ACTIONS_TA]: ...
@@ -2821,7 +2898,7 @@ begin
 		end
 	end 
 
-	/* Update data in [RAZPREG_TA] */
+	/* Update data in [DT015_CUSTOMERS_ACTIONS_TA] */
 	if @WithUpdate = 1
 	begin 
 		UPDATE [D]
@@ -3468,7 +3545,7 @@ begin
 		,	@LIMIT_AVAILABILITY			= [LIMIT_AVAILABILITY]
 		,	@DEAL_STATUS				= [DEAL_STATUS]
 		,	@LIMIT_TAX_UNCOLLECTED		= [LIMIT_TAX_UNCOLLECTED]
-		,	@LIMIT_ZAPOR				= [LIMIT_ZAPOR]
+		,	@LIMIT_ZAPOR				= cast(FLOOR([LIMIT_ZAPOR]) as int)
 		,	@IS_CORR					= [IS_CORR]
 		,	@IS_UNIQUE_DEAL				= [IS_UNIQUE_DEAL]
 		,	@GS_PRODUCT_CODE			= [GS_PRODUCT_CODE]
@@ -3952,7 +4029,7 @@ begin
 
 		if @LIMIT_ZAPOR > 0
 		begin
-			select @Sql2 = ' AND [DEAL].[HAS_DISTRAINT] = 1 AND [DEAL].[BLK_SUMA_MIN] > '+ STR(@LIMIT_ZAPOR,len(@LIMIT_ZAPOR),0) + @CrLf;
+			select @Sql2 = ' AND [DEAL].[HAS_DISTRAINT] = 1 AND [DEAL].[BLK_SUMA_MIN] > 0.0' + @CrLf;
 
 			insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 			select	@Sql2
@@ -5390,3 +5467,5 @@ begin
 	return 0
 end
 go
+
+

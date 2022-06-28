@@ -64,7 +64,15 @@ select 	[v].[ROW_ID]
 	,	[DBEN].[UI_ACCOUNT]				AS [UI_ACCOUNT_BEN]
 	,	[DBEN].[ZAPOR_SUM]				AS [ZAPOR_SUM_BEN]
 	,	[DBEN].[IBAN]					AS [IBAN_BEN]
-	,	[DBEN].[TAX_UNCOLLECTED_SUM]	AS [TAX_UNCOLLECTED_SUM_BEN]		
+	,	[DBEN].[TAX_UNCOLLECTED_SUM]	AS [TAX_UNCOLLECTED_SUM_BEN]
+
+	/* ƒанни на бенефицента - за н€кой от тестовите случай за кредитните преводи */
+	,	[v].[CUST_BEN_ROW_ID]
+	,	[CUST_BEN].[UI_CUSTOMER_ID]		as [UI_CUSTOMER_ID_BEN]
+	,	[CUST_BEN].[UI_EGFN]			as [UI_EGFN_BEN]
+	,	[CUST_BEN].[NAME]				as [NAME_BEN]
+	,	[CUST_BEN].[COMPANY_EFN]		as [COMPANY_EFN_BEN]
+	,	[CUST_BEN].[UI_CLIENT_CODE]		as [UI_CLIENT_CODE_BEN]
 
 from dbo.[VIEW_CASH_PAYMENTS_CONDITIONS] [v]
 
@@ -85,4 +93,7 @@ left outer join  dbo.[DT015_CUSTOMERS_ACTIONS_TA] [p]
 
 left outer join dbo.[RAZPREG_TA] [DBEN]
 	on [DBEN].[ROW_ID] = [v].[DEAL_BEN_ROW_ID]	
+
+left outer join  dbo.[DT015_CUSTOMERS_ACTIONS_TA] [CUST_BEN]
+	on [CUST_BEN].[ROW_ID] = [DBEN].[REF_ID]
 go
