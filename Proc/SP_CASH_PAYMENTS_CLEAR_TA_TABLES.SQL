@@ -25,13 +25,14 @@ begin
 
 	/************************************************************************************************************/
 	-- 2. Get  TA Table Row IDs:
-	declare @RUNNING_ORDER int = 0
-		,	@TYPE_ACTION varchar(128) = ''
-		,	@RAZPREG_TA_RowID int = 0
-		,	@DEALS_CORR_TA_RowID int = 0
-		,	@DT015_CUSTOMERS_RowID int = 0
-		,	@PROXY_CUSTOMERS_RowID int = 0
-		,	@RAZPREG_TA_BEN_RowID int = 0
+	declare @RUNNING_ORDER			int = 0
+		,	@TYPE_ACTION			varchar(128) = ''
+		,	@RAZPREG_TA_RowID		int = 0
+		,	@DEALS_CORR_TA_RowID	int = 0
+		,	@DT015_CUSTOMERS_RowID	int = 0
+		,	@PROXY_CUSTOMERS_RowID	int = 0
+		,	@CUSTOMER_BEN_ROW_ID	int = 0		
+		,	@RAZPREG_TA_BEN_RowID	int = 0
 	;
 	select	@RAZPREG_TA_RowID		= [DEAL_ROW_ID]
 		,	@DEALS_CORR_TA_RowID	= [CORS_ROW_ID]
@@ -39,6 +40,7 @@ begin
 		,	@PROXY_CUSTOMERS_RowID	= [PROXY_ROW_ID]
 		,	@PROXY_CUSTOMERS_RowID	= [PROXY_ROW_ID]
 		,	@RUNNING_ORDER			= [RUNNING_ORDER]
+		,	@CUSTOMER_BEN_ROW_ID	= IsNull([CUST_BEN_ROW_ID],-1)		
 		,	@RAZPREG_TA_BEN_RowID	= IsNull( [DEAL_BEN_ROW_ID],-1)
 	from dbo.[VIEW_CASH_PAYMENTS_CONDITIONS] with(nolock)
 	where [ROW_ID] = @TA_RowID
@@ -127,6 +129,27 @@ begin
 				,	[PROXY_COUNT]			= 0			-- DT015_CUSTOMERS_ACTIONS_TA	PROXY_COUNT	Брой активни пълномощници
 			from dbo.[DT015_CUSTOMERS_ACTIONS_TA] [D]
 			where [D].[ROW_ID] = @DT015_CUSTOMERS_RowID
+		end
+
+
+		-- Зануляваме данните за бенефициена 
+		if IsNull(@CUSTOMER_BEN_ROW_ID,0) > 0 and @IsNotFirstCashPaymentWithAccumulatedTax = 0
+		begin		
+			update [D]
+			set		[UI_CUSTOMER_ID]		= '0'		-- DT015_CUSTOMERS_ACTIONS_TA	UI_CUSTOMER_ID
+				,	[UI_EGFN]				= '0'		-- DT015_CUSTOMERS_ACTIONS_TA	UI_EGFN
+				,	[NAME]					= ''		-- DT015_CUSTOMERS_ACTIONS_TA	NAME
+				,	[COMPANY_EFN]			= '0'		-- DT015_CUSTOMERS_ACTIONS_TA	COMPANY_EFN
+				,	[UI_CLIENT_CODE]		= '0'		-- DT015_CUSTOMERS_ACTIONS_TA	UI_CLIENT_CODE
+				,	[UI_NOTES_EXIST]		= 0			-- DT015_CUSTOMERS_ACTIONS_TA	UI_NOTES_EXIST
+				,	[IS_ZAPOR]				= 0			-- DT015_CUSTOMERS_ACTIONS_TA	IS_ZAPOR (дали има съдебен запор някоя от сделките на клиента) 	Да се разработи обслужване в тестовете
+				,	[ID_TYPE]				= 0
+				,	[ID_NUMBER]				= '0'		-- DT015_CUSTOMERS_ACTIONS_TA	ID_NUMBER номер на лична карта
+				,	[SERVICE_GROUP_EGFN]	= '0'		-- DT015_CUSTOMERS_ACTIONS_TA	SERVICE_GROUP_EGFN	EGFN, което се попълва в допълнителния диалог за търсене според IS_SERVICE
+				,	[IS_ACTUAL]				= 0			-- DT015_CUSTOMERS_ACTIONS_TA	IS_ACTUAL (1; 0)	Да се разработи обслужване в тестовете на клиенти с неактуални данни при 1
+				,	[PROXY_COUNT]			= 0			-- DT015_CUSTOMERS_ACTIONS_TA	PROXY_COUNT	Брой активни пълномощници
+			from dbo.[DT015_CUSTOMERS_ACTIONS_TA] [D]
+			where [D].[ROW_ID] = @CUSTOMER_BEN_ROW_ID
 		end
 
 	end try

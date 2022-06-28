@@ -44,10 +44,10 @@ begin
 		,	@DEAL_BEN_ROW_ID int = 0
 	;
 
-	select	@CUSTOMER_ROW_ID = IsNull([CUST_ROW_ID],-1)
-		,	@CUST_PROXY_ROW_ID = IsNull([PROXY_ROW_ID],-1)
-		,	@CUST_BEN_ROW_ID = IsNull([CUST_BEN_ROW_ID],-1)
-		,	@DEAL_BEN_ROW_ID = IsNull([DEAL_BEN_ROW_ID],-1)
+	select	@CUSTOMER_ROW_ID	= IsNull([CUST_ROW_ID],-1)
+		,	@CUST_PROXY_ROW_ID	= IsNull([PROXY_ROW_ID],-1)
+		,	@CUST_BEN_ROW_ID	= IsNull([CUST_BEN_ROW_ID],-1)
+		,	@DEAL_BEN_ROW_ID	= IsNull([DEAL_BEN_ROW_ID],-1)
 	from dbo.[VIEW_CASH_PAYMENTS_CONDITIONS] with(nolock)
 	where [ROW_ID] = @TA_RowID
 	;
@@ -65,13 +65,14 @@ begin
 	-- Find customer row id:
 	declare @Ben_Customer_ID int = 0 /* Customer ID on OnlineDb for Beneficiary */
 	;
-	if @DEAL_BEN_ROW_ID > 0 
+	if IsNull(@DEAL_BEN_ROW_ID,0) > 0 
 	begin 
 		select @Ben_Customer_ID = IsNull([S].[CUSTOMER_ID],-1)
 		from dbo.[RAZPREG_TA] [R] with(nolock)
 		inner join dbo.[AGR_CASH_PAYMENTS_DEALS] [S] with(nolock)
 			on	[S].[DEAL_TYPE] = 1
 			and [R].[UI_DEAL_NUM] = [S].[DEAL_NUM] 
+		where [R].[ROW_ID] = @DEAL_BEN_ROW_ID
 	end
 
 	/************************************************************************************************************/
