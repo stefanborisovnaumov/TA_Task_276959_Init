@@ -242,6 +242,24 @@ begin
 		return 6;
 	end catch
 
+	/******************************************************************************************************/
+	/* 5.4. Updare table dbo.[PREV_COMMON_TA] for Tax and Preferencial codes  */
+	-- @TODO: UPDATE TAX CODE - SP_CASH_PAYMENTS_UPDATE_TAXED_INFO
+	-- begin try
+	-- 		exec dbo.[SP_CASH_PAYMENTS_UPDATE_TAXED_INFO] @OnlineSqlServerName, @OnlineSqlDataBaseName, @CurrAccDate
+	-- 			, @RowIdStr, @WithUpdate
+	-- end try
+	-- begin catch 
+
+	-- 	select  @Msg = dbo.FN_GET_EXCEPTION_INFO()
+	-- 		,	@Sql = N' exec dbo.[SP_CASH_PAYMENTS_UPDATE_TAXED_INFO] @OnlineSqlServerName, @OnlineSqlDataBaseName, @CurrAccDate'
+	-- 				 + N', @RowIdStr, @WithUpdate';
+
+	-- 	exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql, @Msg
+
+	-- 	return 7;
+	-- end catch
+
 	/************************************************************************************************************/
 	/* Log End Of Procedure */
 	if @LogBegEndProc = 1

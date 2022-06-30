@@ -1,6 +1,6 @@
 /***************************************************************************************************************/
 -- Име          : Янко Янков
--- Дата и час   : 28.06.2022
+-- Дата и час   : 29.06.2022
 -- Задача       : Task 276959 (v2.8.6)
 -- Класификация : Test Automation
 -- Описание     : Автоматизация на тестовете за вснони бележки с използване на наличните данни от Online базата
@@ -1682,11 +1682,11 @@ begin
 		select [A].[CUSTOMER_ID]
 		from 
 		(
-			select DISTINCT CUSTOMER_ID
-			from dbo.AGR_CASH_PAYMENTS_DEALS with(nolock)	
-			UNIon ALL 
-			select DISTINCT REPRESENTATIVE_CUSTOMER_ID
-			from dbo.AGR_CASH_PAYMENTS_DEALS_ACTIVE_PROXY_CUSTOMERS with(nolock)
+			select DISTINCT [CUSTOMER_ID]
+			from dbo.[AGR_CASH_PAYMENTS_DEALS] with(nolock)	
+			UNION ALL 
+			select DISTINCT ]REPRESENTATIVE_CUSTOMER_ID]
+			from dbo.[AGR_CASH_PAYMENTS_DEALS_ACTIVE_PROXY_CUSTOMERS] with(nolock)
 		) [A]
 		group by [CUSTOMER_ID]
 	)
@@ -2127,6 +2127,25 @@ begin
 	/* having count(*) > 1 */
 	;
 
+	/****** Object:  Index [IX_AGR_CASH_PAYMENTS_DEALS_DEAL_CURRENCY_CODE_DEAL_STD_DOG_CODE_CLIENT_SECTOR_DEAL_IS_JOINT_DEAL]    Script Date: 29.06.2022 г. 15:07:23 ******/
+	CREATE NONCLUSTERED INDEX [IX_AGR_CASH_PAYMENTS_DEALS_DEAL_CURRENCY_CODE_DEAL_STD_DOG_CODE_CLIENT_SECTOR_DEAL_IS_JOINT_DEAL] 
+	ON [dbo].[AGR_CASH_PAYMENTS_DEALS]
+	(
+		[DEAL_CURRENCY_CODE] ASC
+	,	[DEAL_STD_DOG_CODE] ASC
+	,	[CLIENT_SECTOR] ASC
+	,	[DEAL_IS_JOINT_DEAL] ASC
+	,	[HAS_WNOS_BEL] ASC
+	,	[IS_DORMUNT_ACCOUNT] ASC
+	)
+	INCLUDE([DEAL_TYPE],[DEAL_NUM],[DEAL_ACCOUNT],[CUSTOMER_ID]) 
+	;
+
+	CREATE NONCLUSTERED INDEX [IX_AGR_CASH_PAYMENTS_DEALS_ACTIVE_PROXY_CUSTOMERS_DEAL_TYPE_DEAL_NUM_CUSTOMER_ROLE_TYPE]
+		ON [dbo].[AGR_CASH_PAYMENTS_DEALS_ACTIVE_PROXY_CUSTOMERS] ( [DEAL_TYPE], [DEAL_NUM], [CUSTOMER_ROLE_TYPE] )
+	INCLUDE ( [REPRESENTATIVE_CUSTOMER_ID] )
+	;
+
 	if @LogTraceInfo = 1
 	begin 
 		select  @Msg = N'After: update bist in [AGR_CASH_PAYMENTS_DEALS]', @Sql1 = N' update [AGR_CASH_PAYMENTS_DEALS] set [HAS_VALID_DOCUMENT] = 1 where ...'
@@ -2513,6 +2532,7 @@ begin
 	if IsNull(@ProxyCustomer_ID,0) > 0 and IsNull(@CUST_PROXY_ROW_ID,0) > 0
 	begin
 		begin try 
+
 			select @Sql2 = N'dbo.[SP_CASH_PAYMENTS_UPDATE_DT015_CUSTOMERS_ACTIONS_TA] @OnlineSqlServerName = '+@OnlineSqlServerName
 						+', @OnlineSqlDataBaseName = '+@OnlineSqlDataBaseName
 						+', @CurrAccountDate = '+convert(varchar(16), @CurrAccountDate,23)
@@ -2533,9 +2553,9 @@ begin
 
 		end try
 		begin catch
-				select @Msg = dbo.FN_GET_EXCEPTION_INFO() 
-				exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql2, @Msg
-				return 2;
+			select @Msg = dbo.FN_GET_EXCEPTION_INFO() 
+			exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql2, @Msg
+			return 2;
 		end catch
 	end
 
@@ -3405,6 +3425,24 @@ begin
 
 		return 6;
 	end catch
+
+	/******************************************************************************************************/
+	/* 5.4. Updare table dbo.[PREV_COMMON_TA] for Tax and Preferencial codes  */
+	-- @TODO: UPDATE TAX CODE - SP_CASH_PAYMENTS_UPDATE_TAXED_INFO
+	-- begin try
+	-- 		exec dbo.[SP_CASH_PAYMENTS_UPDATE_TAXED_INFO] @OnlineSqlServerName, @OnlineSqlDataBaseName, @CurrAccDate
+	-- 			, @RowIdStr, @WithUpdate
+	-- end try
+	-- begin catch 
+
+	-- 	select  @Msg = dbo.FN_GET_EXCEPTION_INFO()
+	-- 		,	@Sql = N' exec dbo.[SP_CASH_PAYMENTS_UPDATE_TAXED_INFO] @OnlineSqlServerName, @OnlineSqlDataBaseName, @CurrAccDate'
+	-- 				 + N', @RowIdStr, @WithUpdate';
+
+	-- 	exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql, @Msg
+
+	-- 	return 7;
+	-- end catch
 
 	/************************************************************************************************************/
 	/* Log End Of Procedure */

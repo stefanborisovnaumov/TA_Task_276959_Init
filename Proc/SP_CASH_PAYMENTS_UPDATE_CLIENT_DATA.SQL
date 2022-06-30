@@ -81,6 +81,7 @@ begin
 	if IsNull(@ProxyCustomer_ID,0) > 0 and IsNull(@CUST_PROXY_ROW_ID,0) > 0
 	begin
 		begin try 
+
 			select @Sql2 = N'dbo.[SP_CASH_PAYMENTS_UPDATE_DT015_CUSTOMERS_ACTIONS_TA] @OnlineSqlServerName = '+@OnlineSqlServerName
 						+', @OnlineSqlDataBaseName = '+@OnlineSqlDataBaseName
 						+', @CurrAccountDate = '+convert(varchar(16), @CurrAccountDate,23)
@@ -101,9 +102,9 @@ begin
 
 		end try
 		begin catch
-				select @Msg = dbo.FN_GET_EXCEPTION_INFO() 
-				exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql2, @Msg
-				return 2;
+			select @Msg = dbo.FN_GET_EXCEPTION_INFO() 
+			exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql2, @Msg
+			return 2;
 		end catch
 	end
 
