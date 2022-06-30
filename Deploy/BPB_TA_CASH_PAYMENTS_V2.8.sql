@@ -1,7 +1,7 @@
 /***************************************************************************************************************/
 -- Име          : Янко Янков
 -- Дата и час   : 30.06.2022
--- Задача       : Task 282617 (v2.8.7)
+-- Задача       : Task 282617 (v2.8.8)
 -- Класификация : Test Automation
 -- Описание     : Автоматизация на тестовете за Кредитните преводи с използване на наличните данни от Online базата
 -- Параметри    : Няма
@@ -1685,7 +1685,7 @@ begin
 			select DISTINCT [CUSTOMER_ID]
 			from dbo.[AGR_CASH_PAYMENTS_DEALS] with(nolock)	
 			UNION ALL 
-			select DISTINCT ]REPRESENTATIVE_CUSTOMER_ID]
+			select DISTINCT [REPRESENTATIVE_CUSTOMER_ID]
 			from dbo.[AGR_CASH_PAYMENTS_DEALS_ACTIVE_PROXY_CUSTOMERS] with(nolock)
 		) [A]
 		group by [CUSTOMER_ID]
