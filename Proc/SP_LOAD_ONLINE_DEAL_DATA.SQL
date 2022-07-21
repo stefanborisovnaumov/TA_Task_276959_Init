@@ -89,13 +89,13 @@ begin
 	) [XBAL]
 	outer apply 
 	(
-		select top (1) cast(1 as bit) as [HAS_TAX_UNCOLLECTED]
+		SELECT TOP (1) cast(1 as bit) as [HAS_TAX_UNCOLLECTED]
 		from '+@SqlFullDBName+'.dbo.[TAX_UNCOLLECTED] [T] with(nolock)
 		where	[T].[ACCOUNT_DT] = [REG].[ACCOUNT]
 			and [T].[TAX_STATUS] =  0
 	) [TAX]
 	outer apply (
-		SELECT SUM( [B].[SUMA] ) as [DISTRAINT_SUM]
+		SELECT TOP (1) SUM( [B].[SUMA] ) as [DISTRAINT_SUM]
 		FROM '+@SqlFullDBName+'.dbo.[BLOCKSUM] [B] with(nolock)
 		INNER JOIN '+@SqlFullDBName+'.dbo.[NOMS] [N] with(nolock)
 			ON	[N].[NOMID] = 136 

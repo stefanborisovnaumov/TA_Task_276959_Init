@@ -1,1 +1,1 @@
-copy .\_cur_ver_.txt + ..\Tables\NEW_TA_TABLES.sql + ..\Views\*.sql + ..\Proc\*.SQL .\BPB_TA_CASH_PAYMENTS_V2.8.sql
+copy .\_cur_ver_.txt + ..\Tables\NEW_TA_TABLES.sql + ..\Views\*.sql + ..\Proc\*.SQL .\BPB_TA_CASH_PAYMENTS_V2.9.sql

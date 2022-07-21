@@ -498,9 +498,9 @@ begin
 	end
 
 	-- 0 - сметката се таксува от себе си, 1 - има друга таксуваща сметка, 2 - без проверка дали има друга таксуваща сметка или се таксува от себе си
-	if IsNull(@UI_OTHER_ACCOUNT_FOR_TAX,-1) = 1
+	if IsNull(@UI_OTHER_ACCOUNT_FOR_TAX,-1) in (0, 1)
 	begin 
-		select @Sql2 = ' AND [DEAL].[HAS_OTHER_TAX_ACCOUNT] = 1' + @CrLf;
+		select @Sql2 = ' AND [DEAL].[HAS_OTHER_TAX_ACCOUNT] = 1' + str(@UI_OTHER_ACCOUNT_FOR_TAX,len(@UI_OTHER_ACCOUNT_FOR_TAX),0) + @CrLf;
 
 		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 		select	@Sql2
