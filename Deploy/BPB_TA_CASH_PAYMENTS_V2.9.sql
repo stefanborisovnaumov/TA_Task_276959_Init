@@ -1,7 +1,7 @@
 /***************************************************************************************************************/
 -- Име          : Янко Янков
--- Дата и час   : 21.07.2022
--- Задача       : Task 282617 (v2.9.0)
+-- Дата и час   : 26.07.2022
+-- Задача       : Task 282617 (v2.9.1.1)
 -- Класификация : Test Automation
 -- Описание     : Автоматизация на тестовете за Кредитните преводи с използване на наличните данни от Online базата
 -- Параметри    : Няма
@@ -26,8 +26,8 @@ create unique index [IX_TEST_AUTOMATION_TA_TYPE]
 	on dbo.[TEST_AUTOMATION_TA_TYPE] ( [TA_TYPE], [DB_TYPE] )
 go
 
-DECLARE @DB_TYPE varchar(64)		= N'BETA'
-	,	@TA_Type_Lile varchar(64)	= N'%BETA%'
+DECLARE @DB_TYPE varchar(64)		= N'AIR'
+	,	@TA_Type_Lile varchar(64)	= N'%AIR%'
 ;
 insert into dbo.[TEST_AUTOMATION_TA_TYPE]
 ( [TA_TYPE], [DB_TYPE] )
@@ -915,19 +915,408 @@ go
 
 
 /********************************************************************************************************/
+/* Процедура за първоначална инициализация на клиентите */
+DROP PROCEDURE IF EXISTS dbo.[SP_CASH_PAYMENTS_INIT_CUSTOMERS]
+GO
+
+drop table if exists dbo.[AGR_CASH_PAYMENTS_CUSTOMERS]
+GO
+
+CREATE PROCEDURE dbo.[SP_CASH_PAYMENTS_INIT_CUSTOMERS]
+(
+	@DB_TYPE				sysname = N'AIR'
+,	@TestAutomationType		sysname = N'%AIR%'
+,	@OnlineSqlServerName	sysname = ''
+,	@OnlineSqlDataBaseName	sysname = ''
+,	@AccountDate			varchar(32) 
+,	@LogTraceInfo			int = 0
+
+)
+as 
+begin
+
+	select @LogTraceInfo = 1
+	;
+
+	declare @Sql varchar(max) = N'', @Msg nvarchar(max) = N'', @LogBegEndProc int = 1,	@Rows int = 0, @Err int = 0, @Ret int = 0
+		,	@Sql1 nvarchar(4000) = N'', @Sql2 nvarchar(4000) = N'', @TimeBeg datetime = GetDate()
+	;
+
+	/************************************************************************************************************/
+	/* 1. Prepare */
+	if @LogBegEndProc = 1 
+	begin	
+		select @Sql1 = 'dbo.[SP_CASH_PAYMENTS_INIT_CUSTOMERS] @DB_TYPE = '+@DB_TYPE
+					+ N' , @@TestAutomationType = '+@TestAutomationType
+					+ N' , @OnlineSqlServerName = '+@OnlineSqlServerName
+					+ N' , @OnlineSqlDataBaseName = '+@OnlineSqlDataBaseName
+			,  @Msg =  '*** Begin Execute Proc ***: dbo.[SP_CASH_PAYMENTS_INIT_CUSTOMERS]'
+		;
+		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg
+	end
+
+	/************************************************************************************************************/
+	/* 2. Prepare Sql Server full database name */
+	IF LEN(@OnlineSqlServerName) > 1 AND LEFT(RTRIM(@OnlineSqlServerName),1) <> N'['
+		select @OnlineSqlServerName = QUOTENAME(@OnlineSqlServerName)
+
+	IF LEN(@OnlineSqlDataBaseName) > 1 AND LEFT(RTRIM(@OnlineSqlDataBaseName),1) <> N'['
+		select @OnlineSqlDataBaseName = QUOTENAME(@OnlineSqlDataBaseName)	
+
+	declare @SqlFullDBName sysname = @OnlineSqlServerName +'.'+@OnlineSqlDataBaseName
+	;
+
+	/************************************************************************************************************/
+	/* 2.1 Prepare all duplicate customers EGFN */
+	truncate table dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_DUBL_EGFN]
+	;	
+
+	select @Sql1 = N';
+	insert into dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_DUBL_EGFN] 
+	select  CAST(RIGHT(RTRIM([C].[IDENTIFIER]), 13) AS BIGINT) AS [EGFN]
+
+	from '+@SqlFullDBName+'.dbo.[DT015_CUSTOMERS] [C] WITH (NOLOCK)
+	where ISNUMERIC( [C].[IDENTIFIER] ) = 1 
+	group by CAST( RIGHT( RTRIM( [C].[IDENTIFIER] ), 13) AS BIGINT) 
+	HAVING COUNT(*) > 1 '
+	;
+
+	begin try
+		exec sp_executeSql @Sql1
+	end try
+	begin catch
+		select  @Msg = dbo.FN_GET_EXCEPTION_INFO()
+		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg
+		return 3
+	end catch 
+
+	select @Rows = (select count(*) from dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_DUBL_EGFN] with(nolock) ), @Err = @@ERROR;
+	if @LogTraceInfo = 1
+	begin 
+		select  @Msg = N'After: select * into dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_DUBL_EGFN]  Rows affected: ' + str(@Rows,len(@Rows),0);
+	 	exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg;
+	end
+
+	/* 2.2 Prepare Customers data */
+	DROP TABLE IF EXISTS #TBL_CLINETS_FILTER
+	;
+	select [SECTOR], [DB_CLIENT_TYPE_DT300] as [CLIENT_TYPE], COUNT(*) AS [CNT] 
+	INTO #TBL_CLINETS_FILTER
+	from dbo.[VIEW_CASH_PAYMENTS_CONDITIONS] WITH(NOLOCK)
+	where [DB_TYPE] = N'AIR' and [TA_TYPE] LIKE @TestAutomationType
+	GROUP BY [SECTOR], [DB_CLIENT_TYPE_DT300]
+	;
+
+	drop table if exists dbo.[AGR_CASH_PAYMENTS_CUSTOMERS]
+	;
+
+	set @Sql1 = N'
+	;
+	WITH [CTE_FILTER] AS 
+	(
+		select [SECTOR], [CLIENT_TYPE]
+		from #TBL_CLINETS_FILTER with(nolock)
+	)
+	select 	IDENTITY(INT, 1, 1) 					AS [ROW_ID]
+		,	[C].[CUSTOMER_ID]						AS [CUSTOMER_ID]
+		,	[M].[CL_CODE]							AS [CLIENT_CODE_MAIN]
+		,	RTRIM([C].[IDENTIFIER])					AS [CLIENT_IDENTIFIER]
+		,	[C].[IDENTIFIER_TYPE]					AS [CLIENT_IDENTIFIER_TYPE]
+		,	[C].[ECONOMIC_SECTOR]					AS [CLIENT_SECTOR]		
+		,	[C].[CLIENT_TYPE]						AS [CLIENT_TYPE_DT300_CODE]
+		,	[C].[BIRTH_DATE]						AS [CLIENT_BIRTH_DATE]
+		,	[TYP].[CUSTOMER_CHARACTERISTIC]			AS [CUSTOMER_CHARACTERISTIC]
+		,	[TYP].[IS_FUNCTIONAL_ID]				AS [IS_FUNCTIONAL_ID]
+		,	[TYP].[IS_PHISICAL_PERSON]				AS [IS_PHISICAL_PERSON]
+		,	[EX_BITS].*
+	into dbo.[AGR_CASH_PAYMENTS_CUSTOMERS]
+	from [CTE_FILTER] [F] with(nolock)
+	inner join '+@SqlFullDBName+'.dbo.[DT015_CUSTOMERS] [C] with(nolock)
+		on  [F].[SECTOR] = [C].[ECONOMIC_SECTOR]
+		and [F].[CLIENT_TYPE] = [C].[CLIENT_TYPE]
+	inner join '+@SqlFullDBName+'.dbo.[DT015_MAINCODE_CUSTID] [M] with(nolock)
+		on  [M].[CUSTOMER_ID] = [C].[CUSTOMER_ID]
+	cross apply (
+		select	CAST( CASE WHEN [C].[IDENTIFIER_TYPE] IN (5,6,7,8) THEN 1 ELSE 0 END AS BIT)
+												AS [IS_FUNCTIONAL_ID]
+			,	CAST( CASE WHEN [C].[CUSTOMER_TYPE] = 1 THEN 1 ELSE 0 END AS BIT)  
+												AS [IS_PHISICAL_PERSON]
+			,	CAST( [C].[CUSTOMER_CHARACTERISTIC] as TINYINT )
+												AS [CUSTOMER_CHARACTERISTIC]
+	) [TYP] 
+	cross apply (
+		select	CAST ( 0 AS BIT )				AS [HAS_MANY_CLIENT_CODES]
+			,	CAST ( 0 AS BIT )				AS [HAS_DUBL_CLIENT_IDS]
+			,	CAST ( 0 AS BIT )				AS [IS_PROXY]
+			,	CAST ( 0 AS BIT )				AS [HAS_LOAN]
+			,	CAST ( 0 AS BIT )				AS [HAS_VALID_DOCUMENT]
+			,	CAST ( 1 AS BIT )				AS [IS_ORIGINAL_EGFN]
+			,	CAST ( 0 AS BIT )				AS [HAS_ZAPOR]
+			,	CAST ( 0 AS BIT )				AS [HAS_UNCOLLECTED_TAX_CONNECTED_TO_ALL_ACC]			
+	) [EX_BITS]
+	'
+	;
+
+	begin try
+		exec sp_executeSql @Sql1
+	end try
+	begin catch
+		select  @Msg = dbo.FN_GET_EXCEPTION_INFO()
+		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg
+		return 4
+	end catch 
+
+	select @Rows =  (select count(*) from dbo.[AGR_CASH_PAYMENTS_CUSTOMERS] with(nolock) ), @Err = @@ERROR;
+	if @LogTraceInfo = 1
+	begin 
+		select  @Msg = N'After: select * into dbo.[AGR_CASH_PAYMENTS_CUSTOMERS], Rows affected: ' + str(@Rows,len(@Rows),0);
+	 	exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg
+	end	
+
+	/* 2.2.1 Create Indexes on [AGR_CASH_PAYMENTS_CUSTOMERS] */
+	create index IX_AGR_CASH_PAYMENTS_CUSTOMERS_CUSTOMER_ID
+		on dbo.[AGR_CASH_PAYMENTS_CUSTOMERS] ( [CUSTOMER_ID] )
+	;	
+
+	/* 2.3 Prepare Customers with many client codes  */
+	truncate table dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_MANY_CLIENT_CODES]
+	;
+
+	select @Sql1 = N';
+	insert into dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_MANY_CLIENT_CODES]	
+	select	[CUST].[CUSTOMER_ID]
+
+	from dbo.[AGR_CASH_PAYMENTS_CUSTOMERS] [CUST] with(nolock)
+	where EXISTS 
+	(
+		select [CC].[CUSTOMER_ID] 
+		from '+@SqlFullDBName+'.dbo.[DT015] [CC] with(nolock)
+		WHERE	[CC].[CUSTOMER_ID] = [CUST].[CUSTOMER_ID]
+		group by [CC].[CUSTOMER_ID] 
+		HAVING COUNT(*) > 1
+	) '
+	;
+
+	begin try
+		exec sp_executeSql @Sql1
+	end try
+	begin catch
+		select  @Msg = dbo.FN_GET_EXCEPTION_INFO()
+		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg
+		return 4
+	end catch 
+
+	select @Rows =  (select count(*) from dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_MANY_CLIENT_CODES] with(nolock) ), @Err = @@ERROR;
+	if @LogTraceInfo = 1
+	begin 
+		select  @Msg = N'After: select * into dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_MANY_CLIENT_CODES], Rows affected: ' + str(@Rows,len(@Rows),0);
+	 	exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg
+	end
+
+	/* 2.4 Prepare Customers with Dubl EGFN  */
+	truncate table dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_DUBL_EGFN]
+	;
+
+	select @Sql1 = N';
+	insert into dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_DUBL_EGFN]	
+	select	[C].[CUSTOMER_ID]
+		,	[X].[IS_ORIGINAL_EGFN]
+
+	from dbo.[AGR_CASH_PAYMENTS_CUSTOMERS] [C] with(nolock)
+	inner join dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_DUBL_EGFN] [DUBL] with(nolock)
+		on [DUBL].[EGFN] = CAST(RIGHT(RTRIM([C].[CLIENT_IDENTIFIER]), 13) AS BIGINT)
+	cross apply (
+		select CAST( CASE WHEN [DUBL].[EGFN] = CAST( [C].[CLIENT_IDENTIFIER] AS BIGINT )
+					THEN 1 ELSE 0 END AS BIT)	AS [IS_ORIGINAL_EGFN]
+	) [X]'
+	;
+
+	begin try
+		exec sp_executeSql @Sql1
+	end try
+	begin catch
+		select  @Msg = dbo.FN_GET_EXCEPTION_INFO()
+		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg
+		return 4
+	end catch 
+
+	select @Rows =  (select count(*) from dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_DUBL_EGFN] with(nolock) ), @Err = @@ERROR;
+	if @LogTraceInfo = 1
+	begin 
+		select  @Msg = N'After: select * into dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_DUBL_EGFN], Rows affected: ' + str(@Rows,len(@Rows),0);
+	 	exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg
+	end
+
+	/* 2.5 Prepare Customers are proxies */
+	truncate table dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_ARE_PROXIES]
+	;
+
+	select @Sql1 = N';
+	insert into dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_ARE_PROXIES]	
+	select	[C].[CUSTOMER_ID]
+
+	from dbo.[AGR_CASH_PAYMENTS_CUSTOMERS] [C] with(nolock)
+	where EXISTS 
+	(
+		select *
+		from '+@SqlFullDBName+'.dbo.[PROXY_SPEC] [PS] with(nolock)
+		WHERE	[PS].[REPRESENTATIVE_CUSTOMER_ID] = [C].[CUSTOMER_ID]
+			and [PS].[REPRESENTED_CUSTOMER_ID] <> [C].[CUSTOMER_ID]
+			and [PS].[CUSTOMER_ROLE_TYPE] IN ( 2, 3 )  /* NM622 (client roles): 1 - Титуляр, 2- Пълномощник; 3 - Законен представител, ... */
+	) '
+	;
+
+	begin try
+		exec sp_executeSql @Sql1
+	end try
+	begin catch
+		select  @Msg = dbo.FN_GET_EXCEPTION_INFO()
+		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg
+		return 4
+	end catch 
+
+	select @Rows =  (select count(*) from dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_ARE_PROXIES] with(nolock) ), @Err = @@ERROR;
+	if @LogTraceInfo = 1
+	begin 
+		select  @Msg = N'After: select * into dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_ARE_PROXIES], Rows affected: ' + str(@Rows,len(@Rows),0);
+	 	exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg
+	end
+
+	/* 2.6 Prepare Customers with valid IDENTITY DOCUMENTS */
+	truncate table dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_VALID_IDENTITY_DOCUMENTS]
+	;
+
+	set @Sql1 = N'
+	declare @DateAcc date = '+@AccountDate+'
+	;
+
+	insert into dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_VALID_IDENTITY_DOCUMENTS]
+	select	[C].[CUSTOMER_ID]
+
+	from dbo.[AGR_CASH_PAYMENTS_CUSTOMERS] [C] with(nolock)
+	where EXISTS 
+	(
+		select *
+		from '+@SqlFullDBName+'.dbo.[DT015_IDENTITY_DOCUMENTS] [D] with(nolock)
+		WHERE	[D].[CUSTOMER_ID] = [C].[CUSTOMER_ID]
+			and [D].[NM405_DOCUMENT_TYPE] IN ( 1, 7, 8  )  /* 1 - Лична карта; 7 - Паспорт; 8 - Шофьорска книжка */
+			and ( [D].[INDEFINITELY] = 1 OR [D].[EXPIRY_DATE] > @DateAcc )
+			and [D].[ISSUER_COUNTRY_CODE] > 0
+			and [D].[ISSUE_DATE] > ''1970-12-31''
+			and len([D].[ISSUER_NAME]) > 0
+	) '
+	;
+
+	begin try
+		exec sp_executeSql @Sql1
+	end try
+	begin catch
+		select  @Msg = dbo.FN_GET_EXCEPTION_INFO()
+		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg
+		return 4
+	end catch 
+
+	select @Rows =  (select count(*) from dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_VALID_IDENTITY_DOCUMENTS] with(nolock) ), @Err = @@ERROR;
+	if @LogTraceInfo = 1
+	begin 
+		select  @Msg = N'After: select * into dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_VALID_IDENTITY_DOCUMENTS], Rows affected: ' + str(@Rows,len(@Rows),0);
+	 	exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg
+	end	
+
+	/* 2.7 Prepare Customers with Active Loas */
+	truncate table dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_LOANS]
+	;
+
+	select @Sql1 = N';
+	insert into dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_LOANS]	
+	select	[CUST].[CUSTOMER_ID]
+
+	from dbo.[AGR_CASH_PAYMENTS_CUSTOMERS] [CUST] with(nolock)
+	where EXISTS 
+	(
+		select *
+		from '+@SqlFullDBName+'.dbo.[KRDREG] [L] with(nolock)
+		inner join '+@SqlFullDBName+'.dbo.[DT015] [CC] with(nolock)
+			on [L].[CLIENT_CODE] =  [CC].[CODE]
+		WHERE	[CC].[CUSTOMER_ID] = [CUST].[CUSTOMER_ID]
+			and [L].[DATE_END_KREDIT] < 2 /* Is active loan */
+	) '
+	;
+
+	begin try
+		exec sp_executeSql @Sql1
+	end try
+	begin catch
+		select  @Msg = dbo.FN_GET_EXCEPTION_INFO()
+		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg
+		return 4
+	end catch 
+
+	select @Rows =  (select count(*) from dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_LOANS] with(nolock) ), @Err = @@ERROR;
+	if @LogTraceInfo = 1
+	begin 
+		select  @Msg = N'After: select * into dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_LOANS], Rows affected: ' + str(@Rows,len(@Rows),0);
+	 	exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg
+	end
+
+	/**************************************************************/
+	/* 2.8 Prepare Customers with Distraint */
+	truncate table dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_DISTRAINT]
+	;
+	
+	insert into dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_DISTRAINT] ( [CUSTOMER_ID] )
+	exec @Ret = dbo.[SP_LOAD_ONLINE_CUSTOMERS_WITH_DISTRAINT] @OnlineSqlServerName, @OnlineSqlDataBaseName
+
+	select @Rows =  (select count(*) from dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_DISTRAINT] with(nolock) ), @Err = @@ERROR;
+	if @LogTraceInfo = 1
+	begin 
+		select  @Msg = N'After: insert into dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_DISTRAINT], Rows affected: ' + str(@Rows,len(@Rows),0);
+	 	exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg
+	end
+
+	/**************************************************************/
+	/* 2.9 Prepare Customers with Uncollected tax connected to all customer accounts */
+	truncate table dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_UNCOLLECTED_TAX_CONNECTED_TO_ALL_ACCOUNTS]
+	;
+	
+	insert into dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_UNCOLLECTED_TAX_CONNECTED_TO_ALL_ACCOUNTS] ( [CUSTOMER_ID] )
+	exec @Ret = dbo.[SP_LOAD_ONLINE_CUSTOMERS_WITH_UNCOLLECTED_TAX_CONNECTED_TO_ALL_ACCOUNTS] @OnlineSqlServerName, @OnlineSqlDataBaseName
+
+	select @Rows =  (select count(*) from dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_UNCOLLECTED_TAX_CONNECTED_TO_ALL_ACCOUNTS] with(nolock) ), @Err = @@ERROR;
+	if @LogTraceInfo = 1
+	begin 
+		select  @Msg = N'After: insert into dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_UNCOLLECTED_TAX_CONNECTED_TO_ALL_ACCOUNTS], Rows affected: ' + str(@Rows,len(@Rows),0);
+	 	exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg
+	end
+
+	/**************************************************************/
+	/* 6. Log end procedure: */
+	if @LogBegEndProc = 1
+	begin
+		select @Msg = 'Duration: '+ dbo.FN_GET_TIME_DIFF(@TimeBeg, GetDate()) + 
+				+ ', AccData: ' + @AccountDate 
+				+ ', @OnlineSqlServerName = '+@OnlineSqlServerName
+				+ ', @OnlineSqlDataBaseName = '+@OnlineSqlDataBaseName
+		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Msg, '*** End Execute Proc ***: dbo.[SP_CASH_PAYMENTS_INIT_CUSTOMERS]'
+	end
+
+	return 0;
+end
+go
+
+
+/********************************************************************************************************/
 /* Процедура за първоначална инициализация */
 DROP PROCEDURE IF EXISTS dbo.[SP_CASH_PAYMENTS_INIT_DEALS]
 GO
 
 drop table if exists dbo.[AGR_CASH_PAYMENTS_DEALS]
 GO
-drop table if exists dbo.[AGR_CASH_PAYMENTS_CUSTOMERS]
-GO
 
 CREATE PROCEDURE dbo.[SP_CASH_PAYMENTS_INIT_DEALS]
 (
-	@DB_TYPE				sysname = N'BETA'
-,	@TestAutomationType		sysname = N'%BETA%'
+	@DB_TYPE				sysname = N'AIR'
+,	@TestAutomationType		sysname = N'%AIR%'
 ,	@LogTraceInfo			int = 0
 )
 as 
@@ -996,6 +1385,29 @@ begin
 	end
 
 	/************************************************************************************************************/
+	/* 0.3. Get Account Date: */
+
+	begin try
+		exec dbo.[SP_CASH_PAYMENTS_INIT_CUSTOMERS] @DB_TYPE, @TestAutomationType, @OnlineSqlServerName, @OnlineSqlDataBaseName, @AccountDate
+	end try
+	begin catch
+		select  @Msg = dbo.FN_GET_EXCEPTION_INFO()
+		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg
+		return -2
+	end catch
+
+	if @LogTraceInfo = 1 
+	begin 
+		select  @Msg = N'After: exec dbo.[SP_CASH_PAYMENTS_INIT_CUSTOMERS], @DB_TYPE = ' +@DB_TYPE
+					+ N', @TestAutomationType = '+ @TestAutomationType
+					+ N', @OnlineSqlServerName = '+ @OnlineSqlServerName
+					+ N', @OnlineSqlDataBaseName = '+ @OnlineSqlDataBaseName
+					+ N', @AccountDate = '+ @AccountDate
+			,	@Sql1 = N'exec dbo.[SP_SYS_GET_ACCOUNT_DATE_FROM_DB] '+@DB_TYPE+', '+@TestAutomationType+', '+@OnlineSqlServerName+N', '+@OnlineSqlDataBaseName+N', @CurrAccDate OUT'
+		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg
+	end
+
+	/************************************************************************************************************/
 	/* 1.1. Prepare BASE conditions */
 	drop table if exists #TBL_WITH_FILTERS
 	;
@@ -1020,7 +1432,7 @@ begin
 	left join dbo.[PROXY_SPEC_TA] as [PSPEC] with(nolock)
 		on [CUST].ROW_ID = [PSPEC].REF_ID
 	where [PREV].[TA_TYPE] LIKE @TestAutomationType
-		and [PREV].[DB_TYPE] = 'BETA'
+		and [PREV].[DB_TYPE] = 'AIR'
 	order by [PREV].[ROW_ID]
 	;
 
@@ -1638,328 +2050,6 @@ begin
 	 	exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg;
 	end
 
-	/**************************************************************/
-	/* 2. Prepare Customers data */
-
-	/* 2.1 Prepare all duplicate customers EGFN */
-	truncate table dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_DUBL_EGFN]
-	;	
-
-	select @Sql1 = N';
-	insert into dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_DUBL_EGFN] 
-	select  CAST(RIGHT(RTRIM([C].[IDENTIFIER]), 13) AS BIGINT) AS [EGFN]
-
-	from '+@SqlFullDBName+'.dbo.[DT015_CUSTOMERS] [C] WITH (NOLOCK)
-	where ISNUMERIC( [C].[IDENTIFIER] ) = 1 
-	group by CAST( RIGHT( RTRIM( [C].[IDENTIFIER] ), 13) AS BIGINT) 
-	HAVING COUNT(*) > 1 '
-	;
-
-	begin try
-		exec sp_executeSql @Sql1
-	end try
-	begin catch
-		select  @Msg = dbo.FN_GET_EXCEPTION_INFO()
-		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg
-		return 3
-	end catch 
-
-	select @Rows = (select count(*) from dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_DUBL_EGFN] with(nolock) ), @Err = @@ERROR;
-	if @LogTraceInfo = 1
-	begin 
-		select  @Msg = N'After: select * into dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_DUBL_EGFN]  Rows affected: ' + str(@Rows,len(@Rows),0);
-	 	exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg;
-	end
-
-	/* 2.2 Prepare Customers data */	
-	drop table if exists dbo.[AGR_CASH_PAYMENTS_CUSTOMERS]
-	;
-
-	set @Sql1 = N'
-	;
-	WITH [CTE_CUST_ID] AS 
-	(
-		select [A].[CUSTOMER_ID]
-		from 
-		(
-			select DISTINCT [CUSTOMER_ID]
-			from dbo.[AGR_CASH_PAYMENTS_DEALS] with(nolock)	
-			UNION ALL 
-			select DISTINCT [REPRESENTATIVE_CUSTOMER_ID]
-			from dbo.[AGR_CASH_PAYMENTS_DEALS_ACTIVE_PROXY_CUSTOMERS] with(nolock)
-		) [A]
-		group by [CUSTOMER_ID]
-	)
-	select 	IDENTITY( INT, 1, 1) 					AS [ROW_ID] 
-		,	[C].[CUSTOMER_ID]						AS [CUSTOMER_ID]
-		,	[M].[CL_CODE]							AS [CLIENT_CODE_MAIN]
-		,	RTRIM([C].[IDENTIFIER])					AS [CLIENT_IDENTIFIER]
-		,	[C].[IDENTIFIER_TYPE]					AS [CLIENT_IDENTIFIER_TYPE]
-		,	[C].[ECONOMIC_SECTOR]					AS [CLIENT_SECTOR]		
-		,	[C].[CLIENT_TYPE]						AS [CLIENT_TYPE_DT300_CODE]
-		,	[C].[BIRTH_DATE]						AS [CLIENT_BIRTH_DATE]
-		,	[TYP].[CUSTOMER_CHARACTERISTIC]			AS [CUSTOMER_CHARACTERISTIC]
-		,	[TYP].[IS_FUNCTIONAL_ID]				AS [IS_FUNCTIONAL_ID]
-		,	[TYP].[IS_PHISICAL_PERSON]				AS [IS_PHISICAL_PERSON]
-		,	[EX_BITS].*
-	into dbo.[AGR_CASH_PAYMENTS_CUSTOMERS]
-	from [CTE_CUST_ID] [F] with(nolock)
-	inner join '+@SqlFullDBName+'.dbo.[DT015_CUSTOMERS] [C] with(nolock)
-		on  [F].[CUSTOMER_ID] = [C].[CUSTOMER_ID]
-	inner join '+@SqlFullDBName+'.dbo.[DT015_MAINCODE_CUSTID] [M] with(nolock)
-		on  [M].[CUSTOMER_ID] = [C].[CUSTOMER_ID]
-	cross apply (
-		select	CAST( CASE WHEN [C].[IDENTIFIER_TYPE] IN (5,6,7,8) THEN 1 ELSE 0 END AS BIT)
-												AS [IS_FUNCTIONAL_ID]
-			,	CAST( CASE WHEN [C].[CUSTOMER_TYPE] = 1 THEN 1 ELSE 0 END AS BIT)  
-												AS [IS_PHISICAL_PERSON]
-			,	CAST( [C].[CUSTOMER_CHARACTERISTIC] as TINYINT )
-												AS [CUSTOMER_CHARACTERISTIC]
-	) [TYP] 
-	cross apply (
-		select	CAST ( 0 AS BIT )				AS [HAS_MANY_CLIENT_CODES]
-			,	CAST ( 0 AS BIT )				AS [HAS_DUBL_CLIENT_IDS]
-			,	CAST ( 0 AS BIT )				AS [IS_PROXY]
-			,	CAST ( 0 AS BIT )				AS [HAS_LOAN]
-			,	CAST ( 0 AS BIT )				AS [HAS_VALID_DOCUMENT]
-			,	CAST ( 1 AS BIT )				AS [IS_ORIGINAL_EGFN]
-			,	CAST ( 0 AS BIT )				AS [HAS_ZAPOR]
-			,	CAST ( 0 AS BIT )				AS [HAS_UNCOLLECTED_TAX_CONNECTED_TO_ALL_ACC]			
-	) [EX_BITS]
-	'
-	;
-
-	begin try
-		exec sp_executeSql @Sql1
-	end try
-	begin catch
-		select  @Msg = dbo.FN_GET_EXCEPTION_INFO()
-		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg
-		return 4
-	end catch 
-
-	select @Rows =  (select count(*) from dbo.[AGR_CASH_PAYMENTS_CUSTOMERS] with(nolock) ), @Err = @@ERROR;
-	if @LogTraceInfo = 1
-	begin 
-		select  @Msg = N'After: select * into dbo.[AGR_CASH_PAYMENTS_CUSTOMERS], Rows affected: ' + str(@Rows,len(@Rows),0);
-	 	exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg
-	end	
-
-	/* 2.2.1 Create Indexes on [AGR_CASH_PAYMENTS_CUSTOMERS] */
-	create index IX_AGR_CASH_PAYMENTS_CUSTOMERS_CUSTOMER_ID
-		on dbo.[AGR_CASH_PAYMENTS_CUSTOMERS] ( [CUSTOMER_ID] )
-	;	
-
-	/* 2.3 Prepare Customers with many client codes  */
-	truncate table dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_MANY_CLIENT_CODES]
-	;
-
-	select @Sql1 = N';
-	insert into dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_MANY_CLIENT_CODES]	
-	select	[CUST].[CUSTOMER_ID]
-
-	from dbo.[AGR_CASH_PAYMENTS_CUSTOMERS] [CUST] with(nolock)
-	where EXISTS 
-	(
-		select [CC].[CUSTOMER_ID] 
-		from '+@SqlFullDBName+'.dbo.[DT015] [CC] with(nolock)
-		WHERE	[CC].[CUSTOMER_ID] = [CUST].[CUSTOMER_ID]
-		group by [CC].[CUSTOMER_ID] 
-		HAVING COUNT(*) > 1
-	) '
-	;
-
-	begin try
-		exec sp_executeSql @Sql1
-	end try
-	begin catch
-		select  @Msg = dbo.FN_GET_EXCEPTION_INFO()
-		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg
-		return 4
-	end catch 
-
-	select @Rows =  (select count(*) from dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_MANY_CLIENT_CODES] with(nolock) ), @Err = @@ERROR;
-	if @LogTraceInfo = 1
-	begin 
-		select  @Msg = N'After: select * into dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_MANY_CLIENT_CODES], Rows affected: ' + str(@Rows,len(@Rows),0);
-	 	exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg
-	end
-
-	/* 2.4 Prepare Customers with Dubl EGFN  */
-	truncate table dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_DUBL_EGFN]
-	;
-
-	select @Sql1 = N';
-	insert into dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_DUBL_EGFN]	
-	select	[C].[CUSTOMER_ID]
-		,	[X].[IS_ORIGINAL_EGFN]
-
-	from dbo.[AGR_CASH_PAYMENTS_CUSTOMERS] [C] with(nolock)
-	inner join dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_DUBL_EGFN] [DUBL] with(nolock)
-		on [DUBL].[EGFN] = CAST(RIGHT(RTRIM([C].[CLIENT_IDENTIFIER]), 13) AS BIGINT)
-	cross apply (
-		select CAST( CASE WHEN [DUBL].[EGFN] = CAST( [C].[CLIENT_IDENTIFIER] AS BIGINT )
-					THEN 1 ELSE 0 END AS BIT)	AS [IS_ORIGINAL_EGFN]
-	) [X]'
-	;
-
-	begin try
-		exec sp_executeSql @Sql1
-	end try
-	begin catch
-		select  @Msg = dbo.FN_GET_EXCEPTION_INFO()
-		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg
-		return 4
-	end catch 
-
-	select @Rows =  (select count(*) from dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_DUBL_EGFN] with(nolock) ), @Err = @@ERROR;
-	if @LogTraceInfo = 1
-	begin 
-		select  @Msg = N'After: select * into dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_DUBL_EGFN], Rows affected: ' + str(@Rows,len(@Rows),0);
-	 	exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg
-	end
-
-	/* 2.5 Prepare Customers are proxies */
-	truncate table dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_ARE_PROXIES]
-	;
-
-	select @Sql1 = N';
-	insert into dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_ARE_PROXIES]	
-	select	[C].[CUSTOMER_ID]
-
-	from dbo.[AGR_CASH_PAYMENTS_CUSTOMERS] [C] with(nolock)
-	where EXISTS 
-	(
-		select *
-		from '+@SqlFullDBName+'.dbo.[PROXY_SPEC] [PS] with(nolock)
-		WHERE	[PS].[REPRESENTATIVE_CUSTOMER_ID] = [C].[CUSTOMER_ID]
-			and [PS].[REPRESENTED_CUSTOMER_ID] <> [C].[CUSTOMER_ID]
-			and [PS].[CUSTOMER_ROLE_TYPE] IN ( 2, 3 )  /* NM622 (client roles): 1 - Титуляр, 2- Пълномощник; 3 - Законен представител, ... */
-	) '
-	;
-
-	begin try
-		exec sp_executeSql @Sql1
-	end try
-	begin catch
-		select  @Msg = dbo.FN_GET_EXCEPTION_INFO()
-		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg
-		return 4
-	end catch 
-
-	select @Rows =  (select count(*) from dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_ARE_PROXIES] with(nolock) ), @Err = @@ERROR;
-	if @LogTraceInfo = 1
-	begin 
-		select  @Msg = N'After: select * into dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_ARE_PROXIES], Rows affected: ' + str(@Rows,len(@Rows),0);
-	 	exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg
-	end
-
-	/* 2.6 Prepare Customers with valid IDENTITY DOCUMENTS */
-	truncate table dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_VALID_IDENTITY_DOCUMENTS]
-	;
-
-	set @Sql1 = N'
-	declare @DateAcc date = '+@AccountDate+'
-	;
-
-	insert into dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_VALID_IDENTITY_DOCUMENTS]
-	select	[C].[CUSTOMER_ID]
-
-	from dbo.[AGR_CASH_PAYMENTS_CUSTOMERS] [C] with(nolock)
-	where EXISTS 
-	(
-		select *
-		from '+@SqlFullDBName+'.dbo.[DT015_IDENTITY_DOCUMENTS] [D] with(nolock)
-		WHERE	[D].[CUSTOMER_ID] = [C].[CUSTOMER_ID]
-			and [D].[NM405_DOCUMENT_TYPE] IN ( 1, 7, 8  )  /* 1 - Лична карта; 7 - Паспорт; 8 - Шофьорска книжка */
-			and ( [D].[INDEFINITELY] = 1 OR [D].[EXPIRY_DATE] > @DateAcc )
-			and [D].[ISSUER_COUNTRY_CODE] > 0
-			and [D].[ISSUE_DATE] > ''1970-12-31''
-			and len([D].[ISSUER_NAME]) > 0
-	) '
-	;
-
-	begin try
-		exec sp_executeSql @Sql1
-	end try
-	begin catch
-		select  @Msg = dbo.FN_GET_EXCEPTION_INFO()
-		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg
-		return 4
-	end catch 
-
-	select @Rows =  (select count(*) from dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_VALID_IDENTITY_DOCUMENTS] with(nolock) ), @Err = @@ERROR;
-	if @LogTraceInfo = 1
-	begin 
-		select  @Msg = N'After: select * into dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_VALID_IDENTITY_DOCUMENTS], Rows affected: ' + str(@Rows,len(@Rows),0);
-	 	exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg
-	end	
-
-	/* 2.7 Prepare Customers with Active Loas */
-	truncate table dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_LOANS]
-	;
-
-	select @Sql1 = N';
-	insert into dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_LOANS]	
-	select	[CUST].[CUSTOMER_ID]
-
-	from dbo.[AGR_CASH_PAYMENTS_CUSTOMERS] [CUST] with(nolock)
-	where EXISTS 
-	(
-		select *
-		from '+@SqlFullDBName+'.dbo.[KRDREG] [L] with(nolock)
-		inner join '+@SqlFullDBName+'.dbo.[DT015] [CC] with(nolock)
-			on [L].[CLIENT_CODE] =  [CC].[CODE]
-		WHERE	[CC].[CUSTOMER_ID] = [CUST].[CUSTOMER_ID]
-			and [L].[DATE_END_KREDIT] < 2 /* Is active loan */
-	) '
-	;
-
-	begin try
-		exec sp_executeSql @Sql1
-	end try
-	begin catch
-		select  @Msg = dbo.FN_GET_EXCEPTION_INFO()
-		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg
-		return 4
-	end catch 
-
-	select @Rows =  (select count(*) from dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_LOANS] with(nolock) ), @Err = @@ERROR;
-	if @LogTraceInfo = 1
-	begin 
-		select  @Msg = N'After: select * into dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_LOANS], Rows affected: ' + str(@Rows,len(@Rows),0);
-	 	exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg
-	end
-
-	/**************************************************************/
-	/* 2.8 Prepare Customers with Distraint */
-	truncate table dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_DISTRAINT]
-	;
-	
-	insert into dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_DISTRAINT] ( [CUSTOMER_ID] )
-	exec @Ret = dbo.[SP_LOAD_ONLINE_CUSTOMERS_WITH_DISTRAINT] @OnlineSqlServerName, @OnlineSqlDataBaseName
-
-	select @Rows =  (select count(*) from dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_DISTRAINT] with(nolock) ), @Err = @@ERROR;
-	if @LogTraceInfo = 1
-	begin 
-		select  @Msg = N'After: insert into dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_DISTRAINT], Rows affected: ' + str(@Rows,len(@Rows),0);
-	 	exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg
-	end
-
-	/**************************************************************/
-	/* 2.9 Prepare Customers with Uncollected tax connected to all customer accounts */
-	truncate table dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_UNCOLLECTED_TAX_CONNECTED_TO_ALL_ACCOUNTS]
-	;
-	
-	insert into dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_UNCOLLECTED_TAX_CONNECTED_TO_ALL_ACCOUNTS] ( [CUSTOMER_ID] )
-	exec @Ret = dbo.[SP_LOAD_ONLINE_CUSTOMERS_WITH_UNCOLLECTED_TAX_CONNECTED_TO_ALL_ACCOUNTS] @OnlineSqlServerName, @OnlineSqlDataBaseName
-
-	select @Rows =  (select count(*) from dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_UNCOLLECTED_TAX_CONNECTED_TO_ALL_ACCOUNTS] with(nolock) ), @Err = @@ERROR;
-	if @LogTraceInfo = 1
-	begin 
-		select  @Msg = N'After: insert into dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_UNCOLLECTED_TAX_CONNECTED_TO_ALL_ACCOUNTS], Rows affected: ' + str(@Rows,len(@Rows),0);
-	 	exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg
-	end
 
 	/**************************************************************/
 	/* 3. update customers: */
@@ -3638,7 +3728,7 @@ begin
 		+ N' AS [TEST_ID]
 		, [DEAL].[DEAL_TYPE], [DEAL].[DEAL_NUM]
 		, [CUST].[CUSTOMER_ID], [PROXY].[CUSTOMER_ID] AS [REPRESENTATIVE_CUSTOMER_ID] '
-		+ case when IsNull(@TYPE_ACTION,'') = 'CT' and IsNull(@UI_INOUT_TRANSFER,'-1') = '3' and IsNull(@BETWEEN_OWN_ACCOUNTS,-1) in (0,1)
+		+ case when IsNull(@TYPE_ACTION,'') IN ( 'CT', 'DD' ) and IsNull(@UI_INOUT_TRANSFER,'-1') = '3' and IsNull(@BETWEEN_OWN_ACCOUNTS,-1) in (0,1)
 			then ', [DEAL_BEN].[DEAL_TYPE_BEN], [DEAL_BEN].[DEAL_NUM_BEN] '
 			else ', NULL AS [DEAL_TYPE_BEN],  NULL AS [DEAL_NUM_BEN]' end + @CrLf
 	insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR], [IS_BASE_select] )
@@ -3702,7 +3792,7 @@ begin
 	end
 
 		-- Add additional joint for document "Credit Transfer":
-	if IsNull(@TYPE_ACTION,'') = 'CT' and IsNull(@UI_INOUT_TRANSFER,'-1') = '3' and IsNull(@BETWEEN_OWN_ACCOUNTS,-1) in (0,1)
+	if IsNull(@TYPE_ACTION,'') in ('CT', 'DD') and IsNull(@UI_INOUT_TRANSFER,'-1') = '3' and IsNull(@BETWEEN_OWN_ACCOUNTS,-1) in (0,1)
 	begin
 
 		if @BETWEEN_OWN_ACCOUNTS = 1
@@ -3958,7 +4048,7 @@ begin
 	-- 0 - сметката се таксува от себе си, 1 - има друга таксуваща сметка, 2 - без проверка дали има друга таксуваща сметка или се таксува от себе си
 	if IsNull(@UI_OTHER_ACCOUNT_FOR_TAX,-1) in (0, 1)
 	begin 
-		select @Sql2 = ' AND [DEAL].[HAS_OTHER_TAX_ACCOUNT] = 1' + str(@UI_OTHER_ACCOUNT_FOR_TAX,len(@UI_OTHER_ACCOUNT_FOR_TAX),0) + @CrLf;
+		select @Sql2 = ' AND [DEAL].[HAS_OTHER_TAX_ACCOUNT] = ' + str(@UI_OTHER_ACCOUNT_FOR_TAX,len(@UI_OTHER_ACCOUNT_FOR_TAX),0) + @CrLf;
 
 		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 		select	@Sql2

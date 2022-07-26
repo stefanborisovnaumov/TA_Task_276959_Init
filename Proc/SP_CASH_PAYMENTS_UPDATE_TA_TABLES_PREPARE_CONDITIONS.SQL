@@ -180,7 +180,7 @@ begin
 		+ N' AS [TEST_ID]
 		, [DEAL].[DEAL_TYPE], [DEAL].[DEAL_NUM]
 		, [CUST].[CUSTOMER_ID], [PROXY].[CUSTOMER_ID] AS [REPRESENTATIVE_CUSTOMER_ID] '
-		+ case when IsNull(@TYPE_ACTION,'') = 'CT' and IsNull(@UI_INOUT_TRANSFER,'-1') = '3' and IsNull(@BETWEEN_OWN_ACCOUNTS,-1) in (0,1)
+		+ case when IsNull(@TYPE_ACTION,'') IN ( 'CT', 'DD' ) and IsNull(@UI_INOUT_TRANSFER,'-1') = '3' and IsNull(@BETWEEN_OWN_ACCOUNTS,-1) in (0,1)
 			then ', [DEAL_BEN].[DEAL_TYPE_BEN], [DEAL_BEN].[DEAL_NUM_BEN] '
 			else ', NULL AS [DEAL_TYPE_BEN],  NULL AS [DEAL_NUM_BEN]' end + @CrLf
 	insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR], [IS_BASE_select] )
@@ -244,7 +244,7 @@ begin
 	end
 
 		-- Add additional joint for document "Credit Transfer":
-	if IsNull(@TYPE_ACTION,'') = 'CT' and IsNull(@UI_INOUT_TRANSFER,'-1') = '3' and IsNull(@BETWEEN_OWN_ACCOUNTS,-1) in (0,1)
+	if IsNull(@TYPE_ACTION,'') in ('CT', 'DD') and IsNull(@UI_INOUT_TRANSFER,'-1') = '3' and IsNull(@BETWEEN_OWN_ACCOUNTS,-1) in (0,1)
 	begin
 
 		if @BETWEEN_OWN_ACCOUNTS = 1
@@ -500,7 +500,7 @@ begin
 	-- 0 - сметката се таксува от себе си, 1 - има друга таксуваща сметка, 2 - без проверка дали има друга таксуваща сметка или се таксува от себе си
 	if IsNull(@UI_OTHER_ACCOUNT_FOR_TAX,-1) in (0, 1)
 	begin 
-		select @Sql2 = ' AND [DEAL].[HAS_OTHER_TAX_ACCOUNT] = 1' + str(@UI_OTHER_ACCOUNT_FOR_TAX,len(@UI_OTHER_ACCOUNT_FOR_TAX),0) + @CrLf;
+		select @Sql2 = ' AND [DEAL].[HAS_OTHER_TAX_ACCOUNT] = ' + str(@UI_OTHER_ACCOUNT_FOR_TAX,len(@UI_OTHER_ACCOUNT_FOR_TAX),0) + @CrLf;
 
 		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 		select	@Sql2

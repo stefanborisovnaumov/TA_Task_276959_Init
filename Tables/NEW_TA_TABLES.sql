@@ -18,8 +18,8 @@ create unique index [IX_TEST_AUTOMATION_TA_TYPE]
 	on dbo.[TEST_AUTOMATION_TA_TYPE] ( [TA_TYPE], [DB_TYPE] )
 go
 
-DECLARE @DB_TYPE varchar(64)		= N'BETA'
-	,	@TA_Type_Lile varchar(64)	= N'%BETA%'
+DECLARE @DB_TYPE varchar(64)		= N'AIR'
+	,	@TA_Type_Lile varchar(64)	= N'%AIR%'
 ;
 insert into dbo.[TEST_AUTOMATION_TA_TYPE]
 ( [TA_TYPE], [DB_TYPE] )
