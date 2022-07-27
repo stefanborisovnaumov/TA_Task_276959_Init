@@ -5115,7 +5115,7 @@ begin
 			ON	[N].[NOMID] = 136 
 			AND [N].[CODE]	= [B].[WHYFREEZED] 
 			AND ([N].[STATUS] & @StsBlockReasonDistraint) = @StsBlockReasonDistraint
-		WHERE [B].[PARTIDA] = [REG].[ACCOUNT] AND [B].[CLOSED_FROZEN_SUM] = 0
+		WHERE [B].[PARTIDA] = [REG].[ACCOUNT] AND [B].[CLOSED_FROZEN_SUM] = 0 AND [B].[SUMA] >= 0.01
 	) [DST]
 	cross apply (
 		SELECT	ROUND([XBAL].[BEG_SAL], 4)						as [BEG_SAL]
