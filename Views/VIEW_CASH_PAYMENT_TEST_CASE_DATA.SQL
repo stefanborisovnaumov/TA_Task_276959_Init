@@ -74,6 +74,10 @@ select 	[v].[ROW_ID]
 	,	[CUST_BEN].[COMPANY_EFN]		as [COMPANY_EFN_BEN]
 	,	[CUST_BEN].[UI_CLIENT_CODE]		as [UI_CLIENT_CODE_BEN]
 
+	/* Данни за таксата */	
+	,	[v].[TAX_CODE]					as [TAX_CODE]
+	,	[v].[PREF_CODE]					as [PREF_CODE]
+
 from dbo.[VIEW_CASH_PAYMENTS_CONDITIONS] [v]
 
 inner join dbo.[DT015_CUSTOMERS_ACTIONS_TA] [c]

@@ -176,7 +176,7 @@ begin
 
 	/*********************************************************************/
 	/* Prepate Base SELECT statement: */
-	select @Sql2 = N'select DISTINCT TOP (3) ''ID_'+@TestCaseRowID+'_'+REPLACE(@TA_TYPE,'''','')+ ''''
+	select @Sql2 = N'select DISTINCT TOP (1) ''ID_'+@TestCaseRowID+'_'+REPLACE(@TA_TYPE,'''','')+ ''''
 		+ N' AS [TEST_ID]
 		, [DEAL].[DEAL_TYPE], [DEAL].[DEAL_NUM]
 		, [CUST].[CUSTOMER_ID], [PROXY].[CUSTOMER_ID] AS [REPRESENTATIVE_CUSTOMER_ID] '
@@ -243,7 +243,8 @@ begin
 		select @Sql += @Sql2;
 	end
 
-		-- Add additional joint for document "Credit Transfer":
+	/* ВНИМАНИЕ!!! При актуализация на условията тук, може да се наложи и корекция на генерирането на SELECT заявката в секция Prepate Base SELECT statement: */
+	-- Add additional joint for document "Credit Transfer": 
 	if IsNull(@TYPE_ACTION,'') in ('CT', 'DD') and IsNull(@UI_INOUT_TRANSFER,'-1') = '3' and IsNull(@BETWEEN_OWN_ACCOUNTS,-1) in (0,1)
 	begin
 

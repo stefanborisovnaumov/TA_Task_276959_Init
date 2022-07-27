@@ -1,7 +1,7 @@
 /***************************************************************************************************************/
 -- Име          : Янко Янков
--- Дата и час   : 26.07.2022
--- Задача       : Task 282617 (v2.9.1.1)
+-- Дата и час   : 27.07.2022
+-- Задача       : Task 282617 (v2.9.2)
 -- Класификация : Test Automation
 -- Описание     : Автоматизация на тестовете за Кредитните преводи с използване на наличните данни от Online базата
 -- Параметри    : Няма
@@ -106,6 +106,22 @@ create table dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_COUNT_DEAL_BY_CURRENCY]
 ,	[DEAL_COUNT]	int
 )
 go
+
+DROP INDEX IF EXISTS [IX_AGR_CASH_PAYMENTS_CUSTOMERS_COUNT_DEAL_BY_CURRENCY_DEAL_TYPE_CURRENCY_CODE_DEAL_COUNT]
+	ON [dbo].[AGR_CASH_PAYMENTS_CUSTOMERS_COUNT_DEAL_BY_CURRENCY] 
+GO
+CREATE NONCLUSTERED INDEX [IX_AGR_CASH_PAYMENTS_CUSTOMERS_COUNT_DEAL_BY_CURRENCY_DEAL_TYPE_CURRENCY_CODE_DEAL_COUNT]
+	ON [dbo].[AGR_CASH_PAYMENTS_CUSTOMERS_COUNT_DEAL_BY_CURRENCY] 
+		([DEAL_TYPE],[CURRENCY_CODE],[DEAL_COUNT])
+	INCLUDE ( [CUSTOMER_ID] )
+GO
+
+DROP INDEX IF EXISTS [IX_AGR_CASH_PAYMENTS_CUSTOMERS_COUNT_DEAL_BY_CURRENCY_CUSTOMER_ID_DEAL_TYPE_CURRENCY_CODE_DEAL_COUNT]
+	ON [dbo].[AGR_CASH_PAYMENTS_CUSTOMERS_COUNT_DEAL_BY_CURRENCY] 
+GO
+CREATE NONCLUSTERED INDEX [IX_AGR_CASH_PAYMENTS_CUSTOMERS_COUNT_DEAL_BY_CURRENCY_CUSTOMER_ID_DEAL_TYPE_CURRENCY_CODE_DEAL_COUNT]
+	ON [dbo].[AGR_CASH_PAYMENTS_CUSTOMERS_COUNT_DEAL_BY_CURRENCY] ([CUSTOMER_ID],[DEAL_TYPE],[CURRENCY_CODE],[DEAL_COUNT])
+GO
 
 
 /*****************************************************************************/
@@ -302,6 +318,15 @@ create table dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_LOANS]
 )
 go
 
+/*****************************************************************************/
+-- Create INDEX ON table dbo.[AGR_CASH_PAYMENTS_DEALS]
+--DROP INDEX IF EXISTS [IX_AGR_CASH_PAYMENTS_DEALS_DEAL_CURRENCY_CODE_CUSTOMER_ID_DEAL_NUM] 
+--	ON [dbo].[AGR_CASH_PAYMENTS_DEALS]
+--go
+
+--CREATE NONCLUSTERED INDEX [IX_AGR_CASH_PAYMENTS_DEALS_DEAL_CURRENCY_CODE_CUSTOMER_ID_DEAL_NUM]
+--	ON [dbo].[AGR_CASH_PAYMENTS_DEALS] ([DEAL_CURRENCY_CODE],[CUSTOMER_ID],[DEAL_NUM])
+--go
 
 
 /********************************************************************************************************/
@@ -528,8 +553,8 @@ AS
 		FROM [CTE_CCY] [NV] WITH(NOLOCK)
 		WHERE [NV].[NAME] = [DBEN].[UI_CURRENCY_CODE]
 	) [CCY_DEAL_BEN]	
-	WHERE [PREV].[DB_TYPE] = 'BETA'
-		AND [PREV].[TA_TYPE] LIKE N'%BETA%'
+	WHERE [PREV].[DB_TYPE] = 'AIR'
+		AND [PREV].[TA_TYPE] LIKE N'%AIR%'
 		AND [PREV].[ROW_ID] = IsNull( NULL,  [PREV].[ROW_ID] )
 	;
 GO
@@ -608,6 +633,10 @@ select 	[v].[ROW_ID]
 	,	[CUST_BEN].[NAME]				as [NAME_BEN]
 	,	[CUST_BEN].[COMPANY_EFN]		as [COMPANY_EFN_BEN]
 	,	[CUST_BEN].[UI_CLIENT_CODE]		as [UI_CLIENT_CODE_BEN]
+
+	/* Данни за таксата */	
+	,	[v].[TAX_CODE]					as [TAX_CODE]
+	,	[v].[PREF_CODE]					as [PREF_CODE]
 
 from dbo.[VIEW_CASH_PAYMENTS_CONDITIONS] [v]
 
@@ -2228,7 +2257,11 @@ begin
 	,	[HAS_WNOS_BEL] ASC
 	,	[IS_DORMUNT_ACCOUNT] ASC
 	)
-	INCLUDE([DEAL_TYPE],[DEAL_NUM],[DEAL_ACCOUNT],[CUSTOMER_ID]) 
+	INCLUDE( [DEAL_TYPE], [DEAL_NUM], [DEAL_ACCOUNT], [CUSTOMER_ID] ) 
+	;
+
+	CREATE NONCLUSTERED INDEX [IX_AGR_CASH_PAYMENTS_DEALS_DEAL_CURRENCY_CODE_CUSTOMER_ID_DEAL_NUM]
+		ON [dbo].[AGR_CASH_PAYMENTS_DEALS] ( [DEAL_CURRENCY_CODE], [CUSTOMER_ID], [DEAL_NUM] )
 	;
 
 	CREATE NONCLUSTERED INDEX [IX_AGR_CASH_PAYMENTS_DEALS_ACTIVE_PROXY_CUSTOMERS_DEAL_TYPE_DEAL_NUM_CUSTOMER_ROLE_TYPE]
@@ -3724,7 +3757,7 @@ begin
 
 	/*********************************************************************/
 	/* Prepate Base SELECT statement: */
-	select @Sql2 = N'select DISTINCT TOP (3) ''ID_'+@TestCaseRowID+'_'+REPLACE(@TA_TYPE,'''','')+ ''''
+	select @Sql2 = N'select DISTINCT TOP (1) ''ID_'+@TestCaseRowID+'_'+REPLACE(@TA_TYPE,'''','')+ ''''
 		+ N' AS [TEST_ID]
 		, [DEAL].[DEAL_TYPE], [DEAL].[DEAL_NUM]
 		, [CUST].[CUSTOMER_ID], [PROXY].[CUSTOMER_ID] AS [REPRESENTATIVE_CUSTOMER_ID] '
@@ -3791,7 +3824,8 @@ begin
 		select @Sql += @Sql2;
 	end
 
-		-- Add additional joint for document "Credit Transfer":
+	/* ВНИМАНИЕ!!! При актуализация на условията тук, може да се наложи и корекция на генерирането на SELECT заявката в секция Prepate Base SELECT statement: */
+	-- Add additional joint for document "Credit Transfer": 
 	if IsNull(@TYPE_ACTION,'') in ('CT', 'DD') and IsNull(@UI_INOUT_TRANSFER,'-1') = '3' and IsNull(@BETWEEN_OWN_ACCOUNTS,-1) in (0,1)
 	begin
 
@@ -5075,7 +5109,7 @@ begin
 			and [T].[TAX_STATUS] =  0
 	) [TAX]
 	outer apply (
-		SELECT TOP (1) SUM( [B].[SUMA] ) as [DISTRAINT_SUM]
+		SELECT TOP (1) [B].[SUMA] as [DISTRAINT_SUM]
 		FROM '+@SqlFullDBName+'.dbo.[BLOCKSUM] [B] with(nolock)
 		INNER JOIN '+@SqlFullDBName+'.dbo.[NOMS] [N] with(nolock)
 			ON	[N].[NOMID] = 136 
