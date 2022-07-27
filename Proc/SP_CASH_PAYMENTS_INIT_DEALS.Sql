@@ -544,7 +544,7 @@ begin
 		inner join @Tbl_Distraint_Codes [N]
 			on	[N].[CODE]	= [B].[WHYFREEZED] 
 		WHERE	[B].[PARTIDA] = [REG].[DEAL_ACCOUNT]
-			and [B].[SUMA] > 0.0
+			and [B].[SUMA] > 0.01
 			and [B].[CLOSED_FROZEN_SUM] = 0
 	)'
 	;
