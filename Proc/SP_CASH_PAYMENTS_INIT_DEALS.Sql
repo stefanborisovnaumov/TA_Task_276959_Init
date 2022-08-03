@@ -79,7 +79,7 @@ begin
 	end
 
 	/************************************************************************************************************/
-	/* 0.3. Get Account Date: */
+	/* 0.3. Init customers data: */
 
 	begin try
 		exec dbo.[SP_CASH_PAYMENTS_INIT_CUSTOMERS] @DB_TYPE, @TestAutomationType, @OnlineSqlServerName, @OnlineSqlDataBaseName, @AccountDate

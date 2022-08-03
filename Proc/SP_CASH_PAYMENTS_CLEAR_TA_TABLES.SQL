@@ -131,6 +131,15 @@ begin
 			where [D].[ROW_ID] = @DT015_CUSTOMERS_RowID
 		end
 
+		-- Актуализация данните за документа ( за сега само код на такса и преференция )
+		if @IsNotFirstCashPaymentWithAccumulatedTax = 0
+		begin
+			update [D]
+			set 	[TAX_CODE]	= 0		/* код на такса */
+				,	[PREF_CODE]	= 0		/* код на преференция */
+			from dbo.[PREV_COMMON_TA] [D]
+			where [D].[ROW_ID] = @TA_RowID
+		end
 
 		-- Зануляваме данните за бенефициена 
 		if IsNull(@CUSTOMER_BEN_ROW_ID,0) > 0 and @IsNotFirstCashPaymentWithAccumulatedTax = 0
