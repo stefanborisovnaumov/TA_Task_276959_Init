@@ -1,7 +1,7 @@
 /***************************************************************************************************************/
 -- Име          : Янко Янков
--- Дата и час   : 27.07.2022
--- Задача       : Task 282617 (v2.9.2)
+-- Дата и час   : 10.08.2022
+-- Задача       : Task 282617 (v2.9.3)
 -- Класификация : Test Automation
 -- Описание     : Автоматизация на тестовете за Кредитните преводи с използване на наличните данни от Online базата
 -- Параметри    : Няма
@@ -482,8 +482,9 @@ AS
 		,	[PREV].[UI_INOUT_TRANSFER]
 		,	[PREV].[BETWEEN_OWN_ACCOUNTS]
 		/* Вида на валутата на кореспондирашата партида от dbo.[RAZPREG_TA] */
-		,	[DBEN].UI_CURRENCY_CODE							AS [UI_CURRENCY_CODE_BEN]
+		,	[DBEN].[UI_CURRENCY_CODE]						AS [UI_CURRENCY_CODE_BEN]
 		,	[CCY_DEAL_BEN].[CCY_CODE_DEAL]					AS [CCY_CODE_DEAL_BEN]
+		,	[DBEN].[UI_STD_DOG_CODE]						AS [UI_STD_DOG_CODE_BEN]
 
 	FROM dbo.[PREV_COMMON_TA] [PREV] WITH(NOLOCK)
 	INNER JOIN dbo.[RAZPREG_TA] [DREG] WITH(NOLOCK)
@@ -625,6 +626,7 @@ select 	[v].[ROW_ID]
 	,	[DBEN].[ZAPOR_SUM]				AS [ZAPOR_SUM_BEN]
 	,	[DBEN].[IBAN]					AS [IBAN_BEN]
 	,	[DBEN].[TAX_UNCOLLECTED_SUM]	AS [TAX_UNCOLLECTED_SUM_BEN]
+	,	[DBEN].[UI_STD_DOG_CODE]		AS [UI_STD_DOG_CODE_BEN]
 
 	/* Данни на бенефицента - за някой от тестовите случай за кредитните преводи */
 	,	[v].[CUST_BEN_ROW_ID]
@@ -794,6 +796,15 @@ begin
 			where [D].[ROW_ID] = @DT015_CUSTOMERS_RowID
 		end
 
+		-- Актуализация данните за документа ( за сега само код на такса и преференция )
+		if @IsNotFirstCashPaymentWithAccumulatedTax = 0
+		begin
+			update [D]
+			set 	[TAX_CODE]	= 0		/* код на такса */
+				,	[PREF_CODE]	= 0		/* код на преференция */
+			from dbo.[PREV_COMMON_TA] [D]
+			where [D].[ROW_ID] = @TA_RowID
+		end
 
 		-- Зануляваме данните за бенефициена 
 		if IsNull(@CUSTOMER_BEN_ROW_ID,0) > 0 and @IsNotFirstCashPaymentWithAccumulatedTax = 0
@@ -1414,7 +1425,7 @@ begin
 	end
 
 	/************************************************************************************************************/
-	/* 0.3. Get Account Date: */
+	/* 0.3. Init customers data: */
 
 	begin try
 		exec dbo.[SP_CASH_PAYMENTS_INIT_CUSTOMERS] @DB_TYPE, @TestAutomationType, @OnlineSqlServerName, @OnlineSqlDataBaseName, @AccountDate
@@ -3669,6 +3680,7 @@ begin
 	declare @UI_INOUT_TRANSFER			varchar(256) = null
 		,	@BETWEEN_OWN_ACCOUNTS		int = -1
 		,	@CCY_CODE_DEAL_BEN			int = -1
+		, 	@UI_STD_DOG_CODE_BEN		int = -1
 	;
 
 	drop table if EXISTS dbo.[#TBL_SQL_CONDITIONS]
@@ -3752,6 +3764,7 @@ begin
 		,	@UI_INOUT_TRANSFER			= [UI_INOUT_TRANSFER]
 		,	@BETWEEN_OWN_ACCOUNTS		= [BETWEEN_OWN_ACCOUNTS]
 		,	@CCY_CODE_DEAL_BEN			= [CCY_CODE_DEAL_BEN]
+		,	@UI_STD_DOG_CODE_BEN		= [UI_STD_DOG_CODE_BEN]
 	from dbo.[#TBL_TA_CONDITIONS] [F] with(nolock)
 	;
 
@@ -3850,6 +3863,13 @@ begin
 		end
 		else 
 		begin
+
+			/* Условие за стандартен договор на кореспондиращата сделка */
+			declare @CND_STD_CONTRACT_BEN nvarchar(256) = N'';
+			if IsNull(@UI_STD_DOG_CODE_BEN, -1) > 0
+				select @CND_STD_CONTRACT_BEN = N' and [D].[DEAL_STD_DOG_CODE] = '+str(@UI_STD_DOG_CODE_BEN,len(@UI_STD_DOG_CODE_BEN),0);
+			;
+
 			select @Sql2 = N'
 			cross apply (
 				select top(1)
@@ -3857,7 +3877,8 @@ begin
 					,	[D].[DEAL_NUM] 	AS	[DEAL_NUM_BEN] 
 				from dbo.[AGR_CASH_PAYMENTS_DEALS] [D] with(nolock)
 				where	[D].[CUSTOMER_ID] <> [DEAL].[CUSTOMER_ID]
-					and [D].[DEAL_CURRENCY_CODE] = '+str(@CCY_CODE_DEAL_BEN,len(@CCY_CODE_DEAL_BEN),0)+'
+					and [D].[DEAL_CURRENCY_CODE] = '+str(@CCY_CODE_DEAL_BEN,len(@CCY_CODE_DEAL_BEN),0)
+					+ @CND_STD_CONTRACT_BEN + '
 			) [DEAL_BEN]
 			';
 		end

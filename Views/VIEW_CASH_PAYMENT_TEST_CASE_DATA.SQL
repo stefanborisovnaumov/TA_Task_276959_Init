@@ -65,6 +65,7 @@ select 	[v].[ROW_ID]
 	,	[DBEN].[ZAPOR_SUM]				AS [ZAPOR_SUM_BEN]
 	,	[DBEN].[IBAN]					AS [IBAN_BEN]
 	,	[DBEN].[TAX_UNCOLLECTED_SUM]	AS [TAX_UNCOLLECTED_SUM_BEN]
+	,	[DBEN].[UI_STD_DOG_CODE]		AS [UI_STD_DOG_CODE_BEN]
 
 	/* ƒанни на бенефицента - за н€кой от тестовите случай за кредитните преводи */
 	,	[v].[CUST_BEN_ROW_ID]

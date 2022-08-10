@@ -88,6 +88,7 @@ begin
 	declare @UI_INOUT_TRANSFER			varchar(256) = null
 		,	@BETWEEN_OWN_ACCOUNTS		int = -1
 		,	@CCY_CODE_DEAL_BEN			int = -1
+		, 	@UI_STD_DOG_CODE_BEN		int = -1
 	;
 
 	drop table if EXISTS dbo.[#TBL_SQL_CONDITIONS]
@@ -171,6 +172,7 @@ begin
 		,	@UI_INOUT_TRANSFER			= [UI_INOUT_TRANSFER]
 		,	@BETWEEN_OWN_ACCOUNTS		= [BETWEEN_OWN_ACCOUNTS]
 		,	@CCY_CODE_DEAL_BEN			= [CCY_CODE_DEAL_BEN]
+		,	@UI_STD_DOG_CODE_BEN		= [UI_STD_DOG_CODE_BEN]
 	from dbo.[#TBL_TA_CONDITIONS] [F] with(nolock)
 	;
 
@@ -269,6 +271,13 @@ begin
 		end
 		else 
 		begin
+
+			/* Условие за стандартен договор на кореспондиращата сделка */
+			declare @CND_STD_CONTRACT_BEN nvarchar(256) = N'';
+			if IsNull(@UI_STD_DOG_CODE_BEN, -1) > 0
+				select @CND_STD_CONTRACT_BEN = N' and [D].[DEAL_STD_DOG_CODE] = '+str(@UI_STD_DOG_CODE_BEN,len(@UI_STD_DOG_CODE_BEN),0);
+			;
+
 			select @Sql2 = N'
 			cross apply (
 				select top(1)
@@ -276,7 +285,8 @@ begin
 					,	[D].[DEAL_NUM] 	AS	[DEAL_NUM_BEN] 
 				from dbo.[AGR_CASH_PAYMENTS_DEALS] [D] with(nolock)
 				where	[D].[CUSTOMER_ID] <> [DEAL].[CUSTOMER_ID]
-					and [D].[DEAL_CURRENCY_CODE] = '+str(@CCY_CODE_DEAL_BEN,len(@CCY_CODE_DEAL_BEN),0)+'
+					and [D].[DEAL_CURRENCY_CODE] = '+str(@CCY_CODE_DEAL_BEN,len(@CCY_CODE_DEAL_BEN),0)
+					+ @CND_STD_CONTRACT_BEN + '
 			) [DEAL_BEN]
 			';
 		end
