@@ -1,144 +1,153 @@
-
 /********************************************************************************************************/
-/* Ïðîöåäóðà çà àêòóàëèçàöèÿ íà äíåâíèòå ñàëäà â TA áàçàòà, ñëåä îáðàáîòêà íà òåñòîâè ñëó÷àé */
-DROP PROCEDURE IF EXISTS dbo.[SP_CASH_PAYMENTS_UPDATE_ACCOUNT_DAY_OPERATION_BALANCE]
-GO
-
-CREATE PROCEDURE dbo.[SP_CASH_PAYMENTS_UPDATE_ACCOUNT_DAY_OPERATION_BALANCE]
+/* ÐŸÑ€Ð¾Ñ†ÐµÐ´ÑƒÑ€Ð° Ð·Ð° Ð°ÐºÑ‚ÑƒÐ°Ð»Ð¸Ð·Ð°Ñ†Ð¸Ñ Ð½Ð° Ð´Ð½ÐµÐ²Ð½Ð¸Ñ‚Ðµ ÑÐ°Ð»Ð´Ð° Ð² TA Ð±Ð°Ð·Ð°Ñ‚Ð°, ÑÐ»ÐµÐ´ Ð¾Ð±Ñ€Ð°Ð±Ð¾Ñ‚ÐºÐ° Ð½Ð° Ñ‚ÐµÑÑ‚Ð¾Ð²Ð¸ ÑÐ»ÑƒÑ‡Ð°Ð¹ */
+CREATE OR ALTER PROCEDURE dbo.[SP_CASH_PAYMENTS_UPDATE_ACCOUNT_DAY_OPERATION_BALANCE]
 (
-    @OnlineSqlServerName    sysname
-,	@OnlineSqlDataBaseName  sysname    
-,	@TestCaseRowID          int
-,   @DEAL_ROW_ID            int 
-,   @REG_NAME               sysname = N''
-,   @UPDATE_MODE            int = 1
+	@OnlineSqlServerName SYSNAME
+	, @OnlineSqlDataBaseName SYSNAME
+	, @TestCaseRowID INT
+	, @DEAL_ROW_ID INT
+	, @REG_NAME SYSNAME = N''
+	, @UPDATE_MODE INT = 1
 )
-AS 
-begin
+AS
+BEGIN
+	DECLARE @LogTraceInfo INT = 0
+		, @LogBegEndProc INT = 1
+		, @TimeBeg DATETIME = GetDate();;
+	DECLARE @Msg NVARCHAR(max) = N''
+		, @Sql NVARCHAR(4000) = N''
+		, @Ret INT = 0
+		, @RowIdStr NVARCHAR(8) = STR(@TestCaseRowID, LEN(@TestCaseRowID), 0);
 
-	declare @LogTraceInfo int = 0,	@LogBegEndProc int = 1,	@TimeBeg datetime = GetDate();
-	;
-	declare @Msg nvarchar(max) = N'', @Sql nvarchar(4000) = N'', @Ret int = 0
-        ,	@RowIdStr nvarchar(8) = STR(@TestCaseRowID,LEN(@TestCaseRowID),0)
-	;
 	/************************************************************************************************************/
 	/* 1. Log Begining of Procedure execution */
-	if @LogBegEndProc = 1 
-	begin	
-		select @Sql = 'dbo.[SP_CASH_PAYMENTS_UPDATE_ACCOUNT_DAY_OPERATION_BALANCE] @OnlineSqlServerName = '''+@OnlineSqlServerName+''''
-				+ N', @OnlineSqlDataBaseName = '''+@OnlineSqlDataBaseName+''''
-				+ N', @TestCaseRowID = '+@RowIdStr
-				+ N', @DEAL_ROW_ID = ' + str(@DEAL_ROW_ID,len(@DEAL_ROW_ID), 0)
-				+ N', @REG_NAME = ''' + @REG_NAME +''''
-				+ N', @UPDATE_MODE = ' + str(@UPDATE_MODE,len(@UPDATE_MODE), 0)
-			,  @Msg =  '*** Begin Execute Proc ***: dbo.[SP_CASH_PAYMENTS_UPDATE_ACCOUNT_DAY_OPERATION_BALANCE]'
-		;
-		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql, @Msg
-	end
+	IF @LogBegEndProc = 1
+	BEGIN
+		SELECT @Sql = 'dbo.[SP_CASH_PAYMENTS_UPDATE_ACCOUNT_DAY_OPERATION_BALANCE] @OnlineSqlServerName = ''' + @OnlineSqlServerName + '''' + N', @OnlineSqlDataBaseName = ''' + @OnlineSqlDataBaseName + '''' + N', @TestCaseRowID = ' + @RowIdStr + N', @DEAL_ROW_ID = ' + str(@DEAL_ROW_ID, len(@DEAL_ROW_ID), 0) + N', @REG_NAME = ''' + @REG_NAME + '''' + N', @UPDATE_MODE = ' + str(@UPDATE_MODE, len(@UPDATE_MODE), 0)
+			, @Msg = '*** Begin Execute Proc ***: dbo.[SP_CASH_PAYMENTS_UPDATE_ACCOUNT_DAY_OPERATION_BALANCE]';
+
+		EXEC dbo.SP_SYS_LOG_PROC @@PROCID
+			, @Sql
+			, @Msg
+	END
 
 	/************************************************************************************************************/
 	/* 2. Load Account from ROW_ID */
-    declare @Row_id     int = -1
-        ,   @Deal_Type  int = 1
-        ,   @Deal_Num   int = -1
-        ,   @Account    varchar(64) = N''
-        ,   @Acc_Type   int = 3 /* Pasive */
-        ,   @UpdAccont  int = @UPDATE_MODE
-		,	@DayAccBal	float = 0.0;
-    ;
+	DECLARE @Row_id INT = - 1
+		, @Deal_Type INT = 1
+		, @Deal_Num INT = - 1
+		, @Account VARCHAR(64) = N''
+		, @Acc_Type INT = 3 /* Pasive */
+		, @UpdAccont INT = @UPDATE_MODE
+		, @DayAccBal FLOAT = 0.0;;
+	DECLARE @OutputUpdateTbl TABLE (
+		[ACCOUNT] VARCHAR(64)
+		, [DAY_SALDO] FLOAT
+		);
 
-    declare @OutputUpdateTbl Table ( [ACCOUNT] varchar(64), [DAY_SALDO] float )
-    ;
+	/* 2.1. Find Account by ROW_ID */
+	IF IsNull(@DEAL_ROW_ID, - 1) > 0
+	BEGIN
+		IF @REG_NAME = N'RAZPREG_TA'
+		BEGIN
+			SELECT @Row_id = [ROW_ID]
+				, @Deal_Type = 1
+				, @Deal_Num = [UI_DEAL_NUM]
+				, @Account = replace([DB_ACCOUNT], ' ', '')
+				, @Acc_Type = 3 /* Pasive */
+			FROM dbo.[RAZPREG_TA] [REG] WITH (NOLOCK)
+			WHERE [REG].[ROW_ID] IN (@DEAL_ROW_ID);
+		END
+		ELSE IF @REG_NAME = N'DEALS_CORR_TA'
+		BEGIN
+			SELECT @Row_id = [ROW_ID]
+				, @Deal_Type = [UI_DEAL_TYPE]
+				, @Deal_Num = [DEAL_NUM]
+				, @Account = replace([UI_CORR_ACCOUNT], ' ', '')
+				, @Acc_Type = 3 /* Pasive */
+			FROM dbo.[DEALS_CORR_TA] [REG] WITH (NOLOCK)
+			WHERE [REG].[ROW_ID] IN (@DEAL_ROW_ID);
+		END
+	END
 
-    /* 2.1. Find Account by ROW_ID */
-    if IsNull(@DEAL_ROW_ID,-1) > 0
-    begin
-        if @REG_NAME = N'RAZPREG_TA'
-        begin
-            select  @Row_id     = [ROW_ID] 
-                ,   @Deal_Type  = 1
-                ,   @Deal_Num   = [UI_DEAL_NUM]
-                ,   @Account    = replace([DB_ACCOUNT], ' ','')
-                ,   @Acc_Type   = 3 /* Pasive */
-            from dbo.[RAZPREG_TA] [REG] with(nolock)
-            where [REG].[ROW_ID] in ( @DEAL_ROW_ID )
-            ;
-        end
-        else if @REG_NAME = N'DEALS_CORR_TA'
-        begin
-            select  @Row_id     = [ROW_ID] 
-                ,   @Deal_Type  = [UI_DEAL_TYPE]
-                ,   @Deal_Num   = [DEAL_NUM]
-                ,   @Account    = replace([UI_CORR_ACCOUNT], ' ','')
-                ,   @Acc_Type   = 3 /* Pasive */
-            from dbo.[DEALS_CORR_TA] [REG] with(nolock)
-            where [REG].[ROW_ID] in ( @DEAL_ROW_ID )
-            ;
-        end
-    end
+	IF IsNull(@Row_id, - 1) <= 0
+	BEGIN
+		SELECT @Msg = 'Can''t find account by ROW_ID: ' + str(@Row_id, len(@Row_id), 0) + ', Register: ' + @REG_NAME + '.'
+			, @Sql = 'select  @Account = .. from ' + @REG_NAME + ' where [ROW_ID] IN (' + str(@Row_id, len(@Row_id), 0) + ') '
 
-    if IsNull(@Row_id,-1) <= 0
-    begin
-        select  @Msg = 'Can''t find account by ROW_ID: '+str(@Row_id,len(@Row_id),0)+', Register: '+ @REG_NAME +'.'
-            ,   @Sql = 'select  @Account = .. from '+@REG_NAME+' where [ROW_ID] IN ('+str(@Row_id,len(@Row_id),0)+') '
-        exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql, @Msg;
-        return 1;
-    end
+		EXEC dbo.SP_SYS_LOG_PROC @@PROCID
+			, @Sql
+			, @Msg;
 
-    /* 2.2. Get day operation balance from OnlineDb: */
-    begin try 
-        insert into #TBL_RESULT ( [ACCOUNT], [PART_TYPE], [DAY_SALDO] )
-        exec @Ret = dbo.[SP_LOAD_ONLINE_ACCOUNT_DAY_OPERATION_BALANCE] @OnlineSqlServerName
-            , @OnlineSqlDataBaseName
-            , @Account
-            , @Acc_Type
-    end try 
-    begin catch 
-        select @Msg = dbo.FN_GET_EXCEPTION_INFO();
-        exec dbo.SP_SYS_LOG_PROC @@PROCID, 'insert into #TBL_RESULT  ... for Main account', @Msg;
-        return 2;
-    end catch 
+		RETURN 1;
+	END
 
-    if @Ret <> 0
-    begin 
-        select @Sql = 'exec @Ret = Sql: dbo.[SP_LOAD_ONLINE_ACCOUNT_DAY_OPERATION_BALANCE] '
-                + '@OnlineSqlServerName = '+ @OnlineSqlServerName
-                + '@OnlineSqlDataBaseName = '+ @OnlineSqlDataBaseName
-                + '@Account = '+ @Account
-                + '@AccType = '+ str(@Acc_Type,len(@Acc_Type), 0)
-                + '@LogTrace = 1'
-            , @Msg = 'Error '+str(@Ret,len(@Ret),0)+' execute sql for test case ID: '+@RowIdStr
-                + ', Account: '+@Account 
-                + ', @DEAL_ROW_ID = '+str(@DEAL_ROW_ID,len(@DEAL_ROW_ID),0)
-        ;
-        exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql, @Msg
-        return 2;
-    end
+	/* 2.2. Get day operation balance from OnlineDb: */
+	BEGIN TRY
+		INSERT INTO #TBL_RESULT (
+			[ACCOUNT]
+			, [PART_TYPE]
+			, [DAY_SALDO]
+			)
+		EXEC @Ret = dbo.[SP_LOAD_ONLINE_ACCOUNT_DAY_OPERATION_BALANCE] @OnlineSqlServerName
+			, @OnlineSqlDataBaseName
+			, @Account
+			, @Acc_Type
+	END TRY
 
-    /* 2.3. Update Account day operation balance in table: */
-    if @UpdAccont = 1 and exists (select * from #TBL_RESULT  where [ACCOUNT] = @Account)
-        update [D]
-            set [DAY_OPERATION_BALANCE] = [S].[DAY_SALDO]
-            output [S].[ACCOUNT], INSERTED.[DAY_OPERATION_BALANCE] into @OutputUpdateTbl
-        from dbo.[AGR_CASH_PAYMENTS_DEALS] [D]
-        inner join #TBL_RESULT  [S]
-            on [S].[ACCOUNT] = [D].[DEAL_ACCOUNT]
-    ;
+	BEGIN CATCH
+		SELECT @Msg = dbo.FN_GET_EXCEPTION_INFO();
+
+		EXEC dbo.SP_SYS_LOG_PROC @@PROCID
+			, 'insert into #TBL_RESULT  ... for Main account'
+			, @Msg;
+
+		RETURN 2;
+	END CATCH
+
+	IF @Ret <> 0
+	BEGIN
+		SELECT @Sql = 'exec @Ret = Sql: dbo.[SP_LOAD_ONLINE_ACCOUNT_DAY_OPERATION_BALANCE] ' + '@OnlineSqlServerName = ' + @OnlineSqlServerName + '@OnlineSqlDataBaseName = ' + @OnlineSqlDataBaseName + '@Account = ' + @Account + '@AccType = ' + str(@Acc_Type, len(@Acc_Type), 0) + '@LogTrace = 1'
+			, @Msg = 'Error ' + str(@Ret, len(@Ret), 0) + ' execute sql for test case ID: ' + @RowIdStr + ', Account: ' + @Account + ', @DEAL_ROW_ID = ' + str(@DEAL_ROW_ID, len(@DEAL_ROW_ID), 0);
+
+		EXEC dbo.SP_SYS_LOG_PROC @@PROCID
+			, @Sql
+			, @Msg
+
+		RETURN 2;
+	END
+
+	/* 2.3. Update Account day operation balance in table: */
+	IF @UpdAccont = 1
+		AND EXISTS (
+			SELECT *
+			FROM #TBL_RESULT
+			WHERE [ACCOUNT] = @Account
+			)
+		UPDATE [D]
+		SET [DAY_OPERATION_BALANCE] = [S].[DAY_SALDO]
+		OUTPUT [S].[ACCOUNT]
+			, INSERTED.[DAY_OPERATION_BALANCE]
+		INTO @OutputUpdateTbl
+		FROM dbo.AGR_TA_EXISTING_ONLINE_DATA_DEALS [D]
+		INNER JOIN #TBL_RESULT [S]
+			ON [S].[ACCOUNT] = [D].[DEAL_ACCOUNT];
 
 	/************************************************************************************************************/
 	/* Log End Of Procedure */
-	if @LogBegEndProc = 1
-	begin
-		select @DayAccBal = [DAY_SALDO] from #TBL_RESULT where [ACCOUNT] = @Account;
-		select @Msg = 'Duration: '+ dbo.FN_GET_TIME_DIFF(@TimeBeg, GetDate())
-			+ '; TA Row ID: ' + @RowIdStr
-			+ '; Account: '+ @Account
-			+ '; balance: '+str(@DayAccBal, 12,2)
-			+ '; Upate mode: '+str(@UpdAccont, len(@UpdAccont),0)
-		;
-		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Msg, '*** End Execute Proc ***: dbo.dbo.[SP_CASH_PAYMENTS_UPDATE_ACCOUNT_DAY_OPERATION_BALANCE]'
-	end
+	IF @LogBegEndProc = 1
+	BEGIN
+		SELECT @DayAccBal = [DAY_SALDO]
+		FROM #TBL_RESULT
+		WHERE [ACCOUNT] = @Account;
 
-    return 0;
-end    
+		SELECT @Msg = 'Duration: ' + dbo.FN_GET_TIME_DIFF(@TimeBeg, GetDate()) + '; TA Row ID: ' + @RowIdStr + '; Account: ' + @Account + '; balance: ' + str(@DayAccBal, 12, 2) + '; Upate mode: ' + str(@UpdAccont, len(@UpdAccont), 0);
+
+		EXEC dbo.SP_SYS_LOG_PROC @@PROCID
+			, @Msg
+			, '*** End Execute Proc ***: dbo.dbo.[SP_CASH_PAYMENTS_UPDATE_ACCOUNT_DAY_OPERATION_BALANCE]'
+	END
+
+	RETURN 0;
+END
 GO

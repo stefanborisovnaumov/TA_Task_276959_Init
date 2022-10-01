@@ -1,11 +1,11 @@
 
 /********************************************************************************************************/
-/* Процедура формираща SQL заявката за търсене на подходяща сделка по ID на тестови случай */
-/* 2022/06/98 - v2.6.3 -> търсена на подходящи сделките за навързаните документи се извършва само за първия тестови случай */
-DROP PROCEDURE IF EXISTS dbo.[SP_CASH_PAYMENTS_UPDATE_TA_TABLES_PREPARE_CONDITIONS]
+/* РџСЂРѕС†РµРґСѓСЂР° С„РѕСЂРјРёСЂР°С‰Р° SQL Р·Р°СЏРІРєР°С‚Р° Р·Р° С‚СЉСЂСЃРµРЅРµ РЅР° РїРѕРґС…РѕРґСЏС‰Р° СЃРґРµР»РєР° РїРѕ ID РЅР° С‚РµСЃС‚РѕРІРё СЃР»СѓС‡Р°Р№ */
+/* 2022/06/98 - v2.6.3 -> С‚СЉСЂСЃРµРЅР° РЅР° РїРѕРґС…РѕРґСЏС‰Рё СЃРґРµР»РєРёС‚Рµ Р·Р° РЅР°РІСЉСЂР·Р°РЅРёС‚Рµ РґРѕРєСѓРјРµРЅС‚Рё СЃРµ РёР·РІСЉСЂС€РІР° СЃР°РјРѕ Р·Р° РїСЉСЂРІРёСЏ С‚РµСЃС‚РѕРІРё СЃР»СѓС‡Р°Р№ */
+DROP PROCEDURE IF EXISTS dbo.[SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_PREPARE_CONDITIONS]
 GO
 
-CREATE PROCEDURE dbo.[SP_CASH_PAYMENTS_UPDATE_TA_TABLES_PREPARE_CONDITIONS]
+CREATE PROCEDURE dbo.[SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_PREPARE_CONDITIONS]
 (
 	@TestCaseRowID nvarchar(16)
 ,	@CurrAccDate datetime
@@ -22,7 +22,7 @@ begin
 	;
 	/************************************************************************************************************/
 	/* Log Begining of Procedure execution */
-	if @LogBegEndProc = 1 exec dbo.SP_SYS_LOG_PROC @@PROCID, @TestCaseRowID, '*** Begin Execute Proc ***: dbo.[SP_CASH_PAYMENTS_UPDATE_TA_TABLES_PREPARE_CONDITIONS]'
+	if @LogBegEndProc = 1 exec dbo.SP_SYS_LOG_PROC @@PROCID, @TestCaseRowID, '*** Begin Execute Proc ***: dbo.[SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_PREPARE_CONDITIONS]'
 	;
 
 	/************************************************************************************************************/
@@ -195,8 +195,8 @@ begin
 	/* prepare tables joint statement:  */
 	-- @SECTOR and @CCY_CODE_DEAL
 	select @Sql2 = N'
-	from dbo.[AGR_CASH_PAYMENTS_DEALS] [DEAL] with(nolock)
-	inner join dbo.[AGR_CASH_PAYMENTS_CUSTOMERS] [CUST] with(nolock)
+	from dbo.AGR_TA_EXISTING_ONLINE_DATA_DEALS [DEAL] with(nolock)
+	inner join dbo.[AGR_TA_EXISTING_ONLINE_DATA_CUSTOMERS] [CUST] with(nolock)
 		on	[CUST].[CUSTOMER_ID] = [DEAL].[CUSTOMER_ID]
 		and [DEAL].[CLIENT_SECTOR] = '+str(@SECTOR,len(@SECTOR),0)+N'
 		and [DEAL].[DEAL_CURRENCY_CODE] = '+str(@CCY_CODE_DEAL,len(@CCY_CODE_DEAL),0)+' ';
@@ -209,24 +209,24 @@ begin
 	-- Access Deal throwght with proxy customer
 	if @UI_RAZPOREDITEL IS NOT NULL
 	begin
-		/* NM622 (client roles): 1 - Титуляр, 2- Пълномощник; 3 - Законен представител, ... */
+		/* NM622 (client roles): 1 - РўРёС‚СѓР»СЏСЂ, 2- РџСЉР»РЅРѕРјРѕС‰РЅРёРє; 3 - Р—Р°РєРѕРЅРµРЅ РїСЂРµРґСЃС‚Р°РІРёС‚РµР», ... */
 		declare @CUSTOMER_ROLE_TYPE varchar(32) = N''
 		;
-		-- 0 - Пълномощник; 1 - Законен представител
+		-- 0 - РџСЉР»РЅРѕРјРѕС‰РЅРёРє; 1 - Р—Р°РєРѕРЅРµРЅ РїСЂРµРґСЃС‚Р°РІРёС‚РµР»
 		select @CUSTOMER_ROLE_TYPE = case IsNull(@UI_RAZPOREDITEL,-1)	
-											when  0 then ' = 2'				/* 2 - Пълномощник*/
-											when  1 then ' = 3'				/* 3 - Законен представител */
+											when  0 then ' = 2'				/* 2 - РџСЉР»РЅРѕРјРѕС‰РЅРёРє*/
+											when  1 then ' = 3'				/* 3 - Р—Р°РєРѕРЅРµРЅ РїСЂРµРґСЃС‚Р°РІРёС‚РµР» */
 											when -1 then ' in (2,3) ' end;	/* 2 & 3 */
 		select @Sql2 = N'
-		inner join dbo.[AGR_CASH_PAYMENTS_DEALS_ACTIVE_PROXY_CUSTOMERS] [PROXY_ID] with(nolock)
+		inner join dbo.[AGR_TA_EXISTING_ONLINE_DATA_DEALS_ACTIVE_PROXY_CUSTOMERS] [PROXY_ID] with(nolock)
 			on	[PROXY_ID].[DEAL_TYPE] = 1
 			and [PROXY_ID].[DEAL_NUM]  = [DEAL].[DEAL_NUM]
 			and [PROXY_ID].[CUSTOMER_ROLE_TYPE] '+@CUSTOMER_ROLE_TYPE+'
-		inner join dbo.[AGR_CASH_PAYMENTS_CUSTOMERS] [PROXY] with(nolock)
+		inner join dbo.[AGR_TA_EXISTING_ONLINE_DATA_CUSTOMERS] [PROXY] with(nolock)
 			on	[PROXY].[CUSTOMER_ID] = [PROXY_ID].[REPRESENTATIVE_CUSTOMER_ID]
 		';
 
-		-- [DT015_CUSTOMERS_ACTIONS_TA].[UI_RAZPOREDITEL] -- 0 - Пълномощник; 1 - Законен представител
+		-- [DT015_CUSTOMERS_ACTIONS_TA].[UI_RAZPOREDITEL] -- 0 - РџСЉР»РЅРѕРјРѕС‰РЅРёРє; 1 - Р—Р°РєРѕРЅРµРЅ РїСЂРµРґСЃС‚Р°РІРёС‚РµР»
 		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 		select	(@Sql2 + @CrLf), N'@UI_RAZPOREDITEL: '+STR(@UI_RAZPOREDITEL,len(@UI_RAZPOREDITEL),0)+' '
 		select @Sql += @Sql2;
@@ -235,7 +235,7 @@ begin
 	begin
 
 		select @Sql2 = N'
-		inner join dbo.[AGR_CASH_PAYMENTS_CUSTOMERS] [PROXY] with(nolock)
+		inner join dbo.[AGR_TA_EXISTING_ONLINE_DATA_CUSTOMERS] [PROXY] with(nolock)
 			ON	[PROXY].[CUSTOMER_ID] = [DEAL].[CUSTOMER_ID]
 		';
 
@@ -245,7 +245,7 @@ begin
 		select @Sql += @Sql2;
 	end
 
-	/* ВНИМАНИЕ!!! При актуализация на условията тук, може да се наложи и корекция на генерирането на SELECT заявката в секция Prepate Base SELECT statement: */
+	/* Р’РќРРњРђРќРР•!!! РџСЂРё Р°РєС‚СѓР°Р»РёР·Р°С†РёСЏ РЅР° СѓСЃР»РѕРІРёСЏС‚Р° С‚СѓРє, РјРѕР¶Рµ РґР° СЃРµ РЅР°Р»РѕР¶Рё Рё РєРѕСЂРµРєС†РёСЏ РЅР° РіРµРЅРµСЂРёСЂР°РЅРµС‚Рѕ РЅР° SELECT Р·Р°СЏРІРєР°С‚Р° РІ СЃРµРєС†РёСЏ Prepate Base SELECT statement: */
 	-- Add additional joint for document "Credit Transfer": 
 	if IsNull(@TYPE_ACTION,'') in ('CT', 'DD') and IsNull(@UI_INOUT_TRANSFER,'-1') = '3' and IsNull(@BETWEEN_OWN_ACCOUNTS,-1) in (0,1)
 	begin
@@ -253,7 +253,7 @@ begin
 		if @BETWEEN_OWN_ACCOUNTS = 1
 		begin
 			select @Sql2 = N'
-			inner join dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_COUNT_DEAL_BY_CURRENCY] [CD_CNT] with(nolock)
+			inner join dbo.[AGR_TA_EXISTING_ONLINE_DATA_CUSTOMERS_COUNT_DEAL_BY_CURRENCY] [CD_CNT] with(nolock)
 				ON	[CD_CNT].[CUSTOMER_ID]	 = [DEAL].[CUSTOMER_ID]
 				AND [CD_CNT].[CURRENCY_CODE] = '+str(@CCY_CODE_DEAL_BEN,len(@CCY_CODE_DEAL_BEN),0)+' 
 				AND	[CD_CNT].[DEAL_TYPE]	 = 1
@@ -262,7 +262,7 @@ begin
 				select top(1)
 						[D].[DEAL_TYPE]	AS	[DEAL_TYPE_BEN] 
 					,	[D].[DEAL_NUM] 	AS	[DEAL_NUM_BEN] 
-				from dbo.[AGR_CASH_PAYMENTS_DEALS] [D] with(nolock)
+				from dbo.AGR_TA_EXISTING_ONLINE_DATA_DEALS [D] with(nolock)
 				where	[D].[CUSTOMER_ID] = [DEAL].[CUSTOMER_ID]
 					and [D].[DEAL_CURRENCY_CODE] = '+str(@CCY_CODE_DEAL_BEN,len(@CCY_CODE_DEAL_BEN),0)+'
 					and	[D].[DEAL_NUM] <> [DEAL].[DEAL_NUM]
@@ -272,7 +272,7 @@ begin
 		else 
 		begin
 
-			/* Условие за стандартен договор на кореспондиращата сделка */
+			/* РЈСЃР»РѕРІРёРµ Р·Р° СЃС‚Р°РЅРґР°СЂС‚РµРЅ РґРѕРіРѕРІРѕСЂ РЅР° РєРѕСЂРµСЃРїРѕРЅРґРёСЂР°С‰Р°С‚Р° СЃРґРµР»РєР° */
 			declare @CND_STD_CONTRACT_BEN nvarchar(256) = N'';
 			if IsNull(@UI_STD_DOG_CODE_BEN, -1) > 0
 				select @CND_STD_CONTRACT_BEN = N' and [D].[DEAL_STD_DOG_CODE] = '+str(@UI_STD_DOG_CODE_BEN,len(@UI_STD_DOG_CODE_BEN),0);
@@ -283,7 +283,7 @@ begin
 				select top(1)
 						[D].[DEAL_TYPE]	AS	[DEAL_TYPE_BEN] 
 					,	[D].[DEAL_NUM] 	AS	[DEAL_NUM_BEN] 
-				from dbo.[AGR_CASH_PAYMENTS_DEALS] [D] with(nolock)
+				from dbo.AGR_TA_EXISTING_ONLINE_DATA_DEALS [D] with(nolock)
 				where	[D].[CUSTOMER_ID] <> [DEAL].[CUSTOMER_ID]
 					and [D].[DEAL_CURRENCY_CODE] = '+str(@CCY_CODE_DEAL_BEN,len(@CCY_CODE_DEAL_BEN),0)
 					+ @CND_STD_CONTRACT_BEN + '
@@ -306,7 +306,7 @@ begin
 	select	(@Sql2 + @CrLf), ' BASE @DB_CLIENT_TYPE_DT300 : ' + @Sql2
 	select @Sql += @Sql2
 
-	-- enum CustomerSubtypes: (-1) - Без значение; 1 - (над 18г.); 2 - (от 14г. до 18г.); 3 - (до 14г.)
+	-- enum CustomerSubtypes: (-1) - Р‘РµР· Р·РЅР°С‡РµРЅРёРµ; 1 - (РЅР°Рґ 18Рі.); 2 - (РѕС‚ 14Рі. РґРѕ 18Рі.); 3 - (РґРѕ 14Рі.)
 	if  IsNull(@CUSTOMER_AGE, '-1') <> '-1'
 	Begin 
 		select	@Sql2 = N'AND [PROXY].[CLIENT_BIRTH_DATE] BETWEEN '
@@ -322,7 +322,7 @@ begin
 	end
 
 	/*****************************************************/
-	-- 0 - не е обединяван (клиент с един кл. код); 3 - обединен, без значение дали е бил главен или подчинен (кл.с повече от един кл.код); -1 - без значение
+	-- 0 - РЅРµ Рµ РѕР±РµРґРёРЅСЏРІР°РЅ (РєР»РёРµРЅС‚ СЃ РµРґРёРЅ РєР». РєРѕРґ); 3 - РѕР±РµРґРёРЅРµРЅ, Р±РµР· Р·РЅР°С‡РµРЅРёРµ РґР°Р»Рё Рµ Р±РёР» РіР»Р°РІРµРЅ РёР»Рё РїРѕРґС‡РёРЅРµРЅ (РєР».СЃ РїРѕРІРµС‡Рµ РѕС‚ РµРґРёРЅ РєР».РєРѕРґ); -1 - Р±РµР· Р·РЅР°С‡РµРЅРёРµ
 	if @UNIFIED <> -1
 	begin 
 		select @Sql2 = ' AND [CUST].[HAS_MANY_CLIENT_CODES] = ' + case when @UNIFIED = 0 THEN '0' ELSE '1' END + @CrLf;
@@ -333,7 +333,7 @@ begin
 		select @Sql += @Sql2
 	end
 
-	-- 0 - Не е служебен или свързан със служебен; 1 - Реално ЕГН, има такива служебни; 2 - служебни ЕГН
+	-- 0 - РќРµ Рµ СЃР»СѓР¶РµР±РµРЅ РёР»Рё СЃРІСЉСЂР·Р°РЅ СЃСЉСЃ СЃР»СѓР¶РµР±РµРЅ; 1 - Р РµР°Р»РЅРѕ Р•Р“Рќ, РёРјР° С‚Р°РєРёРІР° СЃР»СѓР¶РµР±РЅРё; 2 - СЃР»СѓР¶РµР±РЅРё Р•Р“Рќ
 	if @IS_SERVICE <> -1
 	begin 
 		select @Sql2 = ' AND [CUST].[HAS_DUBL_CLIENT_IDS] = ' + case when @IS_SERVICE = 0 then '0' else '1' end + @CrLf;
@@ -367,7 +367,7 @@ begin
 		select @Sql += @Sql2
 	end 
 
-	-- 1 - валидни документи
+	-- 1 - РІР°Р»РёРґРЅРё РґРѕРєСѓРјРµРЅС‚Рё
 	if IsNull(@VALID_ID,-1) = 1
 	begin
 		select @Sql2 = ' AND [PROXY].[HAS_VALID_DOCUMENT] = 1' + @CrLf;
@@ -380,12 +380,12 @@ begin
 	end 
 
 	-- @TODO: @IS_PROXY: 
-	-- Ако клиента е маркиран като пълномощник, то той няма да се търси като самостоятелен 
-	-- клиент, а данните му ще се актуализират при актуализация на данните за титуляра.
+	-- РђРєРѕ РєР»РёРµРЅС‚Р° Рµ РјР°СЂРєРёСЂР°РЅ РєР°С‚Рѕ РїСЉР»РЅРѕРјРѕС‰РЅРёРє, С‚Рѕ С‚РѕР№ РЅСЏРјР° РґР° СЃРµ С‚СЉСЂСЃРё РєР°С‚Рѕ СЃР°РјРѕСЃС‚РѕСЏС‚РµР»РµРЅ 
+	-- РєР»РёРµРЅС‚, Р° РґР°РЅРЅРёС‚Рµ РјСѓ С‰Рµ СЃРµ Р°РєС‚СѓР°Р»РёР·РёСЂР°С‚ РїСЂРё Р°РєС‚СѓР°Р»РёР·Р°С†РёСЏ РЅР° РґР°РЅРЅРёС‚Рµ Р·Р° С‚РёС‚СѓР»СЏСЂР°.
 	--if IsNull(@IS_PROXY, -1) <> -1
 	--	select @Sql += ' AND [CUST].[CUSTOMER_CHARACTERISTIC] = ' + str(@CUSTOMER_CHARACTERISTIC, len(@CUSTOMER_CHARACTERISTIC), 0);
 
-	-- Указва дали клиента да е уникален за таблица dbo.[DT015_CUSTOMERS_ACTIONS_TA]
+	-- РЈРєР°Р·РІР° РґР°Р»Рё РєР»РёРµРЅС‚Р° РґР° Рµ СѓРЅРёРєР°Р»РµРЅ Р·Р° С‚Р°Р±Р»РёС†Р° dbo.[DT015_CUSTOMERS_ACTIONS_TA]
 	if IsNull(@IS_UNIQUE_CUSTOMER, -1) = 1
 	begin 
 		select @Sql2 = ' AND NOT EXISTS 
@@ -404,8 +404,8 @@ begin
 	;
 
 	-- @HAVE_CREDIT:
-	-- Дали клиента има активен кредит: ;Без допълнителни сметки - ;Всички разплащателни и влогове - 
-	-- ;Всички разплащателни - несвързани към друг кредит - ; Всички разплащателни, влогове и депозитни сметки -
+	-- Р”Р°Р»Рё РєР»РёРµРЅС‚Р° РёРјР° Р°РєС‚РёРІРµРЅ РєСЂРµРґРёС‚: ;Р‘РµР· РґРѕРїСЉР»РЅРёС‚РµР»РЅРё СЃРјРµС‚РєРё - ;Р’СЃРёС‡РєРё СЂР°Р·РїР»Р°С‰Р°С‚РµР»РЅРё Рё РІР»РѕРіРѕРІРµ - 
+	-- ;Р’СЃРёС‡РєРё СЂР°Р·РїР»Р°С‰Р°С‚РµР»РЅРё - РЅРµСЃРІСЉСЂР·Р°РЅРё РєСЉРј РґСЂСѓРі РєСЂРµРґРёС‚ - ; Р’СЃРёС‡РєРё СЂР°Р·РїР»Р°С‰Р°С‚РµР»РЅРё, РІР»РѕРіРѕРІРµ Рё РґРµРїРѕР·РёС‚РЅРё СЃРјРµС‚РєРё -
 	if IsNull(@HAVE_CREDIT, -1) in ( 0, 1 )
 	begin
 		select @Sql2 = ' AND [CUST].[HAS_LOAN] = '+STR(@HAVE_CREDIT,LEN(@HAVE_CREDIT),0) + @CrLf;
@@ -416,7 +416,7 @@ begin
 		select @Sql += @Sql2
 	end
 
-	-- [COLLECT_TAX_FROM_ALL_ACC] : Клиента има ли непратени такси, който могат да се събират от всички сметки на клиента
+	-- [COLLECT_TAX_FROM_ALL_ACC] : РљР»РёРµРЅС‚Р° РёРјР° Р»Рё РЅРµРїСЂР°С‚РµРЅРё С‚Р°РєСЃРё, РєРѕР№С‚Рѕ РјРѕРіР°С‚ РґР° СЃРµ СЃСЉР±РёСЂР°С‚ РѕС‚ РІСЃРёС‡РєРё СЃРјРµС‚РєРё РЅР° РєР»РёРµРЅС‚Р°
 	if IsNull(@COLLECT_TAX_FROM_ALL_ACC,-1) in (0,1)
 	begin
 		select @StrIntVal = STR(@COLLECT_TAX_FROM_ALL_ACC,LEN(@COLLECT_TAX_FROM_ALL_ACC),0);
@@ -428,7 +428,7 @@ begin
 		select @Sql += @Sql2
 	end
 
-	-- 0 - Пълномощник; 1 - Законен представител
+	-- 0 - РџСЉР»РЅРѕРјРѕС‰РЅРёРє; 1 - Р—Р°РєРѕРЅРµРЅ РїСЂРµРґСЃС‚Р°РІРёС‚РµР»
 	if IsNull(@UI_RAZPOREDITEL,-1) <> -1
 	begin 
 		if @UI_RAZPOREDITEL = 0
@@ -443,12 +443,12 @@ begin
 		end
 	end
 
-	-- 1 - безсрочен; 0 - с крайна дата
+	-- 1 - Р±РµР·СЃСЂРѕС‡РµРЅ; 0 - СЃ РєСЂР°Р№РЅР° РґР°С‚Р°
 	-- @TODO: @UI_UNLIMITED:
 	--If IsNull(@UI_UNLIMITED, -1) <> -1
 	--	select @Sql += ' ''
 
-	-- Код на стандартен договор
+	-- РљРѕРґ РЅР° СЃС‚Р°РЅРґР°СЂС‚РµРЅ РґРѕРіРѕРІРѕСЂ
 	if IsNull(@UI_STD_DOG_CODE,-1) > 0 and IsNull(@UI_INDIVIDUAL_DEAL,-1) NOT IN (1)
 	begin 
 		select @Sql2 = ' AND [DEAL].[DEAL_STD_DOG_CODE] = '+STR(@UI_STD_DOG_CODE, LEN(@UI_STD_DOG_CODE),0) + @CrLf;
@@ -460,7 +460,7 @@ begin
 		select @Sql += @Sql2
 	end 
 
-	--0 - стандартна сделка, 1 - индивидуална сделка
+	--0 - СЃС‚Р°РЅРґР°СЂС‚РЅР° СЃРґРµР»РєР°, 1 - РёРЅРґРёРІРёРґСѓР°Р»РЅР° СЃРґРµР»РєР°
 	if IsNull(@UI_INDIVIDUAL_DEAL,-1) = 1
 	begin 
 		select @Sql2 = ' AND [DEAL].[DEAL_IS_INDIVIDUAL_DEAL] = '+STR(@UI_INDIVIDUAL_DEAL, LEN(@UI_INDIVIDUAL_DEAL),0) + @CrLf;
@@ -471,7 +471,7 @@ begin
 
 		select @Sql += @Sql2
 
-		-- Код на стандартен договор по който е разкрита индивидуалната сделка
+		-- РљРѕРґ РЅР° СЃС‚Р°РЅРґР°СЂС‚РµРЅ РґРѕРіРѕРІРѕСЂ РїРѕ РєРѕР№С‚Рѕ Рµ СЂР°Р·РєСЂРёС‚Р° РёРЅРґРёРІРёРґСѓР°Р»РЅР°С‚Р° СЃРґРµР»РєР°
 		if IsNull(@INT_COND_STDCONTRACT,-1) >= 0
 		begin
 			select @Sql2 = ' AND [DEAL].[INT_COND_STDCONTRACT] = '+STR(@INT_COND_STDCONTRACT, LEN(@INT_COND_STDCONTRACT),0) + @CrLf;
@@ -496,7 +496,7 @@ begin
 
 	end 
 
-	-- 0 - не е комбиниран продукт, код > 0 - да принадлежи към този комбиниран продукт
+	-- 0 - РЅРµ Рµ РєРѕРјР±РёРЅРёСЂР°РЅ РїСЂРѕРґСѓРєС‚, РєРѕРґ > 0 - РґР° РїСЂРёРЅР°РґР»РµР¶Рё РєСЉРј С‚РѕР·Рё РєРѕРјР±РёРЅРёСЂР°РЅ РїСЂРѕРґСѓРєС‚
 	if IsNull(@CODE_UI_NM342, -1) > 0
 	begin 
 		select @Sql2 = ' AND [DEAL].[DEAL_NM342_BUNDLE_PRODUCT_CODE] = '+ STR(@CODE_UI_NM342,LEN(@CODE_UI_NM342),0) + @CrLf;
@@ -508,7 +508,7 @@ begin
 		select @Sql += @Sql2
 	end
 
-	-- 0 - сметката се таксува от себе си, 1 - има друга таксуваща сметка, 2 - без проверка дали има друга таксуваща сметка или се таксува от себе си
+	-- 0 - СЃРјРµС‚РєР°С‚Р° СЃРµ С‚Р°РєСЃСѓРІР° РѕС‚ СЃРµР±Рµ СЃРё, 1 - РёРјР° РґСЂСѓРіР° С‚Р°РєСЃСѓРІР°С‰Р° СЃРјРµС‚РєР°, 2 - Р±РµР· РїСЂРѕРІРµСЂРєР° РґР°Р»Рё РёРјР° РґСЂСѓРіР° С‚Р°РєСЃСѓРІР°С‰Р° СЃРјРµС‚РєР° РёР»Рё СЃРµ С‚Р°РєСЃСѓРІР° РѕС‚ СЃРµР±Рµ СЃРё
 	if IsNull(@UI_OTHER_ACCOUNT_FOR_TAX,-1) in (0, 1)
 	begin 
 		select @Sql2 = ' AND [DEAL].[HAS_OTHER_TAX_ACCOUNT] = ' + str(@UI_OTHER_ACCOUNT_FOR_TAX,len(@UI_OTHER_ACCOUNT_FOR_TAX),0) + @CrLf;
@@ -520,7 +520,7 @@ begin
 		select @Sql += @Sql2
 	end
 
-	--'-1' няма значение, 0 не е избрано, 1 избрано е
+	--'-1' РЅСЏРјР° Р·РЅР°С‡РµРЅРёРµ, 0 РЅРµ Рµ РёР·Р±СЂР°РЅРѕ, 1 РёР·Р±СЂР°РЅРѕ Рµ
 	if IsNull(@UI_NOAUTOTAX,'-1') in ('0', '1')
 	begin 
 		select @Sql2 = ' AND [DEAL].[DEAL_NO_AUTO_PAY_TAX] = '+@UI_NOAUTOTAX + @CrLf;
@@ -532,7 +532,7 @@ begin
 		select @Sql += @Sql2
 	end 
 
-	--'-1' няма значение, 0 не е избрано, 1 избрано е
+	--'-1' РЅСЏРјР° Р·РЅР°С‡РµРЅРёРµ, 0 РЅРµ Рµ РёР·Р±СЂР°РЅРѕ, 1 РёР·Р±СЂР°РЅРѕ Рµ
 	if IsNull(@UI_DENY_MANUAL_TAX_ASSIGN,'-1') in ('0', '1')
 	begin 
 		select @Sql2 = ' AND [DEAL].[DEAL_IS_DENY_MANUAL_TAX_ASSIGN] = '+@UI_DENY_MANUAL_TAX_ASSIGN + @CrLf;
@@ -544,7 +544,7 @@ begin
 		select @Sql += @Sql2
 	end 
 
-	--'-1' няма значение, 0 не е избрано, 1 избрано е 
+	--'-1' РЅСЏРјР° Р·РЅР°С‡РµРЅРёРµ, 0 РЅРµ Рµ РёР·Р±СЂР°РЅРѕ, 1 РёР·Р±СЂР°РЅРѕ Рµ 
 	if IsNull(@UI_CAPIT_ON_BASE_DATE_OPEN,'-1') in ('0', '1')
 	begin 
 		select @Sql2 = ' AND [DEAL].[DEAL_CAPIT_ON_BASE_DATE_OPEN] = '+@UI_CAPIT_ON_BASE_DATE_OPEN + @CrLf;
@@ -556,7 +556,7 @@ begin
 		select @Sql += @Sql2
 	end 
 
-	--'-1' няма значение, 0 не е избрано, 1 избрано е 
+	--'-1' РЅСЏРјР° Р·РЅР°С‡РµРЅРёРµ, 0 РЅРµ Рµ РёР·Р±СЂР°РЅРѕ, 1 РёР·Р±СЂР°РЅРѕ Рµ 
 	if IsNull(@UI_BANK_RECEIVABLES,'-1') in ('0', '1')
 	begin 
 		select @Sql2 = ' AND [DEAL].[DEAL_EXCLUDE_FROM_BANK_COLLECTIONS] = '+@UI_BANK_RECEIVABLES + @CrLf;
@@ -568,7 +568,7 @@ begin
 		select @Sql += @Sql2
 	end 
 
-	--0 - не е съвместна сделка, 1 - съвместна сделка от тип "по отделно"
+	--0 - РЅРµ Рµ СЃСЉРІРјРµСЃС‚РЅР° СЃРґРµР»РєР°, 1 - СЃСЉРІРјРµСЃС‚РЅР° СЃРґРµР»РєР° РѕС‚ С‚РёРї "РїРѕ РѕС‚РґРµР»РЅРѕ"
 	if IsNull(@UI_JOINT_TYPE,-1) in (0, 1)
 	begin
 
@@ -593,7 +593,7 @@ begin
 		end
 	end
 
-	-- 0 или долна граница на разполагаемостта ( '<0', '>0' )
+	-- 0 РёР»Рё РґРѕР»РЅР° РіСЂР°РЅРёС†Р° РЅР° СЂР°Р·РїРѕР»Р°РіР°РµРјРѕСЃС‚С‚Р° ( '<0', '>0' )
 	if Left(ltrim(IsNull(@LIMIT_AVAILABILITY,'0')),1) in ('<', '>', '=')
 	begin 
 		select @Sql2 = ' AND ([DEAL].[ACCOUNT_BEG_DAY_BALANCE] - [DEAL].[BLK_SUMA_MIN] + [DEAL].[DAY_OPERATION_BALANCE]) ' + REPLACE(@LIMIT_AVAILABILITY, ' ','') + @CrLf;
@@ -604,7 +604,7 @@ begin
 		select @Sql += @Sql2
 	end 
 
-	-- 1 - активна; Безусловно ще се търсят сделки които НЕ СА ЗАМРАЗЕНИ
+	-- 1 - Р°РєС‚РёРІРЅР°; Р‘РµР·СѓСЃР»РѕРІРЅРѕ С‰Рµ СЃРµ С‚СЉСЂСЃСЏС‚ СЃРґРµР»РєРё РєРѕРёС‚Рѕ РќР• РЎРђ Р—РђРњР РђР—Р•РќР
 	if IsNull(@DEAL_STATUS,-1) = 1
 	begin 
 		select @Sql2 = ' AND [DEAL].[IS_DORMUNT_ACCOUNT] = 0' + @CrLf;
@@ -615,7 +615,7 @@ begin
 		select @Sql += @Sql2
 	end 
 
-	-- 0 - няма несъбрани такси; 1 - има несъбрани такси, -1 без значение от сумата
+	-- 0 - РЅСЏРјР° РЅРµСЃСЉР±СЂР°РЅРё С‚Р°РєСЃРё; 1 - РёРјР° РЅРµСЃСЉР±СЂР°РЅРё С‚Р°РєСЃРё, -1 Р±РµР· Р·РЅР°С‡РµРЅРёРµ РѕС‚ СЃСѓРјР°С‚Р°
 	if IsNull(@LIMIT_TAX_UNCOLLECTED,-1) in ( 0, 1 )
 	begin 
 		select @Sql2 = ' AND [DEAL].[HAS_TAX_UNCOLECTED] = ' + str(@LIMIT_TAX_UNCOLLECTED,len(@LIMIT_TAX_UNCOLLECTED),0) + @CrLf;
@@ -627,7 +627,7 @@ begin
 		select @Sql += @Sql2
 	end 
 
-	-- 0 - няма запор; друга сума - има запор над определена сума; (-1) : няма значение;
+	-- 0 - РЅСЏРјР° Р·Р°РїРѕСЂ; РґСЂСѓРіР° СЃСѓРјР° - РёРјР° Р·Р°РїРѕСЂ РЅР°Рґ РѕРїСЂРµРґРµР»РµРЅР° СЃСѓРјР°; (-1) : РЅСЏРјР° Р·РЅР°С‡РµРЅРёРµ;
 	if IsNull(@LIMIT_ZAPOR,-1) >= 0
 	begin 
 
@@ -654,7 +654,7 @@ begin
 		end 
 	end
 
-	-- Да няма осчетоводено 'Вносни Бележки' по сделката: @RUNNING_ORDER = 1 and @TYPE_ACTION = ''
+	-- Р”Р° РЅСЏРјР° РѕСЃС‡РµС‚РѕРІРѕРґРµРЅРѕ 'Р’РЅРѕСЃРЅРё Р‘РµР»РµР¶РєРё' РїРѕ СЃРґРµР»РєР°С‚Р°: @RUNNING_ORDER = 1 and @TYPE_ACTION = ''
 	if @TYPE_ACTION = 'CashPayment' and IsNull(@RUNNING_ORDER,-1) = 1
 	begin
 		select @Sql2 = ' AND [DEAL].[HAS_WNOS_BEL] = ' + (case when @RUNNING_ORDER > 1 then '1' else '0' end)  + @CrLf;
@@ -666,7 +666,7 @@ begin
 		select @Sql += @Sql2
 	end
 
-	-- Да няма осчетоводено 'Нареждане Разписка' по сделката: @RUNNING_ORDER = 1 and @TYPE_ACTION = ''
+	-- Р”Р° РЅСЏРјР° РѕСЃС‡РµС‚РѕРІРѕРґРµРЅРѕ 'РќР°СЂРµР¶РґР°РЅРµ Р Р°Р·РїРёСЃРєР°' РїРѕ СЃРґРµР»РєР°С‚Р°: @RUNNING_ORDER = 1 and @TYPE_ACTION = ''
 	if @TYPE_ACTION = 'CashW' and IsNull(@RUNNING_ORDER,-1) = 1
 	begin
 		select @Sql2 = ' AND [DEAL].[HAS_NAR_RAZP] = ' + (case when @RUNNING_ORDER > 1 then '1' else '0' end)  + @CrLf;
@@ -678,11 +678,11 @@ begin
 		select @Sql += @Sql2
 	end	
 
-	-- Да укаже дали сметката е кореспондираща до други сделки: -1 няма значение; 0 не е; 1 да , кореспондираща е
+	-- Р”Р° СѓРєР°Р¶Рµ РґР°Р»Рё СЃРјРµС‚РєР°С‚Р° Рµ РєРѕСЂРµСЃРїРѕРЅРґРёСЂР°С‰Р° РґРѕ РґСЂСѓРіРё СЃРґРµР»РєРё: -1 РЅСЏРјР° Р·РЅР°С‡РµРЅРёРµ; 0 РЅРµ Рµ; 1 РґР° , РєРѕСЂРµСЃРїРѕРЅРґРёСЂР°С‰Р° Рµ
 	if IsNull(@IS_CORR,-1) in ( 0, 1 )
 	begin 
 		select @Sql2 = ' AND '+CASE WHEN @IS_CORR = 0 THEN 'NOT' ELSE '' END+ ' EXISTS (
-			select * from dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_OTHER_TAX_ACCOUNT] [TAX] with(nolock)
+			select * from dbo.[AGR_TA_EXISTING_ONLINE_DATA_DEALS_WITH_OTHER_TAX_ACCOUNT] [TAX] with(nolock)
 			where  [TAX].[CORR_ACCOUNT] =  [DEAL].[DEAL_ACCOUNT]
 		)' + @CrLf;
 
@@ -693,7 +693,7 @@ begin
 		select @Sql += @Sql2
 	end 
 
-	-- Указва дали РС да е уникална в таблица [RAZPREG_TA]
+	-- РЈРєР°Р·РІР° РґР°Р»Рё Р РЎ РґР° Рµ СѓРЅРёРєР°Р»РЅР° РІ С‚Р°Р±Р»РёС†Р° [RAZPREG_TA]
 	if IsNull(@IS_UNIQUE_DEAL,-1) in ( 1 )
 	begin 
 		select @Sql2 = ' AND NOT EXISTS (
@@ -710,11 +710,11 @@ begin
 	end
 	;
 
-	-- Код на програма от Group Sales + Продуктов код на карта + Код на GS договор
+	-- РљРѕРґ РЅР° РїСЂРѕРіСЂР°РјР° РѕС‚ Group Sales + РџСЂРѕРґСѓРєС‚РѕРІ РєРѕРґ РЅР° РєР°СЂС‚Р° + РљРѕРґ РЅР° GS РґРѕРіРѕРІРѕСЂ
 	if IsNull(@CODE_GS_PROGRAMME,-1) > 0 AND IsNull(@CODE_GS_CARD,-1) > 0 AND IsNull(@GS_PRODUCT_CODE,-1) > 0
 	begin 
 		select @Sql2 = ' AND EXISTS (
-			select * FROM dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_GS_INDIVIDUAL_PROGRAMME] [GS] with(nolock)
+			select * FROM dbo.[AGR_TA_EXISTING_ONLINE_DATA_DEALS_WITH_GS_INDIVIDUAL_PROGRAMME] [GS] with(nolock)
 			where	[GS].[DEAL_NUM]	 = [DEAL].[DEAL_NUM]
 				and [GS].[DEAL_TYPE] = 1
 				and [GS].[DEAL_GS_INDIVIDUAL_PROGRAM_CODE] = '+STR(@CODE_GS_PROGRAMME,LEN(@CODE_GS_PROGRAMME),0)+'
@@ -730,14 +730,14 @@ begin
 		select @Sql += @Sql2
 	end 
 
-	-- Валута на кореспонденцията
+	-- Р’Р°Р»СѓС‚Р° РЅР° РєРѕСЂРµСЃРїРѕРЅРґРµРЅС†РёСЏС‚Р°
 	if IsNull(@CCY_CODE_CORS, -1) > 0
 	begin 
 		select @Sql2 = ' AND '+CASE WHEN @IS_CORR = 0 THEN 'NOT' ELSE '' END+ ' EXISTS (
-			select * FROM dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_OTHER_TAX_ACCOUNT] [TAX] with(nolock)
+			select * FROM dbo.[AGR_TA_EXISTING_ONLINE_DATA_DEALS_WITH_OTHER_TAX_ACCOUNT] [TAX] with(nolock)
 			where  [TAX].[CORR_ACCOUNT] = [DEAL].[DEAL_ACCOUNT] ' + @CrLf;
 
-		-- Разполагаемост по сделката 
+		-- Р Р°Р·РїРѕР»Р°РіР°РµРјРѕСЃС‚ РїРѕ СЃРґРµР»РєР°С‚Р° 
 		if left(ltrim(IsNull(@LIMIT_AVAILABILITY_CORS, '0')),1) in ('<', '>', '=')
 				select @Sql2 += ' AND ([TAX].[ACCOUNT_BEG_DAY_BALANCE] - [TAX].[BLK_SUMA_MIN]+ [TAX].[DAY_OPERATION_BALANCE] ) ' + REPLACE(@LIMIT_AVAILABILITY_CORS,' ','');
 
@@ -795,7 +795,7 @@ begin
 	begin 
 		select @Msg = 'Duration: '+ dbo.FN_GET_TIME_DIFF(@TimeBeg, GetDate()) + 
 			 + ', TA Row ID: ' + @TestCaseRowID
-		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Msg, '*** End Execute Proc ***: dbo.[SP_CASH_PAYMENTS_UPDATE_TA_TABLES_PREPARE_CONDITIONS]'
+		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Msg, '*** End Execute Proc ***: dbo.[SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_PREPARE_CONDITIONS]'
 	end
 
 	return 0;

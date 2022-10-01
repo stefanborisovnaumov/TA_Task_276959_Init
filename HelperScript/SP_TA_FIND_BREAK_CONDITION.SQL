@@ -10,7 +10,7 @@ create proc dbo.[SP_TA_FIND_BREAK_CONDITION]
 as 
 begin
 
-	/* може да използваме текущата счетоводната дата на системата */
+	/* РјРѕР¶Рµ РґР° РёР·РїРѕР»Р·РІР°РјРµ С‚РµРєСѓС‰Р°С‚Р° СЃС‡РµС‚РѕРІРѕРґРЅР°С‚Р° РґР°С‚Р° РЅР° СЃРёСЃС‚РµРјР°С‚Р° */
 	declare	@Curr_Acc_Date datetime = IsNull(@Add_Date,Getdate())
 	;
 
@@ -30,7 +30,7 @@ begin
 	)
 	;
 
-	/* 1.2. Cleare Test Case conditions table */
+	/* 1.2. Clear Test Case conditions table */
 	declare @LastLogId int =  IsNull( (select max(id) from dbo.[SYS_LOG_PROC] with(nolock)), 0)
 		,	@LastCndTblId int = IsNull( (select max(id) from dbo.[AGR_CASH_PAYMENTS_SQL_CONDITIONS] with(nolock)), 0)
 	;
@@ -48,7 +48,7 @@ begin
 	;
 
 	/*********************************************************************************************************/
-	/* 2. Търсим подходящи сделки за вскички Тестови случай: */
+	/* 2. РўСЉСЂСЃРёРј РїРѕРґС…РѕРґСЏС‰Рё СЃРґРµР»РєРё Р·Р° РІСЃРєРёС‡РєРё РўРµСЃС‚РѕРІРё СЃР»СѓС‡Р°Р№: */
 	declare curTestCase cursor for 
 	select [ROW_ID], [TA_TYPE]
 	from dbo.[#TBL_WITH_TEST_CASES] with(nolock)
@@ -62,7 +62,7 @@ begin
 	while @@FETCH_STATUS = 0 
 	begin
 
-		exec @Ret = dbo.[SP_CASH_PAYMENTS_UPDATE_TA_TABLES_PREPARE_CONDITIONS]	
+		exec @Ret = dbo.[SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_PREPARE_CONDITIONS]	
 			@TestCaseRowID = @TA_ID, @CurrAccDate = @Curr_Acc_Date, @SaveTAConditions = 1
 
 		fetch next from curTestCase into @TA_ID, @TA_Type

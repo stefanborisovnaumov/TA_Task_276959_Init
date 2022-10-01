@@ -1,6 +1,6 @@
 
 /********************************************************************************************************/
-/* Процедура за селектиране на всички клиенти от OnlineDb с неплатени такси към всички кл. сметки */
+/* РџСЂРѕС†РµРґСѓСЂР° Р·Р° СЃРµР»РµРєС‚РёСЂР°РЅРµ РЅР° РІСЃРёС‡РєРё РєР»РёРµРЅС‚Рё РѕС‚ OnlineDb СЃ РЅРµРїР»Р°С‚РµРЅРё С‚Р°РєСЃРё РєСЉРј РІСЃРёС‡РєРё РєР». СЃРјРµС‚РєРё */
 DROP PROC IF EXISTS dbo.[SP_LOAD_ONLINE_CUSTOMERS_WITH_UNCOLLECTED_TAX_CONNECTED_TO_ALL_ACCOUNTS]
 GO
 
@@ -47,7 +47,7 @@ begin
         on [a].[PART_ID] = [T].[ACCOUNT_DT]
     inner join '+@SqlFullDBName+'.dbo.[DT015] [C] with(nolock)
         on [C].[CODE] = [A].[CLIENT_ID]
-    where	[T].[TAX_STATUS] =  0 /* eTaxActive = 0 // Действаща такса */
+    where	[T].[TAX_STATUS] =  0 /* eTaxActive = 0 // Р”РµР№СЃС‚РІР°С‰Р° С‚Р°РєСЃР° */
         and [T].[COLLECT_FROM_ALL_CUSTOMER_ACCOUNTS] = 1
     ';
 

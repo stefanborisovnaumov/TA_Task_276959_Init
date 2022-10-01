@@ -1,6 +1,6 @@
 
 /********************************************************************************************************/
-/* Процедура за актуализация на Таблица dbo.[SP_CASH_PAYMENTS_UPDATE_RAZREG_TA] */
+/* РџСЂРѕС†РµРґСѓСЂР° Р·Р° Р°РєС‚СѓР°Р»РёР·Р°С†РёСЏ РЅР° РўР°Р±Р»РёС†Р° dbo.[SP_CASH_PAYMENTS_UPDATE_RAZREG_TA] */
 DROP PROCEDURE IF EXISTS dbo.[SP_CASH_PAYMENTS_UPDATE_RAZREG_TA]
 GO
 
@@ -155,9 +155,9 @@ begin
 		SET		[UI_DEAL_NUM]			= [S].[DEAL_NUM]				-- RAZPREG_TA	UI_DEAL_NUM	
 			,	[DB_ACCOUNT]			= [S].[ACCOUNT]					-- RAZPREG_TA	DB_ACCOUNT	
 			,	[UI_ACCOUNT]			= [xa].[ACC_WITH_SPACE]			/* TODO: new function + date in TA TABLE */ -- RAZPREG_TA	UI_ACCOUNT 
-			,	[ZAPOR_SUM]				= STR([S].[DISTRAINT_SUM],14,2)	-- RAZPREG_TA	ZAPOR_SUM	Сума на запор по сметката (за целите на плащания по запор)
+			,	[ZAPOR_SUM]				= STR([S].[DISTRAINT_SUM],14,2)	-- RAZPREG_TA	ZAPOR_SUM	РЎСѓРјР° РЅР° Р·Р°РїРѕСЂ РїРѕ СЃРјРµС‚РєР°С‚Р° (Р·Р° С†РµР»РёС‚Рµ РЅР° РїР»Р°С‰Р°РЅРёСЏ РїРѕ Р·Р°РїРѕСЂ)
 			,	[IBAN]					= [S].[IBAN]					-- RAZPREG_TA	IBAN	
-			,	[TAX_UNCOLLECTED_SUM]	= [S].[TAX_UNCOLLECTED]			-- RAZPREG_TA	TAX_UNCOLLECTED_SUM	Сума на неплатените такси. Ако няма да се записва 0.00
+			,	[TAX_UNCOLLECTED_SUM]	= [S].[TAX_UNCOLLECTED]			-- RAZPREG_TA	TAX_UNCOLLECTED_SUM	РЎСѓРјР° РЅР° РЅРµРїР»Р°С‚РµРЅРёС‚Рµ С‚Р°РєСЃРё. РђРєРѕ РЅСЏРјР° РґР° СЃРµ Р·Р°РїРёСЃРІР° 0.00
 		FROM dbo.[RAZPREG_TA] [D]
 		INNER JOIN  dbo.[#TBL_ONLINE_DEAL_INFO] [S] WITH(NOLOCK)
 			ON [S].[DEAL_NUM] = @DEAL_NUM

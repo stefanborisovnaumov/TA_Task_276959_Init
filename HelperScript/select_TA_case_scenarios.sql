@@ -102,7 +102,7 @@ ORDER BY CAST( [DEAL_CND_UI_STD_DOG_CODE]  AS INT )
 GO
 
 /**************************************************************/
-DROP TABLE IF EXISTS dbo.[AGR_CASH_PAYMENTS_DEALS]
+DROP TABLE IF EXISTS dbo.AGR_TA_EXISTING_ONLINE_DATA_DEALS
 GO
 
 DECLARE @DealType int = 1
@@ -162,7 +162,7 @@ SELECT	CAST( 1 AS TINYINT)				AS [DEAL_TYPE]
 	,	IsNull([TAX].[HAS_TAX_UNCOLLECTED], 0)	AS [DEAL_HAS_TAX_UNCOLLECTED]
 	,	IsNull([CORR].[HAS_CORRS_FOR_TAX], 0)	AS [DEAL_HAS_CORRS_FOR_TAX]
 --	,	IsNull([BLCK].[HAS_ZAPOR], 0)			AS [DEAL_HAS_ZAPOR]
-INTO dbo.[AGR_CASH_PAYMENTS_DEALS]
+INTO dbo.AGR_TA_EXISTING_ONLINE_DATA_DEALS
 FROM [BPB_VCSBank_Online].dbo.[RAZPREG] [REG] WITH(NOLOCK) 
 INNER JOIN [BPB_VCSBank_Online].dbo.DT008 [CCY] WITH(NOLOCK)	
 	ON  [CCY].[CODE] = [REG].CURRENCY_CODE
@@ -233,27 +233,27 @@ WHERE	([REG].[STATUS] & @StsDeleted) <> @StsDeleted
 	and ([REG].[STATUS] & @StsCloased) <> @StsCloased
 GO
 
-select * from dbo.[AGR_CASH_PAYMENTS_DEALS]
+select * from dbo.AGR_TA_EXISTING_ONLINE_DATA_DEALS
 go
 
-select * from dbo.[AGR_CASH_PAYMENTS_DEALS]
+select * from dbo.AGR_TA_EXISTING_ONLINE_DATA_DEALS
 WHERE [DEAL_HAS_CORRS_FOR_TAX] = 1
 go
 
 /*********************************************/
---1		Титуляр                                               
---2		Пълномощник                                           
---3		Законен представител                                  
---4		Действителен собственик                               
---5		Трето лице                                            
---6		Картодържател                                         
---100	Наследник                                             
---101	Трето лице-представляващ   
+--1		пїЅпїЅпїЅпїЅпїЅпїЅпїЅ                                               
+--2		пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ                                           
+--3		пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ                                  
+--4		пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ                               
+--5		пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ                                            
+--6		пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ                                         
+--100	пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ                                             
+--101	пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ-пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ   
 
 WITH [CL_CODES] AS 
 (
 	SELECT [DEAL_CLIENT_CODE] AS CLIENT_CODE
-	FROM dbo.[AGR_CASH_PAYMENTS_DEALS] [S] WITH(NOLOCK)
+	FROM dbo.AGR_TA_EXISTING_ONLINE_DATA_DEALS [S] WITH(NOLOCK)
 	GROUP BY [DEAL_CLIENT_CODE]
 )
 SELECT  [D].[CUSTOMER_ID]
@@ -267,7 +267,7 @@ GO
 
 select [REG].DEAL_TYPE, [REG].DEAL_NUM
 	, [c].*
-from dbo.[AGR_CASH_PAYMENTS_DEALS] [REG] with(nolock)
+from dbo.AGR_TA_EXISTING_ONLINE_DATA_DEALS [REG] with(nolock)
 cross apply (
 
 	select	TOP (1) [T].*
@@ -295,18 +295,18 @@ DEAL_IS_INDIVIDUAL_COMBINATION
 DEAL_IS_INDIVIDUAL_PROGRAM_GS
 */
 select *
-from dbo.[AGR_CASH_PAYMENTS_DEALS] WITH(NOLOCK)
+from dbo.AGR_TA_EXISTING_ONLINE_DATA_DEALS WITH(NOLOCK)
 where [DEAL_HAS_TAX_UNCOLLECTED] = 0
 go
 
 /* DEAL_IS_INDIVIDUAL_PROGRAM_GS */
 select [P].*
-from dbo.[AGR_CASH_PAYMENTS_DEALS] [A] WITH(NOLOCK)
+from dbo.AGR_TA_EXISTING_ONLINE_DATA_DEALS [A] WITH(NOLOCK)
 INNER JOIN [BPB_VCSBank_Online].dbo.[GS_INDIVIDUAL_PROGRAMME] [P]
 	ON	[A].DEAL_TYPE	= [P].[DEAL_TYPE]
 	AND [A].DEAL_NUM	= [P].[DEAL_NUMBER]
 go
 
 select *
-from dbo.[AGR_CASH_PAYMENTS_DEALS] WITH(NOLOCK)
+from dbo.AGR_TA_EXISTING_ONLINE_DATA_DEALS WITH(NOLOCK)
 go

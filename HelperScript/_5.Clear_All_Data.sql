@@ -28,15 +28,15 @@ begin
 
 	select @TA_RowID, @DealRowID, @CorsRowID, @CustomerRowID
 
-	EXEC @Ret = DBO.[SP_CASH_PAYMENTS_CLEAR_TA_TABLES] @TA_RowID
+	EXEC @Ret = DBO.SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_CLEAR_CURRENT_DATA @TA_RowID
 	select @Ret as [result], @TA_RowID
 
-	select @Msg = 'After Exec DBO.[SP_CASH_PAYMENTS_CLEAR_TA_TABLES] @TA_RowID = '+str(@TA_RowID,len(@TA_RowID),0)
+	select @Msg = 'After Exec DBO.SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_CLEAR_CURRENT_DATA @TA_RowID = '+str(@TA_RowID,len(@TA_RowID),0)
 		+ '; @DealRowID = '+str(@DealRowID,len(@DealRowID),0)
 		+ '; @CorsRowID = '+str(@CorsRowID,len(@CorsRowID),0)
 		+ '; @CustomerRowID = '+str(@CustomerRowID,len(@CustomerRowID),0)
 	;
-	exec dbo.[SP_SYS_LOG_PROC] NULL, 'Exec DBO.[SP_CASH_PAYMENTS_CLEAR_TA_TABLES] @TA_RowID', @Msg
+	exec dbo.[SP_SYS_LOG_PROC] NULL, 'Exec DBO.SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_CLEAR_CURRENT_DATA @TA_RowID', @Msg
 	set @Count += 1
 end
 select @Count as row_count
@@ -45,7 +45,7 @@ GO
 
 select 	[v].[ROW_ID]
 	,	[v].[PSPEC_ROW_ID]
-	/* Данни за потребителя */
+	/* Р”Р°РЅРЅРё Р·Р° РїРѕС‚СЂРµР±РёС‚РµР»СЏ */
 	,	[v].[CUST_ROW_ID]
 	,	[C].[UI_CUSTOMER_ID]
 	,	[C].[UI_EGFN]
@@ -58,7 +58,7 @@ select 	[v].[ROW_ID]
 	,	[C].[SERVICE_GROUP_EGFN]
 	,	[C].[IS_ACTUAL]
 	,	[C].[PROXY_COUNT]
-	/* Данни на Сделката */
+	/* Р”Р°РЅРЅРё РЅР° РЎРґРµР»РєР°С‚Р° */
 	,	[v].[DEAL_ROW_ID]
 	,	[R].[UI_DEAL_NUM]
 	,	[R].[DB_ACCOUNT]
@@ -66,7 +66,7 @@ select 	[v].[ROW_ID]
 	,	[R].[ZAPOR_SUM]
 	,	[R].[IBAN]
 	,	[R].[TAX_UNCOLLECTED_SUM]
-		/* Данни за кореспонденцията */
+		/* Р”Р°РЅРЅРё Р·Р° РєРѕСЂРµСЃРїРѕРЅРґРµРЅС†РёСЏС‚Р° */
 	,	[v].[CORS_ROW_ID]
 	,	[D].[DEAL_NUM]
 	,	[D].[CURRENCY]

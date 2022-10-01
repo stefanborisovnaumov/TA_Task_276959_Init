@@ -1,10 +1,10 @@
 
 /********************************************************************************************************/
-/* Процедура за визличане на Sql Online Server name и Onle Database name */
-DROP PROCEDURE IF EXISTS dbo.[SP_CASH_PAYMENTS_GET_DATASOURCE]
+/* РџСЂРѕС†РµРґСѓСЂР° Р·Р° РІРёР·Р»РёС‡Р°РЅРµ РЅР° Sql Online Server name Рё Onle Database name */
+DROP PROCEDURE IF EXISTS dbo.[SP_TA_GET_DATASOURCE]
 GO
 
-CREATE PROCEDURE dbo.[SP_CASH_PAYMENTS_GET_DATASOURCE]
+CREATE PROCEDURE dbo.[SP_TA_GET_DATASOURCE]
 (
 	@DB_TYPE				sysname = N'BETA'
 ,	@DB_ALIAS				sysname = N'VCS_OnlineDB'
@@ -22,8 +22,8 @@ begin
 	/* Log Begining of Procedure execution */
 	if @LogBegEndProc = 1 
 	begin
-		select @Sql = 'dbo.[SP_CASH_PAYMENTS_GET_DATASOURCE] @DB_TYPE = '''+@DB_TYPE+''', @DB_ALIAS = '''+@DB_ALIAS+''''
-		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql, N'*** Begin Execute Proc ***: dbo.[SP_CASH_PAYMENTS_GET_DATASOURCE]'
+		select @Sql = 'dbo.[SP_TA_GET_DATASOURCE] @DB_TYPE = '''+@DB_TYPE+''', @DB_ALIAS = '''+@DB_ALIAS+''''
+		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql, N'*** Begin Execute Proc ***: dbo.[SP_TA_GET_DATASOURCE]'
 	end 
 	;
 
@@ -58,7 +58,7 @@ begin
 		select @Msg = N'Duration: '+ dbo.FN_GET_TIME_DIFF(@TimeBeg, GetDate())
 			+ N'; @OnlineSqlServerName = '''+ @OnlineSqlServerName+''' out '
 			+ N'; @OnlineSqlDataBaseName = '''+ @OnlineSqlDataBaseName+''' out ';
-		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Msg, N'*** End Execute Proc ***: dbo.dbo.[SP_CASH_PAYMENTS_GET_DATASOURCE]'
+		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Msg, N'*** End Execute Proc ***: dbo.dbo.[SP_TA_GET_DATASOURCE]'
 	end
 
 	return 0;

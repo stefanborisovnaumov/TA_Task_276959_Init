@@ -1,6 +1,6 @@
 
 /********************************************************************************************************/
-/* Процедура за актуализация на Таблица dbo.[DEALS_CORR_TA] */
+/* РџСЂРѕС†РµРґСѓСЂР° Р·Р° Р°РєС‚СѓР°Р»РёР·Р°С†РёСЏ РЅР° РўР°Р±Р»РёС†Р° dbo.[DEALS_CORR_TA] */
 DROP PROCEDURE IF EXISTS dbo.[SP_CASH_PAYMENTS_UPDATE_DEALS_CORS_TA]
 GO
 
@@ -48,7 +48,7 @@ begin
 	end 
 
 	select	@CorrAccount = [CORR_ACCOUNT]
-	from [dbo].[AGR_CASH_PAYMENTS_DEALS_WITH_OTHER_TAX_ACCOUNT] [C] with(nolock)
+	from [dbo].[AGR_TA_EXISTING_ONLINE_DATA_DEALS_WITH_OTHER_TAX_ACCOUNT] [C] with(nolock)
 	where [DEAL_TYPE] = 1 AND [DEAL_NUM] = @DEAL_NUM
 	;	
 
@@ -159,10 +159,10 @@ begin
 	if @WithUpdate = 1
 	begin
 		UPDATE [D]
-		SET [DEAL_NUM]				= [S].[CORR_DEAL_NUM]		-- DEALS_CORR_TA	DEAL_NUM	Номер на кореспондираща сделка
+		SET [DEAL_NUM]				= [S].[CORR_DEAL_NUM]		-- DEALS_CORR_TA	DEAL_NUM	РќРѕРјРµСЂ РЅР° РєРѕСЂРµСЃРїРѕРЅРґРёСЂР°С‰Р° СЃРґРµР»РєР°
 		,	[CURRENCY]				= [S].[CORR_ACCOUNT_CCY]	-- DEALS_CORR_TA	CURRENCY	
-		,	[UI_CORR_ACCOUNT]		= [S].[CORR_ACCOUNT]		-- DEALS_CORR_TA	UI_CORR_ACCOUNT	Партида на кореспондиращата сделка
-		,	[TAX_UNCOLLECTED_SUM]	= [S].[TAX_UNCOLLECTED]		-- DEALS_CORR_TA	TAX_UNCOLLECTED_SUM	 /* @TODO: Трябва да я изчислим !!!... */ 
+		,	[UI_CORR_ACCOUNT]		= [S].[CORR_ACCOUNT]		-- DEALS_CORR_TA	UI_CORR_ACCOUNT	РџР°СЂС‚РёРґР° РЅР° РєРѕСЂРµСЃРїРѕРЅРґРёСЂР°С‰Р°С‚Р° СЃРґРµР»РєР°
+		,	[TAX_UNCOLLECTED_SUM]	= [S].[TAX_UNCOLLECTED]		-- DEALS_CORR_TA	TAX_UNCOLLECTED_SUM	 /* @TODO: РўСЂСЏР±РІР° РґР° СЏ РёР·С‡РёСЃР»РёРј !!!... */ 
 
 		from dbo.[DEALS_CORR_TA] [D]
 		inner join dbo.[#TBL_ONLINE_DEALS_CORR_INFO] [S] with(nolock)

@@ -1,6 +1,6 @@
 
 /********************************************************************************************************/
-/* Процедура за актуализация на дневните салда в TA базата, след обработка на тестови случай */
+/* РџСЂРѕС†РµРґСѓСЂР° Р·Р° Р°РєС‚СѓР°Р»РёР·Р°С†РёСЏ РЅР° РґРЅРµРІРЅРёС‚Рµ СЃР°Р»РґР° РІ TA Р±Р°Р·Р°С‚Р°, СЃР»РµРґ РѕР±СЂР°Р±РѕС‚РєР° РЅР° С‚РµСЃС‚РѕРІРё СЃР»СѓС‡Р°Р№ */
 DROP PROCEDURE IF EXISTS dbo.[SP_CASH_PAYMENTS_UPDATE_ACCOUNTS_DAY_OPERATION_BAL]
 GO
 
@@ -55,7 +55,7 @@ begin
 	/* 3. Get Datasources: */
 	declare @OnlineSqlServerName sysname = N'',	@OnlineSqlDataBaseName sysname = N'', @DB_ALIAS sysname = N'VCS_OnlineDB'
 	;
-	exec @Ret = dbo.[SP_CASH_PAYMENTS_GET_DATASOURCE] @DB_TYPE, @DB_ALIAS, @OnlineSqlServerName out, @OnlineSqlDataBaseName out
+	exec @Ret = dbo.[SP_TA_GET_DATASOURCE] @DB_TYPE, @DB_ALIAS, @OnlineSqlServerName out, @OnlineSqlDataBaseName out
 	if @Ret <> 0
 	begin
 		select  @Msg = N'Error execute proc, Error code: '+str(@Ret,len(@Ret),0)

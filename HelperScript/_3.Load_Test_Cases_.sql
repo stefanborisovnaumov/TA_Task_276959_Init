@@ -1,12 +1,12 @@
 /********************************************************************************************/
-/*  Save Currecnt data */
+/*  Save Current data */
 select * 
 into cstemp_old_data
 from dbo.VIEW_CASH_PAYMENT_TEST_CASE_DATA with(nolock)
 go
 
 /********************************************************************************************/
-/*  Cleare All Data */
+/*  Clear All Data */
 declare @TA_MaxRowID	 int = 0
 		, @TA_RowID		 int= 0
 		, @CustomerRowID int = 0
@@ -37,15 +37,15 @@ begin
 
 	select @TA_RowID, @DealRowID, @CorsRowID, @CustomerRowID
 
-	EXEC @Ret = DBO.[SP_CASH_PAYMENTS_CLEAR_TA_TABLES] @TA_RowID
+	EXEC @Ret = DBO.SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_CLEAR_CURRENT_DATA @TA_RowID
 	select @Ret as [result], @TA_RowID
 
-	select @Msg = 'After Exec DBO.[SP_CASH_PAYMENTS_CLEAR_TA_TABLES] @TA_RowID = '+str(@TA_RowID,len(@TA_RowID),0)
+	select @Msg = 'After Exec DBO.SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_CLEAR_CURRENT_DATA @TA_RowID = '+str(@TA_RowID,len(@TA_RowID),0)
 		+ '; @DealRowID = '+str(@DealRowID,len(@DealRowID),0)
 		+ '; @CorsRowID = '+str(@CorsRowID,len(@CorsRowID),0)
 		+ '; @CustomerRowID = '+str(@CustomerRowID,len(@CustomerRowID),0)
 	;
-	exec dbo.[SP_SYS_LOG_PROC] NULL, 'Exec DBO.[SP_CASH_PAYMENTS_CLEAR_TA_TABLES] @TA_RowID', @Msg
+	exec dbo.[SP_SYS_LOG_PROC] NULL, 'Exec DBO.SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_CLEAR_CURRENT_DATA @TA_RowID', @Msg
 	set @Count += 1
 end
 select @Count as row_count
@@ -63,7 +63,7 @@ select * from dbo.VIEW_CASH_PAYMENTS_CONDITIONS with(nolock)
 where row_id = @TestCaseID
 ;
 
-exec @Ret = dbo.[SP_CASH_PAYMENTS_UPDATE_TA_TABLES] @TestCaseID
+exec @Ret = dbo.[SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES] @TestCaseID
 ;
 select * from dbo.VIEW_CASH_PAYMENT_TEST_CASE_DATA with(nolock)
 where row_id = @TestCaseID
@@ -88,7 +88,7 @@ fetch next from curTestCase into @TestCaseID
 while @@FETCH_STATUS = 0
 begin
 
-	exec @Ret = dbo.[SP_CASH_PAYMENTS_UPDATE_TA_TABLES] @TestCaseID
+	exec @Ret = dbo.[SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES] @TestCaseID
 
 	if @Ret <> 0 
 		print ('Error load test case from '+str(@TestCaseID,len(@TestCaseID),0)+'!');
@@ -102,7 +102,7 @@ deallocate curTestCase
 go
 
 /*************************************************************************/
--- Тестови случай за който не са намерени подходящи сделки:
+-- РўРµСЃС‚РѕРІРё СЃР»СѓС‡Р°Р№ Р·Р° РєРѕР№С‚Рѕ РЅРµ СЃР° РЅР°РјРµСЂРµРЅРё РїРѕРґС…РѕРґСЏС‰Рё СЃРґРµР»РєРё:
 select top (2000) * 
 from sys_log_proc with(nolock)
 where [msg] like 'Not found suitable deal from Test Case with%'

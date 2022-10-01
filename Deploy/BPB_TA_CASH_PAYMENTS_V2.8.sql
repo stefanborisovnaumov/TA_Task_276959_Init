@@ -1,10 +1,10 @@
 /***************************************************************************************************************/
--- Име          : Янко Янков
--- Дата и час   : 30.06.2022
--- Задача       : Task 282617 (v2.8.8)
--- Класификация : Test Automation
--- Описание     : Автоматизация на тестовете за Кредитните преводи с използване на наличните данни от Online базата
--- Параметри    : Няма
+-- РРјРµ          : РЇРЅРєРѕ РЇРЅРєРѕРІ
+-- Р”Р°С‚Р° Рё С‡Р°СЃ   : 30.06.2022
+-- Р—Р°РґР°С‡Р°       : Task 282617 (v2.8.8)
+-- РљР»Р°СЃРёС„РёРєР°С†РёСЏ : Test Automation
+-- РћРїРёСЃР°РЅРёРµ     : РђРІС‚РѕРјР°С‚РёР·Р°С†РёСЏ РЅР° С‚РµСЃС‚РѕРІРµС‚Рµ Р·Р° РљСЂРµРґРёС‚РЅРёС‚Рµ РїСЂРµРІРѕРґРё СЃ РёР·РїРѕР»Р·РІР°РЅРµ РЅР° РЅР°Р»РёС‡РЅРёС‚Рµ РґР°РЅРЅРё РѕС‚ Online Р±Р°Р·Р°С‚Р°
+-- РџР°СЂР°РјРµС‚СЂРё    : РќСЏРјР°
 /***************************************************************************************************************/
 
 /*****************************************************************************/
@@ -305,7 +305,7 @@ go
 
 
 /********************************************************************************************************/
-/* Създаване на помощно view за Условията към тестовите сценарии */
+/* РЎСЉР·РґР°РІР°РЅРµ РЅР° РїРѕРјРѕС‰РЅРѕ view Р·Р° РЈСЃР»РѕРІРёСЏС‚Р° РєСЉРј С‚РµСЃС‚РѕРІРёС‚Рµ СЃС†РµРЅР°СЂРёРё */
 DROP VIEW IF EXISTS dbo.[VIEW_CASH_PAYMENTS_CONDITIONS]
 GO
 
@@ -316,51 +316,51 @@ AS
 	(
 		SELECT [X].*
 		FROM ( 
-			VALUES	( 1 , 'ЕГН' )
-				,	( 2 , 'ЕИК/БУЛСТАТ' )
-				,	( 3 , 'БАЕ' )
-				,	( 4 , 'ЛНЧ' )
-				,	( 5 , 'Функционално ЕГН' )
-				,	( 6 , 'Функционално ЛНЧ (ЧФЛ)' )
-				,	( 7 , 'Функционално ЕИК (МЮЛ)' ) 
-				,	( 8 , 'Функционално ЕИК (ЧЮЛ)' )
-				,	( 9 , 'Идентификатор за клиенти по ЗЗКИ' )
+			VALUES	( 1 , 'Р•Р“Рќ' )
+				,	( 2 , 'Р•РРљ/Р‘РЈР›РЎРўРђРў' )
+				,	( 3 , 'Р‘РђР•' )
+				,	( 4 , 'Р›РќР§' )
+				,	( 5 , 'Р¤СѓРЅРєС†РёРѕРЅР°Р»РЅРѕ Р•Р“Рќ' )
+				,	( 6 , 'Р¤СѓРЅРєС†РёРѕРЅР°Р»РЅРѕ Р›РќР§ (Р§Р¤Р›)' )
+				,	( 7 , 'Р¤СѓРЅРєС†РёРѕРЅР°Р»РЅРѕ Р•РРљ (РњР®Р›)' ) 
+				,	( 8 , 'Р¤СѓРЅРєС†РёРѕРЅР°Р»РЅРѕ Р•РРљ (Р§Р®Р›)' )
+				,	( 9 , 'РРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ Р·Р° РєР»РёРµРЅС‚Рё РїРѕ Р—Р—РљР' )
 		) X([ID], [NAME])
 	)
 	, [CTE_CUSTOMER_CHARACTERISTIC] AS 
 	(
 		SELECT [X].*
 		FROM ( 
-			VALUES	(0,	'Банков клиент' )
-				,	(1,	'Външен клиент' )
-				,	(2,	'Prospect клиент' )
-				,	(3,	'Действителен собственик' )
-				,	(4,	'Клиент без активни продукти' )
+			VALUES	(0,	'Р‘Р°РЅРєРѕРІ РєР»РёРµРЅС‚' )
+				,	(1,	'Р’СЉРЅС€РµРЅ РєР»РёРµРЅС‚' )
+				,	(2,	'Prospect РєР»РёРµРЅС‚' )
+				,	(3,	'Р”РµР№СЃС‚РІРёС‚РµР»РµРЅ СЃРѕР±СЃС‚РІРµРЅРёРє' )
+				,	(4,	'РљР»РёРµРЅС‚ Р±РµР· Р°РєС‚РёРІРЅРё РїСЂРѕРґСѓРєС‚Рё' )
 		) X([ID], [NAME])
 	)
 	, [CTE_CUSTOMER_AGE] AS 
 	(
 		SELECT [X].*, GetDate() as [SYS_DATE]
 		FROM (
-			VALUES	(-1, 00, 190, 'Без значение' )
-				,	( 1, 18, 190, 'Пълнолетно лице (над 18г.)' )
-				,	( 2, 14,  17, 'Непълнолетно физическо лице (от 14г. до 18г.)' )
-				,	( 3, 00,  13, 'Малолетно физическо лице (до 14г.)' )
-				,	( 4, 00, 190, 'Външен клиент' )
+			VALUES	(-1, 00, 190, 'Р‘РµР· Р·РЅР°С‡РµРЅРёРµ' )
+				,	( 1, 18, 190, 'РџСЉР»РЅРѕР»РµС‚РЅРѕ Р»РёС†Рµ (РЅР°Рґ 18Рі.)' )
+				,	( 2, 14,  17, 'РќРµРїСЉР»РЅРѕР»РµС‚РЅРѕ С„РёР·РёС‡РµСЃРєРѕ Р»РёС†Рµ (РѕС‚ 14Рі. РґРѕ 18Рі.)' )
+				,	( 3, 00,  13, 'РњР°Р»РѕР»РµС‚РЅРѕ С„РёР·РёС‡РµСЃРєРѕ Р»РёС†Рµ (РґРѕ 14Рі.)' )
+				,	( 4, 00, 190, 'Р’СЉРЅС€РµРЅ РєР»РёРµРЅС‚' )
 		) X([ID], [AGE_MIN], [AGE_MAX], [NAME])
 	)
 	, [CTE_UI_RAZPOREDITEL] AS 
 	(
 		SELECT [X].*
 		FROM ( 
-			VALUES	( 1	, 1,'Титуляр' )
-				,	( 2	, 0,'Пълномощник' )
-				,	( 3	, 0,'Законен представител' )
-				,	( 4	,-1,'Действителен собственик' )
-				,	( 5	,-1,'Трето лице' )
-				,	( 6	,-1,'Картодържател' )
-				,	(100,-1,'Наследник' )
-				,	(101,-1,'Трето лице-представляващ' )
+			VALUES	( 1	, 1,'РўРёС‚СѓР»СЏСЂ' )
+				,	( 2	, 0,'РџСЉР»РЅРѕРјРѕС‰РЅРёРє' )
+				,	( 3	, 0,'Р—Р°РєРѕРЅРµРЅ РїСЂРµРґСЃС‚Р°РІРёС‚РµР»' )
+				,	( 4	,-1,'Р”РµР№СЃС‚РІРёС‚РµР»РµРЅ СЃРѕР±СЃС‚РІРµРЅРёРє' )
+				,	( 5	,-1,'РўСЂРµС‚Рѕ Р»РёС†Рµ' )
+				,	( 6	,-1,'РљР°СЂС‚РѕРґСЉСЂР¶Р°С‚РµР»' )
+				,	(100,-1,'РќР°СЃР»РµРґРЅРёРє' )
+				,	(101,-1,'РўСЂРµС‚Рѕ Р»РёС†Рµ-РїСЂРµРґСЃС‚Р°РІР»СЏРІР°С‰' )
 			) X([ID], [CND_ID], [NAME])
 	)
 	, [CTE_CCY] AS 
@@ -383,7 +383,7 @@ AS
 		,	[CUST_BEN].[ROW_ID]								AS [CUST_BEN_ROW_ID]
 		,	[DBEN].[ROW_ID]									AS [DEAL_BEN_ROW_ID]
 
-		/* Условия за титуляра dbo.[DT015_CUSTOMERS_ACTIONS_TA] */
+		/* РЈСЃР»РѕРІРёСЏ Р·Р° С‚РёС‚СѓР»СЏСЂР° dbo.[DT015_CUSTOMERS_ACTIONS_TA] */
 		,	[CUST].[SECTOR]									AS [SECTOR]
 		,	[CUST].[UNIFIED]								AS [UNIFIED]
 		,	[CUST].[IS_SERVICE]								AS [IS_SERVICE]
@@ -404,11 +404,11 @@ AS
 		,	[CUST].[PROXY_COUNT]							AS [PROXY_COUNT]
 		,	[CUST].[COLLECT_TAX_FROM_ALL_ACC]				AS [COLLECT_TAX_FROM_ALL_ACC]
 
-		/* Условия за пълномощника dbo.[PROXY_SPEC_TA] */
+		/* РЈСЃР»РѕРІРёСЏ Р·Р° РїСЉР»РЅРѕРјРѕС‰РЅРёРєР° dbo.[PROXY_SPEC_TA] */
 		,	[PSPEC].[UI_RAZPOREDITEL]						AS [UI_RAZPOREDITEL]
 		,	[PSPEC].[UI_UNLIMITED]							AS [UI_UNLIMITED]
 
-		/* Условия за сделката dbo.[RAZPREG_TA] */
+		/* РЈСЃР»РѕРІРёСЏ Р·Р° СЃРґРµР»РєР°С‚Р° dbo.[RAZPREG_TA] */
 		,	[DREG].UI_STD_DOG_CODE							AS [UI_STD_DOG_CODE]
 		,	[DREG].[UI_INDIVIDUAL_DEAL]						AS [UI_INDIVIDUAL_DEAL]
 		,	[DREG].[INT_COND_STDCONTRACT]					AS [INT_COND_STDCONTRACT]
@@ -434,29 +434,29 @@ AS
 		,	[NM_ID].[CODE_GS_PROGRAMME]
 		,	[NM_ID].[CODE_GS_CARD]
 
-		/* Условия за кореспондиращи сметки dbo.[DEALS_CORR_TA] */
+		/* РЈСЃР»РѕРІРёСЏ Р·Р° РєРѕСЂРµСЃРїРѕРЅРґРёСЂР°С‰Рё СЃРјРµС‚РєРё dbo.[DEALS_CORR_TA] */
 		,	[CORS].[CURRENCY]								AS [CURRENCY_CORS]
 		,	[CCY_CORS].[CCY_CODE_CORS]						AS [CCY_CODE_CORS]
 		,	[CORS].[LIMIT_AVAILABILITY]						AS [LIMIT_AVAILABILITY_CORS]
 /*		,	[CORS].[LIMIT_TAX_UNCOLLECTED]					AS [LIMIT_TAX_UNCOLLECTED_CORS] */
 
 			/* [PROXY_ACC_TA] */
-/*		,	[PROXY_ACC_TA]  Пълномощника, да има права за действието по избраната сметка */
+/*		,	[PROXY_ACC_TA]  РџСЉР»РЅРѕРјРѕС‰РЅРёРєР°, РґР° РёРјР° РїСЂР°РІР° Р·Р° РґРµР№СЃС‚РІРёРµС‚Рѕ РїРѕ РёР·Р±СЂР°РЅР°С‚Р° СЃРјРµС‚РєР° */
 
-			/* Условия за вносната бележка [PREV_COMMON_TA] */
+			/* РЈСЃР»РѕРІРёСЏ Р·Р° РІРЅРѕСЃРЅР°С‚Р° Р±РµР»РµР¶РєР° [PREV_COMMON_TA] */
 		,	[PREV].[RUNNING_ORDER]							AS [RUNNING_ORDER]
 		,	[PREV].[TYPE_ACTION]							AS [TYPE_ACTION]
 		,	[PREV].TAX_CODE									AS [TAX_CODE]
 		,	[PREV].PREF_CODE								AS [PREF_CODE]
 
-			/* Зададената сума на документа и очакванета сума на таксата */						
+			/* Р—Р°РґР°РґРµРЅР°С‚Р° СЃСѓРјР° РЅР° РґРѕРєСѓРјРµРЅС‚Р° Рё РѕС‡Р°РєРІР°РЅРµС‚Р° СЃСѓРјР° РЅР° С‚Р°РєСЃР°С‚Р° */						
 		,	[NM_ID].[DOC_SUM]								AS [DOC_SUM]
 		,	[PREV].[TAX_SUM]								AS [DOC_TAX_SUM]
 
-		/* Условия за кореспондиращата за документ кредитен превод */
+		/* РЈСЃР»РѕРІРёСЏ Р·Р° РєРѕСЂРµСЃРїРѕРЅРґРёСЂР°С‰Р°С‚Р° Р·Р° РґРѕРєСѓРјРµРЅС‚ РєСЂРµРґРёС‚РµРЅ РїСЂРµРІРѕРґ */
 		,	[PREV].[UI_INOUT_TRANSFER]
 		,	[PREV].[BETWEEN_OWN_ACCOUNTS]
-		/* Вида на валутата на кореспондирашата партида от dbo.[RAZPREG_TA] */
+		/* Р’РёРґР° РЅР° РІР°Р»СѓС‚Р°С‚Р° РЅР° РєРѕСЂРµСЃРїРѕРЅРґРёСЂР°С€Р°С‚Р° РїР°СЂС‚РёРґР° РѕС‚ dbo.[RAZPREG_TA] */
 		,	[DBEN].UI_CURRENCY_CODE							AS [UI_CURRENCY_CODE_BEN]
 		,	[CCY_DEAL_BEN].[CCY_CODE_DEAL]					AS [CCY_CODE_DEAL_BEN]
 
@@ -535,7 +535,7 @@ AS
 GO
 
 /********************************************************************************************************/
-/* Помощно view за визуализация на данните от TA таблиците, който подлежат на актуализация */
+/* РџРѕРјРѕС‰РЅРѕ view Р·Р° РІРёР·СѓР°Р»РёР·Р°С†РёСЏ РЅР° РґР°РЅРЅРёС‚Рµ РѕС‚ TA С‚Р°Р±Р»РёС†РёС‚Рµ, РєРѕР№С‚Рѕ РїРѕРґР»РµР¶Р°С‚ РЅР° Р°РєС‚СѓР°Р»РёР·Р°С†РёСЏ */
 drop view if exists dbo.[VIEW_CASH_PAYMENT_TEST_CASE_DATA]
 go
 
@@ -544,7 +544,7 @@ as
 select 	[v].[ROW_ID]
 	,	[v].TA_TYPE
 		
-	/* Данни за Титуляра */
+	/* Р”Р°РЅРЅРё Р·Р° РўРёС‚СѓР»СЏСЂР° */
 	,	[v].[CUST_ROW_ID]
 	,	[c].[UI_CUSTOMER_ID]
 	,	[c].[UI_EGFN]
@@ -560,7 +560,7 @@ select 	[v].[ROW_ID]
 	,	[c].[PROXY_COUNT]
 	,	[c].[IS_PROXY]
 
-	/* Данни на Сделката */
+	/* Р”Р°РЅРЅРё РЅР° РЎРґРµР»РєР°С‚Р° */
 	,	[v].[DEAL_ROW_ID]
 	,	[R].[UI_DEAL_NUM]
 	,	[R].[DB_ACCOUNT]
@@ -569,14 +569,14 @@ select 	[v].[ROW_ID]
 	,	[R].[IBAN]
 	,	[R].[TAX_UNCOLLECTED_SUM]
 
-	/* Данни за обслужващата пардита за такси */
+	/* Р”Р°РЅРЅРё Р·Р° РѕР±СЃР»СѓР¶РІР°С‰Р°С‚Р° РїР°СЂРґРёС‚Р° Р·Р° С‚Р°РєСЃРё */
 	,	[v].[CORS_ROW_ID]
 	,	[D].[DEAL_NUM]
 	,	[D].[CURRENCY]
 	,	[D].[UI_CORR_ACCOUNT]
 	,	[D].[TAX_UNCOLLECTED_SUM]	as [TAX_UNCOLLECTED_SUM_CORS]
 
-	/* Данни за пълномощника */
+	/* Р”Р°РЅРЅРё Р·Р° РїСЉР»РЅРѕРјРѕС‰РЅРёРєР° */
 	,	[v].[PSPEC_ROW_ID]
 	,	[v].[PROXY_ROW_ID]
 	,	[p].[UI_CUSTOMER_ID]		as [UI_CUSTOMER_ID_PROXY]
@@ -592,7 +592,7 @@ select 	[v].[ROW_ID]
 	,	[p].[PROXY_COUNT]			as [PROXY_COUNT_PROXY]
 	,	[p].[IS_PROXY]				as [PROXY_IS_PROXY]
 
-	/* Данни на Сделката на бенефицента - за някой от тестовите случай за кредитните преводи */
+	/* Р”Р°РЅРЅРё РЅР° РЎРґРµР»РєР°С‚Р° РЅР° Р±РµРЅРµС„РёС†РµРЅС‚Р° - Р·Р° РЅСЏРєРѕР№ РѕС‚ С‚РµСЃС‚РѕРІРёС‚Рµ СЃР»СѓС‡Р°Р№ Р·Р° РєСЂРµРґРёС‚РЅРёС‚Рµ РїСЂРµРІРѕРґРё */
 	,	[v].[DEAL_BEN_ROW_ID]
 	,	[DBEN].[UI_DEAL_NUM]			AS [UI_DEAL_NUM_BEN]
 	,	[DBEN].[DB_ACCOUNT]				AS [DB_ACCOUNT_BEN]
@@ -601,7 +601,7 @@ select 	[v].[ROW_ID]
 	,	[DBEN].[IBAN]					AS [IBAN_BEN]
 	,	[DBEN].[TAX_UNCOLLECTED_SUM]	AS [TAX_UNCOLLECTED_SUM_BEN]
 
-	/* Данни на бенефицента - за някой от тестовите случай за кредитните преводи */
+	/* Р”Р°РЅРЅРё РЅР° Р±РµРЅРµС„РёС†РµРЅС‚Р° - Р·Р° РЅСЏРєРѕР№ РѕС‚ С‚РµСЃС‚РѕРІРёС‚Рµ СЃР»СѓС‡Р°Р№ Р·Р° РєСЂРµРґРёС‚РЅРёС‚Рµ РїСЂРµРІРѕРґРё */
 	,	[v].[CUST_BEN_ROW_ID]
 	,	[CUST_BEN].[UI_CUSTOMER_ID]		as [UI_CUSTOMER_ID_BEN]
 	,	[CUST_BEN].[UI_EGFN]			as [UI_EGFN_BEN]
@@ -634,8 +634,8 @@ left outer join  dbo.[DT015_CUSTOMERS_ACTIONS_TA] [CUST_BEN]
 go
 
 /********************************************************************************************************/
-/* Процедура за зачистване наданните от TA Таблиците */
-/* 2022/06/98 - v2.6.3 -> актуализацията на сделките с навързаните документи се извършва само за първия тестови случай */
+/* РџСЂРѕС†РµРґСѓСЂР° Р·Р° Р·Р°С‡РёСЃС‚РІР°РЅРµ РЅР°РґР°РЅРЅРёС‚Рµ РѕС‚ TA РўР°Р±Р»РёС†РёС‚Рµ */
+/* 2022/06/98 - v2.6.3 -> Р°РєС‚СѓР°Р»РёР·Р°С†РёСЏС‚Р° РЅР° СЃРґРµР»РєРёС‚Рµ СЃ РЅР°РІСЉСЂР·Р°РЅРёС‚Рµ РґРѕРєСѓРјРµРЅС‚Рё СЃРµ РёР·РІСЉСЂС€РІР° СЃР°РјРѕ Р·Р° РїСЉСЂРІРёСЏ С‚РµСЃС‚РѕРІРё СЃР»СѓС‡Р°Р№ */
 DROP PROCEDURE IF EXISTS dbo.[SP_CASH_PAYMENTS_CLEAR_TA_TABLES]
 GO
 
@@ -701,18 +701,18 @@ begin
 
 	begin try
 
-		-- Актуализация данните за кореспондиращата сметка
+		-- РђРєС‚СѓР°Р»РёР·Р°С†РёСЏ РґР°РЅРЅРёС‚Рµ Р·Р° РєРѕСЂРµСЃРїРѕРЅРґРёСЂР°С‰Р°С‚Р° СЃРјРµС‚РєР°
 		if IsNull(@DEALS_CORR_TA_RowID,0) > 0 and @IsNotFirstCashPaymentWithAccumulatedTax = 0
 		begin
 			update [D]
-			set		[DEAL_NUM]				= 0		-- DEALS_CORR_TA	DEAL_NUM	Номер на кореспондираща сделка
-				,	[UI_CORR_ACCOUNT]		= ''	-- DEALS_CORR_TA	UI_CORR_ACCOUNT	Партида на кореспондиращата сделка
-				,	[TAX_UNCOLLECTED_SUM]	= 0		-- DEALS_CORR_TA	TAX_UNCOLLECTED_SUM	 /* @TODO: Трябва да я изчислим !!!... */ 
+			set		[DEAL_NUM]				= 0		-- DEALS_CORR_TA	DEAL_NUM	РќРѕРјРµСЂ РЅР° РєРѕСЂРµСЃРїРѕРЅРґРёСЂР°С‰Р° СЃРґРµР»РєР°
+				,	[UI_CORR_ACCOUNT]		= ''	-- DEALS_CORR_TA	UI_CORR_ACCOUNT	РџР°СЂС‚РёРґР° РЅР° РєРѕСЂРµСЃРїРѕРЅРґРёСЂР°С‰Р°С‚Р° СЃРґРµР»РєР°
+				,	[TAX_UNCOLLECTED_SUM]	= 0		-- DEALS_CORR_TA	TAX_UNCOLLECTED_SUM	 /* @TODO: РўСЂСЏР±РІР° РґР° СЏ РёР·С‡РёСЃР»РёРј !!!... */ 
 			from dbo.[DEALS_CORR_TA] [D]
 			where [D].[ROW_ID] = @DEALS_CORR_TA_RowID
 		end
 
-		-- Актуализация данните на пълномощника
+		-- РђРєС‚СѓР°Р»РёР·Р°С†РёСЏ РґР°РЅРЅРёС‚Рµ РЅР° РїСЉР»РЅРѕРјРѕС‰РЅРёРєР°
 		if IsNull(@PROXY_CUSTOMERS_RowID,0) > 0 and @IsNotFirstCashPaymentWithAccumulatedTax = 0
 		begin
 			update [D]
@@ -722,30 +722,30 @@ begin
 				,	[COMPANY_EFN]			= '0'		-- DT015_CUSTOMERS_ACTIONS_TA	COMPANY_EFN
 				,	[UI_CLIENT_CODE]		= '0'		-- DT015_CUSTOMERS_ACTIONS_TA	UI_CLIENT_CODE
 				,	[UI_NOTES_EXIST]		= 0			-- DT015_CUSTOMERS_ACTIONS_TA	UI_NOTES_EXIST
-				,	[IS_ZAPOR]				= 0			-- DT015_CUSTOMERS_ACTIONS_TA	IS_ZAPOR (дали има съдебен запор някоя от сделките на клиента) 	Да се разработи обслужване в тестовете
-				,	[ID_NUMBER]				= '0'		-- DT015_CUSTOMERS_ACTIONS_TA	ID_NUMBER номер на лична карта
-				,	[SERVICE_GROUP_EGFN]	= '0'		-- DT015_CUSTOMERS_ACTIONS_TA	SERVICE_GROUP_EGFN	EGFN, което се попълва в допълнителния диалог за търсене според IS_SERVICE
-				,	[IS_ACTUAL]				= 0			-- DT015_CUSTOMERS_ACTIONS_TA	IS_ACTUAL (1; 0)	Да се разработи обслужване в тестовете на клиенти с неактуални данни при 1
-				,	[PROXY_COUNT]			= 0			-- DT015_CUSTOMERS_ACTIONS_TA	PROXY_COUNT	Брой активни пълномощници
+				,	[IS_ZAPOR]				= 0			-- DT015_CUSTOMERS_ACTIONS_TA	IS_ZAPOR (РґР°Р»Рё РёРјР° СЃСЉРґРµР±РµРЅ Р·Р°РїРѕСЂ РЅСЏРєРѕСЏ РѕС‚ СЃРґРµР»РєРёС‚Рµ РЅР° РєР»РёРµРЅС‚Р°) 	Р”Р° СЃРµ СЂР°Р·СЂР°Р±РѕС‚Рё РѕР±СЃР»СѓР¶РІР°РЅРµ РІ С‚РµСЃС‚РѕРІРµС‚Рµ
+				,	[ID_NUMBER]				= '0'		-- DT015_CUSTOMERS_ACTIONS_TA	ID_NUMBER РЅРѕРјРµСЂ РЅР° Р»РёС‡РЅР° РєР°СЂС‚Р°
+				,	[SERVICE_GROUP_EGFN]	= '0'		-- DT015_CUSTOMERS_ACTIONS_TA	SERVICE_GROUP_EGFN	EGFN, РєРѕРµС‚Рѕ СЃРµ РїРѕРїСЉР»РІР° РІ РґРѕРїСЉР»РЅРёС‚РµР»РЅРёСЏ РґРёР°Р»РѕРі Р·Р° С‚СЉСЂСЃРµРЅРµ СЃРїРѕСЂРµРґ IS_SERVICE
+				,	[IS_ACTUAL]				= 0			-- DT015_CUSTOMERS_ACTIONS_TA	IS_ACTUAL (1; 0)	Р”Р° СЃРµ СЂР°Р·СЂР°Р±РѕС‚Рё РѕР±СЃР»СѓР¶РІР°РЅРµ РІ С‚РµСЃС‚РѕРІРµС‚Рµ РЅР° РєР»РёРµРЅС‚Рё СЃ РЅРµР°РєС‚СѓР°Р»РЅРё РґР°РЅРЅРё РїСЂРё 1
+				,	[PROXY_COUNT]			= 0			-- DT015_CUSTOMERS_ACTIONS_TA	PROXY_COUNT	Р‘СЂРѕР№ Р°РєС‚РёРІРЅРё РїСЉР»РЅРѕРјРѕС‰РЅРёС†Рё
 			from dbo.[DT015_CUSTOMERS_ACTIONS_TA] [D]
 			where [D].[ROW_ID] = @PROXY_CUSTOMERS_RowID
 		end
 
-		-- Актуализация данните на сделката
+		-- РђРєС‚СѓР°Р»РёР·Р°С†РёСЏ РґР°РЅРЅРёС‚Рµ РЅР° СЃРґРµР»РєР°С‚Р°
 		if @IsNotFirstCashPaymentWithAccumulatedTax = 0
 		begin
 			update [D]
 			set		[UI_DEAL_NUM]			= 0		-- RAZPREG_TA	UI_DEAL_NUM	
 				,	[DB_ACCOUNT]			= ''	-- RAZPREG_TA	DB_ACCOUNT	
 				,	[UI_ACCOUNT]			= ''	/* TODO: new function + date in TA TABLE */ -- RAZPREG_TA	UI_ACCOUNT 
-				,	[ZAPOR_SUM]				= ''	-- RAZPREG_TA	ZAPOR_SUM	Сума на запор по сметката (за целите на плащания по запор)
+				,	[ZAPOR_SUM]				= ''	-- RAZPREG_TA	ZAPOR_SUM	РЎСѓРјР° РЅР° Р·Р°РїРѕСЂ РїРѕ СЃРјРµС‚РєР°С‚Р° (Р·Р° С†РµР»РёС‚Рµ РЅР° РїР»Р°С‰Р°РЅРёСЏ РїРѕ Р·Р°РїРѕСЂ)
 				,	[IBAN]					= ''	-- RAZPREG_TA	IBAN	
-				,	[TAX_UNCOLLECTED_SUM]	= ''	-- RAZPREG_TA	TAX_UNCOLLECTED_SUM	Сума на неплатените такси. Ако няма да се записва 0.00
+				,	[TAX_UNCOLLECTED_SUM]	= ''	-- RAZPREG_TA	TAX_UNCOLLECTED_SUM	РЎСѓРјР° РЅР° РЅРµРїР»Р°С‚РµРЅРёС‚Рµ С‚Р°РєСЃРё. РђРєРѕ РЅСЏРјР° РґР° СЃРµ Р·Р°РїРёСЃРІР° 0.00
 			from dbo.[RAZPREG_TA] [D]
 			where [D].[ROW_ID] in ( @RAZPREG_TA_RowID, @RAZPREG_TA_BEN_RowID )
 		end
 
-		-- Актуализация данните на клиента
+		-- РђРєС‚СѓР°Р»РёР·Р°С†РёСЏ РґР°РЅРЅРёС‚Рµ РЅР° РєР»РёРµРЅС‚Р°
 		if @IsNotFirstCashPaymentWithAccumulatedTax = 0
 		begin		
 			update [D]
@@ -755,18 +755,18 @@ begin
 				,	[COMPANY_EFN]			= '0'		-- DT015_CUSTOMERS_ACTIONS_TA	COMPANY_EFN
 				,	[UI_CLIENT_CODE]		= '0'		-- DT015_CUSTOMERS_ACTIONS_TA	UI_CLIENT_CODE
 				,	[UI_NOTES_EXIST]		= 0			-- DT015_CUSTOMERS_ACTIONS_TA	UI_NOTES_EXIST
-				,	[IS_ZAPOR]				= 0			-- DT015_CUSTOMERS_ACTIONS_TA	IS_ZAPOR (дали има съдебен запор някоя от сделките на клиента) 	Да се разработи обслужване в тестовете
+				,	[IS_ZAPOR]				= 0			-- DT015_CUSTOMERS_ACTIONS_TA	IS_ZAPOR (РґР°Р»Рё РёРјР° СЃСЉРґРµР±РµРЅ Р·Р°РїРѕСЂ РЅСЏРєРѕСЏ РѕС‚ СЃРґРµР»РєРёС‚Рµ РЅР° РєР»РёРµРЅС‚Р°) 	Р”Р° СЃРµ СЂР°Р·СЂР°Р±РѕС‚Рё РѕР±СЃР»СѓР¶РІР°РЅРµ РІ С‚РµСЃС‚РѕРІРµС‚Рµ
 				,	[ID_TYPE]				= 0
-				,	[ID_NUMBER]				= '0'		-- DT015_CUSTOMERS_ACTIONS_TA	ID_NUMBER номер на лична карта
-				,	[SERVICE_GROUP_EGFN]	= '0'		-- DT015_CUSTOMERS_ACTIONS_TA	SERVICE_GROUP_EGFN	EGFN, което се попълва в допълнителния диалог за търсене според IS_SERVICE
-				,	[IS_ACTUAL]				= 0			-- DT015_CUSTOMERS_ACTIONS_TA	IS_ACTUAL (1; 0)	Да се разработи обслужване в тестовете на клиенти с неактуални данни при 1
-				,	[PROXY_COUNT]			= 0			-- DT015_CUSTOMERS_ACTIONS_TA	PROXY_COUNT	Брой активни пълномощници
+				,	[ID_NUMBER]				= '0'		-- DT015_CUSTOMERS_ACTIONS_TA	ID_NUMBER РЅРѕРјРµСЂ РЅР° Р»РёС‡РЅР° РєР°СЂС‚Р°
+				,	[SERVICE_GROUP_EGFN]	= '0'		-- DT015_CUSTOMERS_ACTIONS_TA	SERVICE_GROUP_EGFN	EGFN, РєРѕРµС‚Рѕ СЃРµ РїРѕРїСЉР»РІР° РІ РґРѕРїСЉР»РЅРёС‚РµР»РЅРёСЏ РґРёР°Р»РѕРі Р·Р° С‚СЉСЂСЃРµРЅРµ СЃРїРѕСЂРµРґ IS_SERVICE
+				,	[IS_ACTUAL]				= 0			-- DT015_CUSTOMERS_ACTIONS_TA	IS_ACTUAL (1; 0)	Р”Р° СЃРµ СЂР°Р·СЂР°Р±РѕС‚Рё РѕР±СЃР»СѓР¶РІР°РЅРµ РІ С‚РµСЃС‚РѕРІРµС‚Рµ РЅР° РєР»РёРµРЅС‚Рё СЃ РЅРµР°РєС‚СѓР°Р»РЅРё РґР°РЅРЅРё РїСЂРё 1
+				,	[PROXY_COUNT]			= 0			-- DT015_CUSTOMERS_ACTIONS_TA	PROXY_COUNT	Р‘СЂРѕР№ Р°РєС‚РёРІРЅРё РїСЉР»РЅРѕРјРѕС‰РЅРёС†Рё
 			from dbo.[DT015_CUSTOMERS_ACTIONS_TA] [D]
 			where [D].[ROW_ID] = @DT015_CUSTOMERS_RowID
 		end
 
 
-		-- Зануляваме данните за бенефициена 
+		-- Р—Р°РЅСѓР»СЏРІР°РјРµ РґР°РЅРЅРёС‚Рµ Р·Р° Р±РµРЅРµС„РёС†РёРµРЅР° 
 		if IsNull(@CUSTOMER_BEN_ROW_ID,0) > 0 and @IsNotFirstCashPaymentWithAccumulatedTax = 0
 		begin		
 			update [D]
@@ -776,12 +776,12 @@ begin
 				,	[COMPANY_EFN]			= '0'		-- DT015_CUSTOMERS_ACTIONS_TA	COMPANY_EFN
 				,	[UI_CLIENT_CODE]		= '0'		-- DT015_CUSTOMERS_ACTIONS_TA	UI_CLIENT_CODE
 				,	[UI_NOTES_EXIST]		= 0			-- DT015_CUSTOMERS_ACTIONS_TA	UI_NOTES_EXIST
-				,	[IS_ZAPOR]				= 0			-- DT015_CUSTOMERS_ACTIONS_TA	IS_ZAPOR (дали има съдебен запор някоя от сделките на клиента) 	Да се разработи обслужване в тестовете
+				,	[IS_ZAPOR]				= 0			-- DT015_CUSTOMERS_ACTIONS_TA	IS_ZAPOR (РґР°Р»Рё РёРјР° СЃСЉРґРµР±РµРЅ Р·Р°РїРѕСЂ РЅСЏРєРѕСЏ РѕС‚ СЃРґРµР»РєРёС‚Рµ РЅР° РєР»РёРµРЅС‚Р°) 	Р”Р° СЃРµ СЂР°Р·СЂР°Р±РѕС‚Рё РѕР±СЃР»СѓР¶РІР°РЅРµ РІ С‚РµСЃС‚РѕРІРµС‚Рµ
 				,	[ID_TYPE]				= 0
-				,	[ID_NUMBER]				= '0'		-- DT015_CUSTOMERS_ACTIONS_TA	ID_NUMBER номер на лична карта
-				,	[SERVICE_GROUP_EGFN]	= '0'		-- DT015_CUSTOMERS_ACTIONS_TA	SERVICE_GROUP_EGFN	EGFN, което се попълва в допълнителния диалог за търсене според IS_SERVICE
-				,	[IS_ACTUAL]				= 0			-- DT015_CUSTOMERS_ACTIONS_TA	IS_ACTUAL (1; 0)	Да се разработи обслужване в тестовете на клиенти с неактуални данни при 1
-				,	[PROXY_COUNT]			= 0			-- DT015_CUSTOMERS_ACTIONS_TA	PROXY_COUNT	Брой активни пълномощници
+				,	[ID_NUMBER]				= '0'		-- DT015_CUSTOMERS_ACTIONS_TA	ID_NUMBER РЅРѕРјРµСЂ РЅР° Р»РёС‡РЅР° РєР°СЂС‚Р°
+				,	[SERVICE_GROUP_EGFN]	= '0'		-- DT015_CUSTOMERS_ACTIONS_TA	SERVICE_GROUP_EGFN	EGFN, РєРѕРµС‚Рѕ СЃРµ РїРѕРїСЉР»РІР° РІ РґРѕРїСЉР»РЅРёС‚РµР»РЅРёСЏ РґРёР°Р»РѕРі Р·Р° С‚СЉСЂСЃРµРЅРµ СЃРїРѕСЂРµРґ IS_SERVICE
+				,	[IS_ACTUAL]				= 0			-- DT015_CUSTOMERS_ACTIONS_TA	IS_ACTUAL (1; 0)	Р”Р° СЃРµ СЂР°Р·СЂР°Р±РѕС‚Рё РѕР±СЃР»СѓР¶РІР°РЅРµ РІ С‚РµСЃС‚РѕРІРµС‚Рµ РЅР° РєР»РёРµРЅС‚Рё СЃ РЅРµР°РєС‚СѓР°Р»РЅРё РґР°РЅРЅРё РїСЂРё 1
+				,	[PROXY_COUNT]			= 0			-- DT015_CUSTOMERS_ACTIONS_TA	PROXY_COUNT	Р‘СЂРѕР№ Р°РєС‚РёРІРЅРё РїСЉР»РЅРѕРјРѕС‰РЅРёС†Рё
 			from dbo.[DT015_CUSTOMERS_ACTIONS_TA] [D]
 			where [D].[ROW_ID] = @CUSTOMER_BEN_ROW_ID
 		end
@@ -807,7 +807,7 @@ end
 go
 
 /********************************************************************************************************/
-/* Процедура за определяне на критериите който ни пречат да намерим подходяща сделка за датен TestCase */
+/* РџСЂРѕС†РµРґСѓСЂР° Р·Р° РѕРїСЂРµРґРµР»СЏРЅРµ РЅР° РєСЂРёС‚РµСЂРёРёС‚Рµ РєРѕР№С‚Рѕ РЅРё РїСЂРµС‡Р°С‚ РґР° РЅР°РјРµСЂРёРј РїРѕРґС…РѕРґСЏС‰Р° СЃРґРµР»РєР° Р·Р° РґР°С‚РµРЅ TestCase */
 DROP PROCEDURE IF EXISTS dbo.[SP_CASH_PAYMENTS_FIND_SUITABLE_DEAL]
 GO
 
@@ -915,7 +915,7 @@ go
 
 
 /********************************************************************************************************/
-/* Процедура за първоначална инициализация */
+/* РџСЂРѕС†РµРґСѓСЂР° Р·Р° РїСЉСЂРІРѕРЅР°С‡Р°Р»РЅР° РёРЅРёС†РёР°Р»РёР·Р°С†РёСЏ */
 DROP PROCEDURE IF EXISTS dbo.[SP_CASH_PAYMENTS_INIT_DEALS]
 GO
 
@@ -1466,7 +1466,7 @@ begin
 
 	select @Sql1 = N';
 	declare @DealType 	int = 1
-		,	@StsPART_IsSleepy int = dbo.SETBIT(cast(0 as binary(4)), 22, 1)	/* #define PART_IsSleepy (22) // Партидата е спяща(замразена) */
+		,	@StsPART_IsSleepy int = dbo.SETBIT(cast(0 as binary(4)), 22, 1)	/* #define PART_IsSleepy (22) // РџР°СЂС‚РёРґР°С‚Р° Рµ СЃРїСЏС‰Р°(Р·Р°РјСЂР°Р·РµРЅР°) */
 	;
 
 	insert into dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_DORMUNT_ACCOUNT] 
@@ -1519,10 +1519,10 @@ begin
 	inner join '+@SqlFullDBName+'.dbo.[CUSTOMERS_RIGHTS_AND_LIMITS] [CRL] with(nolock) 
 		on  [CRL].[DEAL_TYPE]	= @DealType 
 		AND	[CRL].[DEAL_NUM]	= [D].[DEAL_NUM] 
-		AND	[CRL].[CHANNEL]		= 1									/* NM455 (Chanels) : 1 Основна банкова система, ... */
-		AND	[CRL].[CUSTOMER_ROLE_TYPE] in ( 1 )						/* NM622 (client roles): 1 - Титуляр, 2- Пълномощник; 3 - Законен представител ... */
-		AND	[CRL].[CUSTOMER_ACCESS_RIGHT] = 1 						/* NM620 (Type Rights): 1 - Вноска, 2 - Теглене, ... */
-	where ( [CRL].[STATUS] & @StsDeActivated ) <> @StsDeActivated	/* STS_LIMIT_DEACTIVATED 12 (Деактивиран) */
+		AND	[CRL].[CHANNEL]		= 1									/* NM455 (Chanels) : 1 РћСЃРЅРѕРІРЅР° Р±Р°РЅРєРѕРІР° СЃРёСЃС‚РµРјР°, ... */
+		AND	[CRL].[CUSTOMER_ROLE_TYPE] in ( 1 )						/* NM622 (client roles): 1 - РўРёС‚СѓР»СЏСЂ, 2- РџСЉР»РЅРѕРјРѕС‰РЅРёРє; 3 - Р—Р°РєРѕРЅРµРЅ РїСЂРµРґСЃС‚Р°РІРёС‚РµР» ... */
+		AND	[CRL].[CUSTOMER_ACCESS_RIGHT] = 1 						/* NM620 (Type Rights): 1 - Р’РЅРѕСЃРєР°, 2 - РўРµРіР»РµРЅРµ, ... */
+	where ( [CRL].[STATUS] & @StsDeActivated ) <> @StsDeActivated	/* STS_LIMIT_DEACTIVATED 12 (Р”РµР°РєС‚РёРІРёСЂР°РЅ) */
 	';
 
 	begin try
@@ -1560,9 +1560,9 @@ begin
 	inner join '+@SqlFullDBName+'.dbo.[CUSTOMERS_RIGHTS_AND_LIMITS] [CRL] with(nolock) 
 		on  [CRL].[DEAL_TYPE]	= @DealType 
 		AND	[CRL].[DEAL_NUM]	= [D].[DEAL_NUM] 
-		AND	[CRL].[CHANNEL]		= 1					/* NM455 (Chanels) : 1 Основна банкова система, ... */
-		AND	[CRL].[CUSTOMER_ROLE_TYPE] IN ( 2, 3 )	/* NM622 (client roles): 1 - Титуляр, 2- Пълномощник; 3 - Законен представител, ... */
-		AND	[CRL].[CUSTOMER_ACCESS_RIGHT] = 1		/* NM620 (Type Rights): 1 - Вноска, 2 - Теглене, ... */
+		AND	[CRL].[CHANNEL]		= 1					/* NM455 (Chanels) : 1 РћСЃРЅРѕРІРЅР° Р±Р°РЅРєРѕРІР° СЃРёСЃС‚РµРјР°, ... */
+		AND	[CRL].[CUSTOMER_ROLE_TYPE] IN ( 2, 3 )	/* NM622 (client roles): 1 - РўРёС‚СѓР»СЏСЂ, 2- РџСЉР»РЅРѕРјРѕС‰РЅРёРє; 3 - Р—Р°РєРѕРЅРµРЅ РїСЂРµРґСЃС‚Р°РІРёС‚РµР», ... */
+		AND	[CRL].[CUSTOMER_ACCESS_RIGHT] = 1		/* NM620 (Type Rights): 1 - Р’РЅРѕСЃРєР°, 2 - РўРµРіР»РµРЅРµ, ... */
 	where  ( [CRL].[STATUS] & @StsDeActivated ) <> @StsDeActivated 
 	and exists
 	(
@@ -1834,7 +1834,7 @@ begin
 		from '+@SqlFullDBName+'.dbo.[PROXY_SPEC] [PS] with(nolock)
 		WHERE	[PS].[REPRESENTATIVE_CUSTOMER_ID] = [C].[CUSTOMER_ID]
 			and [PS].[REPRESENTED_CUSTOMER_ID] <> [C].[CUSTOMER_ID]
-			and [PS].[CUSTOMER_ROLE_TYPE] IN ( 2, 3 )  /* NM622 (client roles): 1 - Титуляр, 2- Пълномощник; 3 - Законен представител, ... */
+			and [PS].[CUSTOMER_ROLE_TYPE] IN ( 2, 3 )  /* NM622 (client roles): 1 - РўРёС‚СѓР»СЏСЂ, 2- РџСЉР»РЅРѕРјРѕС‰РЅРёРє; 3 - Р—Р°РєРѕРЅРµРЅ РїСЂРµРґСЃС‚Р°РІРёС‚РµР», ... */
 	) '
 	;
 
@@ -1871,7 +1871,7 @@ begin
 		select *
 		from '+@SqlFullDBName+'.dbo.[DT015_IDENTITY_DOCUMENTS] [D] with(nolock)
 		WHERE	[D].[CUSTOMER_ID] = [C].[CUSTOMER_ID]
-			and [D].[NM405_DOCUMENT_TYPE] IN ( 1, 7, 8  )  /* 1 - Лична карта; 7 - Паспорт; 8 - Шофьорска книжка */
+			and [D].[NM405_DOCUMENT_TYPE] IN ( 1, 7, 8  )  /* 1 - Р›РёС‡РЅР° РєР°СЂС‚Р°; 7 - РџР°СЃРїРѕСЂС‚; 8 - РЁРѕС„СЊРѕСЂСЃРєР° РєРЅРёР¶РєР° */
 			and ( [D].[INDEFINITELY] = 1 OR [D].[EXPIRY_DATE] > @DateAcc )
 			and [D].[ISSUER_COUNTRY_CODE] > 0
 			and [D].[ISSUE_DATE] > ''1970-12-31''
@@ -2127,7 +2127,7 @@ begin
 	/* having count(*) > 1 */
 	;
 
-	/****** Object:  Index [IX_AGR_CASH_PAYMENTS_DEALS_DEAL_CURRENCY_CODE_DEAL_STD_DOG_CODE_CLIENT_SECTOR_DEAL_IS_JOINT_DEAL]    Script Date: 29.06.2022 г. 15:07:23 ******/
+	/****** Object:  Index [IX_AGR_CASH_PAYMENTS_DEALS_DEAL_CURRENCY_CODE_DEAL_STD_DOG_CODE_CLIENT_SECTOR_DEAL_IS_JOINT_DEAL]    Script Date: 29.06.2022 Рі. 15:07:23 ******/
 	CREATE NONCLUSTERED INDEX [IX_AGR_CASH_PAYMENTS_DEALS_DEAL_CURRENCY_CODE_DEAL_STD_DOG_CODE_CLIENT_SECTOR_DEAL_IS_JOINT_DEAL] 
 	ON [dbo].[AGR_CASH_PAYMENTS_DEALS]
 	(
@@ -2167,7 +2167,7 @@ go
 
 
 /********************************************************************************************************/
-/* Процедура за актуализация на дневните салда в TA базата, след обработка на тестови случай */
+/* РџСЂРѕС†РµРґСѓСЂР° Р·Р° Р°РєС‚СѓР°Р»РёР·Р°С†РёСЏ РЅР° РґРЅРµРІРЅРёС‚Рµ СЃР°Р»РґР° РІ TA Р±Р°Р·Р°С‚Р°, СЃР»РµРґ РѕР±СЂР°Р±РѕС‚РєР° РЅР° С‚РµСЃС‚РѕРІРё СЃР»СѓС‡Р°Р№ */
 DROP PROCEDURE IF EXISTS dbo.[SP_CASH_PAYMENTS_UPDATE_ACCOUNTS_DAY_OPERATION_BAL]
 GO
 
@@ -2308,7 +2308,7 @@ begin
 end    
 GO
 /********************************************************************************************************/
-/* Процедура за актуализация на дневните салда в TA базата, след обработка на тестови случай */
+/* РџСЂРѕС†РµРґСѓСЂР° Р·Р° Р°РєС‚СѓР°Р»РёР·Р°С†РёСЏ РЅР° РґРЅРµРІРЅРёС‚Рµ СЃР°Р»РґР° РІ TA Р±Р°Р·Р°С‚Р°, СЃР»РµРґ РѕР±СЂР°Р±РѕС‚РєР° РЅР° С‚РµСЃС‚РѕРІРё СЃР»СѓС‡Р°Р№ */
 DROP PROCEDURE IF EXISTS dbo.[SP_CASH_PAYMENTS_UPDATE_ACCOUNT_DAY_OPERATION_BALANCE]
 GO
 
@@ -2451,7 +2451,7 @@ begin
 end    
 GO
 /**********************************************************************************************************/
-/* Процедура за актуализация данните в на Таблица dbo.[DT015_CUSTOMERS_ACTIONS_TA] за титуляра и Proxy-то*/
+/* РџСЂРѕС†РµРґСѓСЂР° Р·Р° Р°РєС‚СѓР°Р»РёР·Р°С†РёСЏ РґР°РЅРЅРёС‚Рµ РІ РЅР° РўР°Р±Р»РёС†Р° dbo.[DT015_CUSTOMERS_ACTIONS_TA] Р·Р° С‚РёС‚СѓР»СЏСЂР° Рё Proxy-С‚Рѕ*/
 DROP PROCEDURE IF EXISTS dbo.[SP_CASH_PAYMENTS_UPDATE_CLIENT_DATA]
 GO
 
@@ -2527,8 +2527,8 @@ begin
 	end
 
 	/************************************************************************************************************/
-	-- Актуализация на данните за титуляря и Proxy-то...
-	-- Първо актуализираме данните на Proxy-то	
+	-- РђРєС‚СѓР°Р»РёР·Р°С†РёСЏ РЅР° РґР°РЅРЅРёС‚Рµ Р·Р° С‚РёС‚СѓР»СЏСЂСЏ Рё Proxy-С‚Рѕ...
+	-- РџСЉСЂРІРѕ Р°РєС‚СѓР°Р»РёР·РёСЂР°РјРµ РґР°РЅРЅРёС‚Рµ РЅР° Proxy-С‚Рѕ	
 	if IsNull(@ProxyCustomer_ID,0) > 0 and IsNull(@CUST_PROXY_ROW_ID,0) > 0
 	begin
 		begin try 
@@ -2559,7 +2559,7 @@ begin
 		end catch
 	end
 
-	-- Aктуализираме данните на Титуляра
+	-- AРєС‚СѓР°Р»РёР·РёСЂР°РјРµ РґР°РЅРЅРёС‚Рµ РЅР° РўРёС‚СѓР»СЏСЂР°
 	begin try 
 		select @Sql2 = N'dbo.[SP_CASH_PAYMENTS_UPDATE_DT015_CUSTOMERS_ACTIONS_TA] @OnlineSqlServerName = '+@OnlineSqlServerName
 					+', @OnlineSqlDataBaseName = '+@OnlineSqlDataBaseName
@@ -2585,7 +2585,7 @@ begin
 			return 4;
 	end catch
 
-	-- Aктуализираме данните на Бенефициента
+	-- AРєС‚СѓР°Р»РёР·РёСЂР°РјРµ РґР°РЅРЅРёС‚Рµ РЅР° Р‘РµРЅРµС„РёС†РёРµРЅС‚Р°
 	if IsNull(@Ben_Customer_ID,0) > 0 and IsNull(@CUST_BEN_ROW_ID,0) > 0
 	begin
 		begin try 
@@ -2631,7 +2631,7 @@ end
 go
 
 /********************************************************************************************************/
-/* Процедура за актуализация на Таблица dbo.[DEALS_CORR_TA] */
+/* РџСЂРѕС†РµРґСѓСЂР° Р·Р° Р°РєС‚СѓР°Р»РёР·Р°С†РёСЏ РЅР° РўР°Р±Р»РёС†Р° dbo.[DEALS_CORR_TA] */
 DROP PROCEDURE IF EXISTS dbo.[SP_CASH_PAYMENTS_UPDATE_DEALS_CORS_TA]
 GO
 
@@ -2790,10 +2790,10 @@ begin
 	if @WithUpdate = 1
 	begin
 		UPDATE [D]
-		SET [DEAL_NUM]				= [S].[CORR_DEAL_NUM]		-- DEALS_CORR_TA	DEAL_NUM	Номер на кореспондираща сделка
+		SET [DEAL_NUM]				= [S].[CORR_DEAL_NUM]		-- DEALS_CORR_TA	DEAL_NUM	РќРѕРјРµСЂ РЅР° РєРѕСЂРµСЃРїРѕРЅРґРёСЂР°С‰Р° СЃРґРµР»РєР°
 		,	[CURRENCY]				= [S].[CORR_ACCOUNT_CCY]	-- DEALS_CORR_TA	CURRENCY	
-		,	[UI_CORR_ACCOUNT]		= [S].[CORR_ACCOUNT]		-- DEALS_CORR_TA	UI_CORR_ACCOUNT	Партида на кореспондиращата сделка
-		,	[TAX_UNCOLLECTED_SUM]	= [S].[TAX_UNCOLLECTED]		-- DEALS_CORR_TA	TAX_UNCOLLECTED_SUM	 /* @TODO: Трябва да я изчислим !!!... */ 
+		,	[UI_CORR_ACCOUNT]		= [S].[CORR_ACCOUNT]		-- DEALS_CORR_TA	UI_CORR_ACCOUNT	РџР°СЂС‚РёРґР° РЅР° РєРѕСЂРµСЃРїРѕРЅРґРёСЂР°С‰Р°С‚Р° СЃРґРµР»РєР°
+		,	[TAX_UNCOLLECTED_SUM]	= [S].[TAX_UNCOLLECTED]		-- DEALS_CORR_TA	TAX_UNCOLLECTED_SUM	 /* @TODO: РўСЂСЏР±РІР° РґР° СЏ РёР·С‡РёСЃР»РёРј !!!... */ 
 
 		from dbo.[DEALS_CORR_TA] [D]
 		inner join dbo.[#TBL_ONLINE_DEALS_CORR_INFO] [S] with(nolock)
@@ -2827,7 +2827,7 @@ end
 GO
 
 /********************************************************************************************************/
-/* Процедура за актуализация на Таблица dbo.[DT015_CUSTOMERS_ACTIONS_TA] */
+/* РџСЂРѕС†РµРґСѓСЂР° Р·Р° Р°РєС‚СѓР°Р»РёР·Р°С†РёСЏ РЅР° РўР°Р±Р»РёС†Р° dbo.[DT015_CUSTOMERS_ACTIONS_TA] */
 DROP PROCEDURE IF EXISTS dbo.[SP_CASH_PAYMENTS_UPDATE_DT015_CUSTOMERS_ACTIONS_TA]
 GO
 
@@ -2910,16 +2910,16 @@ begin
 	if @LogResultTable = 1 select * from dbo.[#TBL_ONLINE_DT015_INFO] with(nolock)
 	;
 
-	/* Тези данни ще ги заредим от вече 'кешираниет'  */
+	/* РўРµР·Рё РґР°РЅРЅРё С‰Рµ РіРё Р·Р°СЂРµРґРёРј РѕС‚ РІРµС‡Рµ 'РєРµС€РёСЂР°РЅРёРµС‚'  */
 	declare @IS_ZAPOR int = 0,	@SERVICE_GROUP_EGFN varchar(16) = N''
 	;
-	/* Дали клиента има запори по някоя от сделките: */
+	/* Р”Р°Р»Рё РєР»РёРµРЅС‚Р° РёРјР° Р·Р°РїРѕСЂРё РїРѕ РЅСЏРєРѕСЏ РѕС‚ СЃРґРµР»РєРёС‚Рµ: */
 	select top(1) @IS_ZAPOR = 1 
 	from dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_DISTRAINT] [D] with(nolock)
 	where [D].[CUSTOMER_ID] = @OnlineDbCustomer_ID
 	;
 
-	/* За клиентите със служебни EGFN-та да заредим Оригиналното: */
+	/* Р—Р° РєР»РёРµРЅС‚РёС‚Рµ СЃСЉСЃ СЃР»СѓР¶РµР±РЅРё EGFN-С‚Р° РґР° Р·Р°СЂРµРґРёРј РћСЂРёРіРёРЅР°Р»РЅРѕС‚Рѕ: */
 	DECLARE @ClientIdentifier varchar(32) = N''
 		,	@HasDublClientIDs int = 0
 		,	@IsOrioginalID int = 0
@@ -2952,12 +2952,12 @@ begin
 			,	[COMPANY_EFN]			= [S].[COMPANY_EFN]				 -- DT015_CUSTOMERS_ACTIONS_TA	COMPANY_EFN
 			,	[UI_CLIENT_CODE]		= [S].[UI_CLIENT_CODE]			 -- DT015_CUSTOMERS_ACTIONS_TA	UI_CLIENT_CODE
 			,	[UI_NOTES_EXIST]		= IsNull([S].[UI_NOTES_EXIST],0) -- DT015_CUSTOMERS_ACTIONS_TA	UI_NOTES_EXIST
-			,	[IS_ZAPOR]				= @IS_ZAPOR						 -- DT015_CUSTOMERS_ACTIONS_TA	IS_ZAPOR (дали има съдебен запор някоя от сделките на клиента) 	Да се разработи обслужване в тестовете
-			,	[ID_TYPE]				= [S].[ID_DOCUMENT_TYPE]		-- DT015_CUSTOMERS_ACTIONS_TA  ID_TYPE типа на документа за самоличност 
-			,	[ID_NUMBER]				= IsNull([S].[ID_NUMBER], '')	 -- DT015_CUSTOMERS_ACTIONS_TA	ID_NUMBER номер на лична карта
-			,	[SERVICE_GROUP_EGFN]	= @SERVICE_GROUP_EGFN			 -- DT015_CUSTOMERS_ACTIONS_TA	SERVICE_GROUP_EGFN	EGFN, което се попълва в допълнителния диалог за търсене според IS_SERVICE
-			,	[IS_ACTUAL]				= [S].[IS_ACTUAL]				 -- DT015_CUSTOMERS_ACTIONS_TA	IS_ACTUAL (1; 0)	Да се разработи обслужване в тестовете на клиенти с неактуални данни при 1
-			,	[PROXY_COUNT]			= IsNull([S].[PROXY_COUNT],0)	 -- DT015_CUSTOMERS_ACTIONS_TA	PROXY_COUNT	Брой активни пълномощници
+			,	[IS_ZAPOR]				= @IS_ZAPOR						 -- DT015_CUSTOMERS_ACTIONS_TA	IS_ZAPOR (РґР°Р»Рё РёРјР° СЃСЉРґРµР±РµРЅ Р·Р°РїРѕСЂ РЅСЏРєРѕСЏ РѕС‚ СЃРґРµР»РєРёС‚Рµ РЅР° РєР»РёРµРЅС‚Р°) 	Р”Р° СЃРµ СЂР°Р·СЂР°Р±РѕС‚Рё РѕР±СЃР»СѓР¶РІР°РЅРµ РІ С‚РµСЃС‚РѕРІРµС‚Рµ
+			,	[ID_TYPE]				= [S].[ID_DOCUMENT_TYPE]		-- DT015_CUSTOMERS_ACTIONS_TA  ID_TYPE С‚РёРїР° РЅР° РґРѕРєСѓРјРµРЅС‚Р° Р·Р° СЃР°РјРѕР»РёС‡РЅРѕСЃС‚ 
+			,	[ID_NUMBER]				= IsNull([S].[ID_NUMBER], '')	 -- DT015_CUSTOMERS_ACTIONS_TA	ID_NUMBER РЅРѕРјРµСЂ РЅР° Р»РёС‡РЅР° РєР°СЂС‚Р°
+			,	[SERVICE_GROUP_EGFN]	= @SERVICE_GROUP_EGFN			 -- DT015_CUSTOMERS_ACTIONS_TA	SERVICE_GROUP_EGFN	EGFN, РєРѕРµС‚Рѕ СЃРµ РїРѕРїСЉР»РІР° РІ РґРѕРїСЉР»РЅРёС‚РµР»РЅРёСЏ РґРёР°Р»РѕРі Р·Р° С‚СЉСЂСЃРµРЅРµ СЃРїРѕСЂРµРґ IS_SERVICE
+			,	[IS_ACTUAL]				= [S].[IS_ACTUAL]				 -- DT015_CUSTOMERS_ACTIONS_TA	IS_ACTUAL (1; 0)	Р”Р° СЃРµ СЂР°Р·СЂР°Р±РѕС‚Рё РѕР±СЃР»СѓР¶РІР°РЅРµ РІ С‚РµСЃС‚РѕРІРµС‚Рµ РЅР° РєР»РёРµРЅС‚Рё СЃ РЅРµР°РєС‚СѓР°Р»РЅРё РґР°РЅРЅРё РїСЂРё 1
+			,	[PROXY_COUNT]			= IsNull([S].[PROXY_COUNT],0)	 -- DT015_CUSTOMERS_ACTIONS_TA	PROXY_COUNT	Р‘СЂРѕР№ Р°РєС‚РёРІРЅРё РїСЉР»РЅРѕРјРѕС‰РЅРёС†Рё
 		from dbo.[DT015_CUSTOMERS_ACTIONS_TA] [D]
 		inner join dbo.[#TBL_ONLINE_DT015_INFO] [S] with(nolock)
 			on [S].[CUSTOMR_ID] = @OnlineDbCustomer_ID
@@ -2988,7 +2988,7 @@ end
 go
 
 /********************************************************************************************************/
-/* Процедура за актуализация на Таблица dbo.[SP_CASH_PAYMENTS_UPDATE_RAZREG_TA] */
+/* РџСЂРѕС†РµРґСѓСЂР° Р·Р° Р°РєС‚СѓР°Р»РёР·Р°С†РёСЏ РЅР° РўР°Р±Р»РёС†Р° dbo.[SP_CASH_PAYMENTS_UPDATE_RAZREG_TA] */
 DROP PROCEDURE IF EXISTS dbo.[SP_CASH_PAYMENTS_UPDATE_RAZREG_TA]
 GO
 
@@ -3143,9 +3143,9 @@ begin
 		SET		[UI_DEAL_NUM]			= [S].[DEAL_NUM]				-- RAZPREG_TA	UI_DEAL_NUM	
 			,	[DB_ACCOUNT]			= [S].[ACCOUNT]					-- RAZPREG_TA	DB_ACCOUNT	
 			,	[UI_ACCOUNT]			= [xa].[ACC_WITH_SPACE]			/* TODO: new function + date in TA TABLE */ -- RAZPREG_TA	UI_ACCOUNT 
-			,	[ZAPOR_SUM]				= STR([S].[DISTRAINT_SUM],14,2)	-- RAZPREG_TA	ZAPOR_SUM	Сума на запор по сметката (за целите на плащания по запор)
+			,	[ZAPOR_SUM]				= STR([S].[DISTRAINT_SUM],14,2)	-- RAZPREG_TA	ZAPOR_SUM	РЎСѓРјР° РЅР° Р·Р°РїРѕСЂ РїРѕ СЃРјРµС‚РєР°С‚Р° (Р·Р° С†РµР»РёС‚Рµ РЅР° РїР»Р°С‰Р°РЅРёСЏ РїРѕ Р·Р°РїРѕСЂ)
 			,	[IBAN]					= [S].[IBAN]					-- RAZPREG_TA	IBAN	
-			,	[TAX_UNCOLLECTED_SUM]	= [S].[TAX_UNCOLLECTED]			-- RAZPREG_TA	TAX_UNCOLLECTED_SUM	Сума на неплатените такси. Ако няма да се записва 0.00
+			,	[TAX_UNCOLLECTED_SUM]	= [S].[TAX_UNCOLLECTED]			-- RAZPREG_TA	TAX_UNCOLLECTED_SUM	РЎСѓРјР° РЅР° РЅРµРїР»Р°С‚РµРЅРёС‚Рµ С‚Р°РєСЃРё. РђРєРѕ РЅСЏРјР° РґР° СЃРµ Р·Р°РїРёСЃРІР° 0.00
 		FROM dbo.[RAZPREG_TA] [D]
 		INNER JOIN  dbo.[#TBL_ONLINE_DEAL_INFO] [S] WITH(NOLOCK)
 			ON [S].[DEAL_NUM] = @DEAL_NUM
@@ -3184,8 +3184,8 @@ end
 GO
 
 /********************************************************************************************************/
-/* Процедура за актуализация на Таблиците по ID на тестови case */
-/* 2022/06/98 - v2.6.3 -> актуализация на TA таблиците за навързаните документи се извършва само за първия тестови случай */
+/* РџСЂРѕС†РµРґСѓСЂР° Р·Р° Р°РєС‚СѓР°Р»РёР·Р°С†РёСЏ РЅР° РўР°Р±Р»РёС†РёС‚Рµ РїРѕ ID РЅР° С‚РµСЃС‚РѕРІРё case */
+/* 2022/06/98 - v2.6.3 -> Р°РєС‚СѓР°Р»РёР·Р°С†РёСЏ РЅР° TA С‚Р°Р±Р»РёС†РёС‚Рµ Р·Р° РЅР°РІСЉСЂР·Р°РЅРёС‚Рµ РґРѕРєСѓРјРµРЅС‚Рё СЃРµ РёР·РІСЉСЂС€РІР° СЃР°РјРѕ Р·Р° РїСЉСЂРІРёСЏ С‚РµСЃС‚РѕРІРё СЃР»СѓС‡Р°Р№ */
 DROP PROCEDURE IF EXISTS dbo.[SP_CASH_PAYMENTS_UPDATE_TA_TABLES]
 GO
 
@@ -3458,8 +3458,8 @@ end
 go
 
 /********************************************************************************************************/
-/* Процедура формираща SQL заявката за търсене на подходяща сделка по ID на тестови случай */
-/* 2022/06/98 - v2.6.3 -> търсена на подходящи сделките за навързаните документи се извършва само за първия тестови случай */
+/* РџСЂРѕС†РµРґСѓСЂР° С„РѕСЂРјРёСЂР°С‰Р° SQL Р·Р°СЏРІРєР°С‚Р° Р·Р° С‚СЉСЂСЃРµРЅРµ РЅР° РїРѕРґС…РѕРґСЏС‰Р° СЃРґРµР»РєР° РїРѕ ID РЅР° С‚РµСЃС‚РѕРІРё СЃР»СѓС‡Р°Р№ */
+/* 2022/06/98 - v2.6.3 -> С‚СЉСЂСЃРµРЅР° РЅР° РїРѕРґС…РѕРґСЏС‰Рё СЃРґРµР»РєРёС‚Рµ Р·Р° РЅР°РІСЉСЂР·Р°РЅРёС‚Рµ РґРѕРєСѓРјРµРЅС‚Рё СЃРµ РёР·РІСЉСЂС€РІР° СЃР°РјРѕ Р·Р° РїСЉСЂРІРёСЏ С‚РµСЃС‚РѕРІРё СЃР»СѓС‡Р°Р№ */
 DROP PROCEDURE IF EXISTS dbo.[SP_CASH_PAYMENTS_UPDATE_TA_TABLES_PREPARE_CONDITIONS]
 GO
 
@@ -3665,13 +3665,13 @@ begin
 	-- Access Deal throwght with proxy customer
 	if @UI_RAZPOREDITEL IS NOT NULL
 	begin
-		/* NM622 (client roles): 1 - Титуляр, 2- Пълномощник; 3 - Законен представител, ... */
+		/* NM622 (client roles): 1 - РўРёС‚СѓР»СЏСЂ, 2- РџСЉР»РЅРѕРјРѕС‰РЅРёРє; 3 - Р—Р°РєРѕРЅРµРЅ РїСЂРµРґСЃС‚Р°РІРёС‚РµР», ... */
 		declare @CUSTOMER_ROLE_TYPE varchar(32) = N''
 		;
-		-- 0 - Пълномощник; 1 - Законен представител
+		-- 0 - РџСЉР»РЅРѕРјРѕС‰РЅРёРє; 1 - Р—Р°РєРѕРЅРµРЅ РїСЂРµРґСЃС‚Р°РІРёС‚РµР»
 		select @CUSTOMER_ROLE_TYPE = case IsNull(@UI_RAZPOREDITEL,-1)	
-											when  0 then ' = 2'				/* 2 - Пълномощник*/
-											when  1 then ' = 3'				/* 3 - Законен представител */
+											when  0 then ' = 2'				/* 2 - РџСЉР»РЅРѕРјРѕС‰РЅРёРє*/
+											when  1 then ' = 3'				/* 3 - Р—Р°РєРѕРЅРµРЅ РїСЂРµРґСЃС‚Р°РІРёС‚РµР» */
 											when -1 then ' in (2,3) ' end;	/* 2 & 3 */
 		select @Sql2 = N'
 		inner join dbo.[AGR_CASH_PAYMENTS_DEALS_ACTIVE_PROXY_CUSTOMERS] [PROXY_ID] with(nolock)
@@ -3682,7 +3682,7 @@ begin
 			on	[PROXY].[CUSTOMER_ID] = [PROXY_ID].[REPRESENTATIVE_CUSTOMER_ID]
 		';
 
-		-- [DT015_CUSTOMERS_ACTIONS_TA].[UI_RAZPOREDITEL] -- 0 - Пълномощник; 1 - Законен представител
+		-- [DT015_CUSTOMERS_ACTIONS_TA].[UI_RAZPOREDITEL] -- 0 - РџСЉР»РЅРѕРјРѕС‰РЅРёРє; 1 - Р—Р°РєРѕРЅРµРЅ РїСЂРµРґСЃС‚Р°РІРёС‚РµР»
 		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 		select	(@Sql2 + @CrLf), N'@UI_RAZPOREDITEL: '+STR(@UI_RAZPOREDITEL,len(@UI_RAZPOREDITEL),0)+' '
 		select @Sql += @Sql2;
@@ -3753,7 +3753,7 @@ begin
 	select	(@Sql2 + @CrLf), ' BASE @DB_CLIENT_TYPE_DT300 : ' + @Sql2
 	select @Sql += @Sql2
 
-	-- enum CustomerSubtypes: (-1) - Без значение; 1 - (над 18г.); 2 - (от 14г. до 18г.); 3 - (до 14г.)
+	-- enum CustomerSubtypes: (-1) - Р‘РµР· Р·РЅР°С‡РµРЅРёРµ; 1 - (РЅР°Рґ 18Рі.); 2 - (РѕС‚ 14Рі. РґРѕ 18Рі.); 3 - (РґРѕ 14Рі.)
 	if  IsNull(@CUSTOMER_AGE, '-1') <> '-1'
 	Begin 
 		select	@Sql2 = N'AND [PROXY].[CLIENT_BIRTH_DATE] BETWEEN '
@@ -3769,7 +3769,7 @@ begin
 	end
 
 	/*****************************************************/
-	-- 0 - не е обединяван (клиент с един кл. код); 3 - обединен, без значение дали е бил главен или подчинен (кл.с повече от един кл.код); -1 - без значение
+	-- 0 - РЅРµ Рµ РѕР±РµРґРёРЅСЏРІР°РЅ (РєР»РёРµРЅС‚ СЃ РµРґРёРЅ РєР». РєРѕРґ); 3 - РѕР±РµРґРёРЅРµРЅ, Р±РµР· Р·РЅР°С‡РµРЅРёРµ РґР°Р»Рё Рµ Р±РёР» РіР»Р°РІРµРЅ РёР»Рё РїРѕРґС‡РёРЅРµРЅ (РєР».СЃ РїРѕРІРµС‡Рµ РѕС‚ РµРґРёРЅ РєР».РєРѕРґ); -1 - Р±РµР· Р·РЅР°С‡РµРЅРёРµ
 	if @UNIFIED <> -1
 	begin 
 		select @Sql2 = ' AND [CUST].[HAS_MANY_CLIENT_CODES] = ' + case when @UNIFIED = 0 THEN '0' ELSE '1' END + @CrLf;
@@ -3780,7 +3780,7 @@ begin
 		select @Sql += @Sql2
 	end
 
-	-- 0 - Не е служебен или свързан със служебен; 1 - Реално ЕГН, има такива служебни; 2 - служебни ЕГН
+	-- 0 - РќРµ Рµ СЃР»СѓР¶РµР±РµРЅ РёР»Рё СЃРІСЉСЂР·Р°РЅ СЃСЉСЃ СЃР»СѓР¶РµР±РµРЅ; 1 - Р РµР°Р»РЅРѕ Р•Р“Рќ, РёРјР° С‚Р°РєРёРІР° СЃР»СѓР¶РµР±РЅРё; 2 - СЃР»СѓР¶РµР±РЅРё Р•Р“Рќ
 	if @IS_SERVICE <> -1
 	begin 
 		select @Sql2 = ' AND [CUST].[HAS_DUBL_CLIENT_IDS] = ' + case when @IS_SERVICE = 0 then '0' else '1' end + @CrLf;
@@ -3814,7 +3814,7 @@ begin
 		select @Sql += @Sql2
 	end 
 
-	-- 1 - валидни документи
+	-- 1 - РІР°Р»РёРґРЅРё РґРѕРєСѓРјРµРЅС‚Рё
 	if IsNull(@VALID_ID,-1) = 1
 	begin
 		select @Sql2 = ' AND [PROXY].[HAS_VALID_DOCUMENT] = 1' + @CrLf;
@@ -3827,12 +3827,12 @@ begin
 	end 
 
 	-- @TODO: @IS_PROXY: 
-	-- Ако клиента е маркиран като пълномощник, то той няма да се търси като самостоятелен 
-	-- клиент, а данните му ще се актуализират при актуализация на данните за титуляра.
+	-- РђРєРѕ РєР»РёРµРЅС‚Р° Рµ РјР°СЂРєРёСЂР°РЅ РєР°С‚Рѕ РїСЉР»РЅРѕРјРѕС‰РЅРёРє, С‚Рѕ С‚РѕР№ РЅСЏРјР° РґР° СЃРµ С‚СЉСЂСЃРё РєР°С‚Рѕ СЃР°РјРѕСЃС‚РѕСЏС‚РµР»РµРЅ 
+	-- РєР»РёРµРЅС‚, Р° РґР°РЅРЅРёС‚Рµ РјСѓ С‰Рµ СЃРµ Р°РєС‚СѓР°Р»РёР·РёСЂР°С‚ РїСЂРё Р°РєС‚СѓР°Р»РёР·Р°С†РёСЏ РЅР° РґР°РЅРЅРёС‚Рµ Р·Р° С‚РёС‚СѓР»СЏСЂР°.
 	--if IsNull(@IS_PROXY, -1) <> -1
 	--	select @Sql += ' AND [CUST].[CUSTOMER_CHARACTERISTIC] = ' + str(@CUSTOMER_CHARACTERISTIC, len(@CUSTOMER_CHARACTERISTIC), 0);
 
-	-- Указва дали клиента да е уникален за таблица dbo.[DT015_CUSTOMERS_ACTIONS_TA]
+	-- РЈРєР°Р·РІР° РґР°Р»Рё РєР»РёРµРЅС‚Р° РґР° Рµ СѓРЅРёРєР°Р»РµРЅ Р·Р° С‚Р°Р±Р»РёС†Р° dbo.[DT015_CUSTOMERS_ACTIONS_TA]
 	if IsNull(@IS_UNIQUE_CUSTOMER, -1) = 1
 	begin 
 		select @Sql2 = ' AND NOT EXISTS 
@@ -3851,8 +3851,8 @@ begin
 	;
 
 	-- @HAVE_CREDIT:
-	-- Дали клиента има активен кредит: ;Без допълнителни сметки - ;Всички разплащателни и влогове - 
-	-- ;Всички разплащателни - несвързани към друг кредит - ; Всички разплащателни, влогове и депозитни сметки -
+	-- Р”Р°Р»Рё РєР»РёРµРЅС‚Р° РёРјР° Р°РєС‚РёРІРµРЅ РєСЂРµРґРёС‚: ;Р‘РµР· РґРѕРїСЉР»РЅРёС‚РµР»РЅРё СЃРјРµС‚РєРё - ;Р’СЃРёС‡РєРё СЂР°Р·РїР»Р°С‰Р°С‚РµР»РЅРё Рё РІР»РѕРіРѕРІРµ - 
+	-- ;Р’СЃРёС‡РєРё СЂР°Р·РїР»Р°С‰Р°С‚РµР»РЅРё - РЅРµСЃРІСЉСЂР·Р°РЅРё РєСЉРј РґСЂСѓРі РєСЂРµРґРёС‚ - ; Р’СЃРёС‡РєРё СЂР°Р·РїР»Р°С‰Р°С‚РµР»РЅРё, РІР»РѕРіРѕРІРµ Рё РґРµРїРѕР·РёС‚РЅРё СЃРјРµС‚РєРё -
 	if IsNull(@HAVE_CREDIT, -1) in ( 0, 1 )
 	begin
 		select @Sql2 = ' AND [CUST].[HAS_LOAN] = '+STR(@HAVE_CREDIT,LEN(@HAVE_CREDIT),0) + @CrLf;
@@ -3863,7 +3863,7 @@ begin
 		select @Sql += @Sql2
 	end
 
-	-- [COLLECT_TAX_FROM_ALL_ACC] : Клиента има ли непратени такси, който могат да се събират от всички сметки на клиента
+	-- [COLLECT_TAX_FROM_ALL_ACC] : РљР»РёРµРЅС‚Р° РёРјР° Р»Рё РЅРµРїСЂР°С‚РµРЅРё С‚Р°РєСЃРё, РєРѕР№С‚Рѕ РјРѕРіР°С‚ РґР° СЃРµ СЃСЉР±РёСЂР°С‚ РѕС‚ РІСЃРёС‡РєРё СЃРјРµС‚РєРё РЅР° РєР»РёРµРЅС‚Р°
 	if IsNull(@COLLECT_TAX_FROM_ALL_ACC,-1) in (0,1)
 	begin
 		select @StrIntVal = STR(@COLLECT_TAX_FROM_ALL_ACC,LEN(@COLLECT_TAX_FROM_ALL_ACC),0);
@@ -3875,7 +3875,7 @@ begin
 		select @Sql += @Sql2
 	end
 
-	-- 0 - Пълномощник; 1 - Законен представител
+	-- 0 - РџСЉР»РЅРѕРјРѕС‰РЅРёРє; 1 - Р—Р°РєРѕРЅРµРЅ РїСЂРµРґСЃС‚Р°РІРёС‚РµР»
 	if IsNull(@UI_RAZPOREDITEL,-1) <> -1
 	begin 
 		if @UI_RAZPOREDITEL = 0
@@ -3890,12 +3890,12 @@ begin
 		end
 	end
 
-	-- 1 - безсрочен; 0 - с крайна дата
+	-- 1 - Р±РµР·СЃСЂРѕС‡РµРЅ; 0 - СЃ РєСЂР°Р№РЅР° РґР°С‚Р°
 	-- @TODO: @UI_UNLIMITED:
 	--If IsNull(@UI_UNLIMITED, -1) <> -1
 	--	select @Sql += ' ''
 
-	-- Код на стандартен договор
+	-- РљРѕРґ РЅР° СЃС‚Р°РЅРґР°СЂС‚РµРЅ РґРѕРіРѕРІРѕСЂ
 	if IsNull(@UI_STD_DOG_CODE,-1) > 0 and IsNull(@UI_INDIVIDUAL_DEAL,-1) NOT IN (1)
 	begin 
 		select @Sql2 = ' AND [DEAL].[DEAL_STD_DOG_CODE] = '+STR(@UI_STD_DOG_CODE, LEN(@UI_STD_DOG_CODE),0) + @CrLf;
@@ -3907,7 +3907,7 @@ begin
 		select @Sql += @Sql2
 	end 
 
-	--0 - стандартна сделка, 1 - индивидуална сделка
+	--0 - СЃС‚Р°РЅРґР°СЂС‚РЅР° СЃРґРµР»РєР°, 1 - РёРЅРґРёРІРёРґСѓР°Р»РЅР° СЃРґРµР»РєР°
 	if IsNull(@UI_INDIVIDUAL_DEAL,-1) = 1
 	begin 
 		select @Sql2 = ' AND [DEAL].[DEAL_IS_INDIVIDUAL_DEAL] = '+STR(@UI_INDIVIDUAL_DEAL, LEN(@UI_INDIVIDUAL_DEAL),0) + @CrLf;
@@ -3918,7 +3918,7 @@ begin
 
 		select @Sql += @Sql2
 
-		-- Код на стандартен договор по който е разкрита индивидуалната сделка
+		-- РљРѕРґ РЅР° СЃС‚Р°РЅРґР°СЂС‚РµРЅ РґРѕРіРѕРІРѕСЂ РїРѕ РєРѕР№С‚Рѕ Рµ СЂР°Р·РєСЂРёС‚Р° РёРЅРґРёРІРёРґСѓР°Р»РЅР°С‚Р° СЃРґРµР»РєР°
 		if IsNull(@INT_COND_STDCONTRACT,-1) >= 0
 		begin
 			select @Sql2 = ' AND [DEAL].[INT_COND_STDCONTRACT] = '+STR(@INT_COND_STDCONTRACT, LEN(@INT_COND_STDCONTRACT),0) + @CrLf;
@@ -3943,7 +3943,7 @@ begin
 
 	end 
 
-	-- 0 - не е комбиниран продукт, код > 0 - да принадлежи към този комбиниран продукт
+	-- 0 - РЅРµ Рµ РєРѕРјР±РёРЅРёСЂР°РЅ РїСЂРѕРґСѓРєС‚, РєРѕРґ > 0 - РґР° РїСЂРёРЅР°РґР»РµР¶Рё РєСЉРј С‚РѕР·Рё РєРѕРјР±РёРЅРёСЂР°РЅ РїСЂРѕРґСѓРєС‚
 	if IsNull(@CODE_UI_NM342, -1) > 0
 	begin 
 		select @Sql2 = ' AND [DEAL].[DEAL_NM342_BUNDLE_PRODUCT_CODE] = '+ STR(@CODE_UI_NM342,LEN(@CODE_UI_NM342),0) + @CrLf;
@@ -3955,7 +3955,7 @@ begin
 		select @Sql += @Sql2
 	end
 
-	-- 0 - сметката се таксува от себе си, 1 - има друга таксуваща сметка, 2 - без проверка дали има друга таксуваща сметка или се таксува от себе си
+	-- 0 - СЃРјРµС‚РєР°С‚Р° СЃРµ С‚Р°РєСЃСѓРІР° РѕС‚ СЃРµР±Рµ СЃРё, 1 - РёРјР° РґСЂСѓРіР° С‚Р°РєСЃСѓРІР°С‰Р° СЃРјРµС‚РєР°, 2 - Р±РµР· РїСЂРѕРІРµСЂРєР° РґР°Р»Рё РёРјР° РґСЂСѓРіР° С‚Р°РєСЃСѓРІР°С‰Р° СЃРјРµС‚РєР° РёР»Рё СЃРµ С‚Р°РєСЃСѓРІР° РѕС‚ СЃРµР±Рµ СЃРё
 	if IsNull(@UI_OTHER_ACCOUNT_FOR_TAX,-1) = 1
 	begin 
 		select @Sql2 = ' AND [DEAL].[HAS_OTHER_TAX_ACCOUNT] = 1' + @CrLf;
@@ -3967,7 +3967,7 @@ begin
 		select @Sql += @Sql2
 	end
 
-	--'-1' няма значение, 0 не е избрано, 1 избрано е
+	--'-1' РЅСЏРјР° Р·РЅР°С‡РµРЅРёРµ, 0 РЅРµ Рµ РёР·Р±СЂР°РЅРѕ, 1 РёР·Р±СЂР°РЅРѕ Рµ
 	if IsNull(@UI_NOAUTOTAX,'-1') in ('0', '1')
 	begin 
 		select @Sql2 = ' AND [DEAL].[DEAL_NO_AUTO_PAY_TAX] = '+@UI_NOAUTOTAX + @CrLf;
@@ -3979,7 +3979,7 @@ begin
 		select @Sql += @Sql2
 	end 
 
-	--'-1' няма значение, 0 не е избрано, 1 избрано е
+	--'-1' РЅСЏРјР° Р·РЅР°С‡РµРЅРёРµ, 0 РЅРµ Рµ РёР·Р±СЂР°РЅРѕ, 1 РёР·Р±СЂР°РЅРѕ Рµ
 	if IsNull(@UI_DENY_MANUAL_TAX_ASSIGN,'-1') in ('0', '1')
 	begin 
 		select @Sql2 = ' AND [DEAL].[DEAL_IS_DENY_MANUAL_TAX_ASSIGN] = '+@UI_DENY_MANUAL_TAX_ASSIGN + @CrLf;
@@ -3991,7 +3991,7 @@ begin
 		select @Sql += @Sql2
 	end 
 
-	--'-1' няма значение, 0 не е избрано, 1 избрано е 
+	--'-1' РЅСЏРјР° Р·РЅР°С‡РµРЅРёРµ, 0 РЅРµ Рµ РёР·Р±СЂР°РЅРѕ, 1 РёР·Р±СЂР°РЅРѕ Рµ 
 	if IsNull(@UI_CAPIT_ON_BASE_DATE_OPEN,'-1') in ('0', '1')
 	begin 
 		select @Sql2 = ' AND [DEAL].[DEAL_CAPIT_ON_BASE_DATE_OPEN] = '+@UI_CAPIT_ON_BASE_DATE_OPEN + @CrLf;
@@ -4003,7 +4003,7 @@ begin
 		select @Sql += @Sql2
 	end 
 
-	--'-1' няма значение, 0 не е избрано, 1 избрано е 
+	--'-1' РЅСЏРјР° Р·РЅР°С‡РµРЅРёРµ, 0 РЅРµ Рµ РёР·Р±СЂР°РЅРѕ, 1 РёР·Р±СЂР°РЅРѕ Рµ 
 	if IsNull(@UI_BANK_RECEIVABLES,'-1') in ('0', '1')
 	begin 
 		select @Sql2 = ' AND [DEAL].[DEAL_EXCLUDE_FROM_BANK_COLLECTIONS] = '+@UI_BANK_RECEIVABLES + @CrLf;
@@ -4015,7 +4015,7 @@ begin
 		select @Sql += @Sql2
 	end 
 
-	--0 - не е съвместна сделка, 1 - съвместна сделка от тип "по отделно"
+	--0 - РЅРµ Рµ СЃСЉРІРјРµСЃС‚РЅР° СЃРґРµР»РєР°, 1 - СЃСЉРІРјРµСЃС‚РЅР° СЃРґРµР»РєР° РѕС‚ С‚РёРї "РїРѕ РѕС‚РґРµР»РЅРѕ"
 	if IsNull(@UI_JOINT_TYPE,-1) in (0, 1)
 	begin
 
@@ -4040,7 +4040,7 @@ begin
 		end
 	end
 
-	-- 0 или долна граница на разполагаемостта ( '<0', '>0' )
+	-- 0 РёР»Рё РґРѕР»РЅР° РіСЂР°РЅРёС†Р° РЅР° СЂР°Р·РїРѕР»Р°РіР°РµРјРѕСЃС‚С‚Р° ( '<0', '>0' )
 	if Left(ltrim(IsNull(@LIMIT_AVAILABILITY,'0')),1) in ('<', '>', '=')
 	begin 
 		select @Sql2 = ' AND ([DEAL].[ACCOUNT_BEG_DAY_BALANCE] - [DEAL].[BLK_SUMA_MIN] + [DEAL].[DAY_OPERATION_BALANCE]) ' + REPLACE(@LIMIT_AVAILABILITY, ' ','') + @CrLf;
@@ -4051,7 +4051,7 @@ begin
 		select @Sql += @Sql2
 	end 
 
-	-- 1 - активна; Безусловно ще се търсят сделки които НЕ СА ЗАМРАЗЕНИ
+	-- 1 - Р°РєС‚РёРІРЅР°; Р‘РµР·СѓСЃР»РѕРІРЅРѕ С‰Рµ СЃРµ С‚СЉСЂСЃСЏС‚ СЃРґРµР»РєРё РєРѕРёС‚Рѕ РќР• РЎРђ Р—РђРњР РђР—Р•РќР
 	if IsNull(@DEAL_STATUS,-1) = 1
 	begin 
 		select @Sql2 = ' AND [DEAL].[IS_DORMUNT_ACCOUNT] = 0' + @CrLf;
@@ -4062,7 +4062,7 @@ begin
 		select @Sql += @Sql2
 	end 
 
-	-- 0 - няма несъбрани такси; 1 - има несъбрани такси, -1 без значение от сумата
+	-- 0 - РЅСЏРјР° РЅРµСЃСЉР±СЂР°РЅРё С‚Р°РєСЃРё; 1 - РёРјР° РЅРµСЃСЉР±СЂР°РЅРё С‚Р°РєСЃРё, -1 Р±РµР· Р·РЅР°С‡РµРЅРёРµ РѕС‚ СЃСѓРјР°С‚Р°
 	if IsNull(@LIMIT_TAX_UNCOLLECTED,-1) in ( 0, 1 )
 	begin 
 		select @Sql2 = ' AND [DEAL].[HAS_TAX_UNCOLECTED] = ' + str(@LIMIT_TAX_UNCOLLECTED,len(@LIMIT_TAX_UNCOLLECTED),0) + @CrLf;
@@ -4074,7 +4074,7 @@ begin
 		select @Sql += @Sql2
 	end 
 
-	-- 0 - няма запор; друга сума - има запор над определена сума; (-1) : няма значение;
+	-- 0 - РЅСЏРјР° Р·Р°РїРѕСЂ; РґСЂСѓРіР° СЃСѓРјР° - РёРјР° Р·Р°РїРѕСЂ РЅР°Рґ РѕРїСЂРµРґРµР»РµРЅР° СЃСѓРјР°; (-1) : РЅСЏРјР° Р·РЅР°С‡РµРЅРёРµ;
 	if IsNull(@LIMIT_ZAPOR,-1) >= 0
 	begin 
 
@@ -4101,7 +4101,7 @@ begin
 		end 
 	end
 
-	-- Да няма осчетоводено 'Вносни Бележки' по сделката: @RUNNING_ORDER = 1 and @TYPE_ACTION = ''
+	-- Р”Р° РЅСЏРјР° РѕСЃС‡РµС‚РѕРІРѕРґРµРЅРѕ 'Р’РЅРѕСЃРЅРё Р‘РµР»РµР¶РєРё' РїРѕ СЃРґРµР»РєР°С‚Р°: @RUNNING_ORDER = 1 and @TYPE_ACTION = ''
 	if @TYPE_ACTION = 'CashPayment' and IsNull(@RUNNING_ORDER,-1) = 1
 	begin
 		select @Sql2 = ' AND [DEAL].[HAS_WNOS_BEL] = ' + (case when @RUNNING_ORDER > 1 then '1' else '0' end)  + @CrLf;
@@ -4113,7 +4113,7 @@ begin
 		select @Sql += @Sql2
 	end
 
-	-- Да няма осчетоводено 'Нареждане Разписка' по сделката: @RUNNING_ORDER = 1 and @TYPE_ACTION = ''
+	-- Р”Р° РЅСЏРјР° РѕСЃС‡РµС‚РѕРІРѕРґРµРЅРѕ 'РќР°СЂРµР¶РґР°РЅРµ Р Р°Р·РїРёСЃРєР°' РїРѕ СЃРґРµР»РєР°С‚Р°: @RUNNING_ORDER = 1 and @TYPE_ACTION = ''
 	if @TYPE_ACTION = 'CashW' and IsNull(@RUNNING_ORDER,-1) = 1
 	begin
 		select @Sql2 = ' AND [DEAL].[HAS_NAR_RAZP] = ' + (case when @RUNNING_ORDER > 1 then '1' else '0' end)  + @CrLf;
@@ -4125,7 +4125,7 @@ begin
 		select @Sql += @Sql2
 	end	
 
-	-- Да укаже дали сметката е кореспондираща до други сделки: -1 няма значение; 0 не е; 1 да , кореспондираща е
+	-- Р”Р° СѓРєР°Р¶Рµ РґР°Р»Рё СЃРјРµС‚РєР°С‚Р° Рµ РєРѕСЂРµСЃРїРѕРЅРґРёСЂР°С‰Р° РґРѕ РґСЂСѓРіРё СЃРґРµР»РєРё: -1 РЅСЏРјР° Р·РЅР°С‡РµРЅРёРµ; 0 РЅРµ Рµ; 1 РґР° , РєРѕСЂРµСЃРїРѕРЅРґРёСЂР°С‰Р° Рµ
 	if IsNull(@IS_CORR,-1) in ( 0, 1 )
 	begin 
 		select @Sql2 = ' AND '+CASE WHEN @IS_CORR = 0 THEN 'NOT' ELSE '' END+ ' EXISTS (
@@ -4140,7 +4140,7 @@ begin
 		select @Sql += @Sql2
 	end 
 
-	-- Указва дали РС да е уникална в таблица [RAZPREG_TA]
+	-- РЈРєР°Р·РІР° РґР°Р»Рё Р РЎ РґР° Рµ СѓРЅРёРєР°Р»РЅР° РІ С‚Р°Р±Р»РёС†Р° [RAZPREG_TA]
 	if IsNull(@IS_UNIQUE_DEAL,-1) in ( 1 )
 	begin 
 		select @Sql2 = ' AND NOT EXISTS (
@@ -4157,7 +4157,7 @@ begin
 	end
 	;
 
-	-- Код на програма от Group Sales + Продуктов код на карта + Код на GS договор
+	-- РљРѕРґ РЅР° РїСЂРѕРіСЂР°РјР° РѕС‚ Group Sales + РџСЂРѕРґСѓРєС‚РѕРІ РєРѕРґ РЅР° РєР°СЂС‚Р° + РљРѕРґ РЅР° GS РґРѕРіРѕРІРѕСЂ
 	if IsNull(@CODE_GS_PROGRAMME,-1) > 0 AND IsNull(@CODE_GS_CARD,-1) > 0 AND IsNull(@GS_PRODUCT_CODE,-1) > 0
 	begin 
 		select @Sql2 = ' AND EXISTS (
@@ -4177,14 +4177,14 @@ begin
 		select @Sql += @Sql2
 	end 
 
-	-- Валута на кореспонденцията
+	-- Р’Р°Р»СѓС‚Р° РЅР° РєРѕСЂРµСЃРїРѕРЅРґРµРЅС†РёСЏС‚Р°
 	if IsNull(@CCY_CODE_CORS, -1) > 0
 	begin 
 		select @Sql2 = ' AND '+CASE WHEN @IS_CORR = 0 THEN 'NOT' ELSE '' END+ ' EXISTS (
 			select * FROM dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_OTHER_TAX_ACCOUNT] [TAX] with(nolock)
 			where  [TAX].[CORR_ACCOUNT] = [DEAL].[DEAL_ACCOUNT] ' + @CrLf;
 
-		-- Разполагаемост по сделката 
+		-- Р Р°Р·РїРѕР»Р°РіР°РµРјРѕСЃС‚ РїРѕ СЃРґРµР»РєР°С‚Р° 
 		if left(ltrim(IsNull(@LIMIT_AVAILABILITY_CORS, '0')),1) in ('<', '>', '=')
 				select @Sql2 += ' AND ([TAX].[ACCOUNT_BEG_DAY_BALANCE] - [TAX].[BLK_SUMA_MIN]+ [TAX].[DAY_OPERATION_BALANCE] ) ' + REPLACE(@LIMIT_AVAILABILITY_CORS,' ','');
 
@@ -4250,7 +4250,7 @@ end
 go
 
 /********************************************************************************************************/
-/* Процедура за визличане на Sql Online Server name и Onle Database name */
+/* РџСЂРѕС†РµРґСѓСЂР° Р·Р° РІРёР·Р»РёС‡Р°РЅРµ РЅР° Sql Online Server name Рё Onle Database name */
 DROP PROCEDURE IF EXISTS dbo.[SP_CASH_PAYMENTS_GET_DATASOURCE]
 GO
 
@@ -4316,7 +4316,7 @@ end
 go
 
 /********************************************************************************************************/
-/* Процедура за зареждане на дневните обороти от OnLineDB по сметка */
+/* РџСЂРѕС†РµРґСѓСЂР° Р·Р° Р·Р°СЂРµР¶РґР°РЅРµ РЅР° РґРЅРµРІРЅРёС‚Рµ РѕР±РѕСЂРѕС‚Рё РѕС‚ OnLineDB РїРѕ СЃРјРµС‚РєР° */
 DROP PROCEDURE IF EXISTS dbo.[SP_LOAD_ONLINE_ACCOUNT_DAY_OPERATION_BALANCE]
 GO
 
@@ -4422,7 +4422,7 @@ begin
 end
 GO
 /********************************************************************************************************/
-/* Процедура за зареждане на Клиентски данни от OnLineDB по CustomerID */
+/* РџСЂРѕС†РµРґСѓСЂР° Р·Р° Р·Р°СЂРµР¶РґР°РЅРµ РЅР° РљР»РёРµРЅС‚СЃРєРё РґР°РЅРЅРё РѕС‚ OnLineDB РїРѕ CustomerID */
 DROP PROCEDURE IF EXISTS dbo.[SP_LOAD_ONLINE_CLIENT_DATA]
 GO
 
@@ -4476,9 +4476,9 @@ begin
 		,	[CUST].[COMPANY_EFN]				AS [COMPANY_EFN]	
 		,	[MCLC].[CL_CODE]					AS [MAIN_CLIENT_CODE]
 		,	[NOTE].[HAS_POPUP_NOTE]				AS [UI_NOTES_EXIST]
-		,	[XF].[IS_ZAPOR]						AS [IS_ZAPOR]			/* [IS_ZAPOR] : (дали има съдебен запор някоя от сделките на клиента) */
-		,	IsNull([DOC].[DOCUMENT_TYPE],-1)	AS [ID_DOCUMENT_TYPE]	/* Тип на личния документ - код от NM405 */
-		,	IsNull([DOC].[ID_NUMBER], '''')		AS [ID_NUMBER]			/* [ID_NUMBER] Номера на: лична карта; паспорт; шофьорска книжка ... */
+		,	[XF].[IS_ZAPOR]						AS [IS_ZAPOR]			/* [IS_ZAPOR] : (РґР°Р»Рё РёРјР° СЃСЉРґРµР±РµРЅ Р·Р°РїРѕСЂ РЅСЏРєРѕСЏ РѕС‚ СЃРґРµР»РєРёС‚Рµ РЅР° РєР»РёРµРЅС‚Р°) */
+		,	IsNull([DOC].[DOCUMENT_TYPE],-1)	AS [ID_DOCUMENT_TYPE]	/* РўРёРї РЅР° Р»РёС‡РЅРёСЏ РґРѕРєСѓРјРµРЅС‚ - РєРѕРґ РѕС‚ NM405 */
+		,	IsNull([DOC].[ID_NUMBER], '''')		AS [ID_NUMBER]			/* [ID_NUMBER] РќРѕРјРµСЂР° РЅР°: Р»РёС‡РЅР° РєР°СЂС‚Р°; РїР°СЃРїРѕСЂС‚; С€РѕС„СЊРѕСЂСЃРєР° РєРЅРёР¶РєР° ... */
 		,	[XF].[SERVICE_GROUP_EGFN]			AS [SERVICE_GROUP_EGFN]	/* TODO: [SERVICE_GROUP_EGFN]: */
 		,	[XF].[IS_ACTUAL]					AS [IS_ACTUAL]			/* TODO: [IS_ACTUAL]: ?!?*/
 		,	[PR].[PROXY_COUNT]					AS [PROXY_COUNT]
@@ -4507,7 +4507,7 @@ begin
 		from '+@SqlFullDBName+'.dbo.[DT015_NOTES] [n] with(nolock)
 		where	[n].[CUSTOMER_ID] = [CUST].[CUSTOMER_ID]
 			and [n].[CLIENT_NOTETYPE] = 1 /* enum ClientNoteType : ClientNoteTypeExtraData = 1 */
-			and DATALENGTH([n].[NOTE]) > 1 /* Да има поне един символ освен нулевия терминатор */
+			and DATALENGTH([n].[NOTE]) > 1 /* Р”Р° РёРјР° РїРѕРЅРµ РµРґРёРЅ СЃРёРјРІРѕР» РѕСЃРІРµРЅ РЅСѓР»РµРІРёСЏ С‚РµСЂРјРёРЅР°С‚РѕСЂ */
 	) [NOTE]
 	outer apply (
 		select top(1) [NM405_DOCUMENT_TYPE]	as [DOCUMENT_TYPE]
@@ -4515,7 +4515,7 @@ begin
 			,	[ISSUER_COUNTRY_CODE]		as [ISSUER_COUNTRY_CODE]
 		from '+@SqlFullDBName+'.dbo.[DT015_IDENTITY_DOCUMENTS] [d] with(nolock)
 		where [d].[CUSTOMER_ID] = [CUST].[CUSTOMER_ID]
-			and [d].[NM405_DOCUMENT_TYPE] IN (1, 7, 8) /* 1 - Лична карта; 7 - Паспорт; 8 - Шофьорска книжка */
+			and [d].[NM405_DOCUMENT_TYPE] IN (1, 7, 8) /* 1 - Р›РёС‡РЅР° РєР°СЂС‚Р°; 7 - РџР°СЃРїРѕСЂС‚; 8 - РЁРѕС„СЊРѕСЂСЃРєР° РєРЅРёР¶РєР° */
 		order by [d].[NM405_DOCUMENT_TYPE]
 	) [DOC]
 	where [CUST].[CUSTOMER_ID] = ' + str(@CUSTOMER_ID,len(@CUSTOMER_ID),0)
@@ -4553,7 +4553,7 @@ end
 GO
 
 /********************************************************************************************************/
-/* Процедура за селектиране на всички клиенти от Online базата с активни запори */
+/* РџСЂРѕС†РµРґСѓСЂР° Р·Р° СЃРµР»РµРєС‚РёСЂР°РЅРµ РЅР° РІСЃРёС‡РєРё РєР»РёРµРЅС‚Рё РѕС‚ Online Р±Р°Р·Р°С‚Р° СЃ Р°РєС‚РёРІРЅРё Р·Р°РїРѕСЂРё */
 DROP PROC IF EXISTS dbo.[SP_LOAD_ONLINE_CUSTOMERS_WITH_DISTRAINT]
 GO
 
@@ -4652,7 +4652,7 @@ end
 go
 
 /********************************************************************************************************/
-/* Процедура за селектиране на всички клиенти от OnlineDb с неплатени такси към всички кл. сметки */
+/* РџСЂРѕС†РµРґСѓСЂР° Р·Р° СЃРµР»РµРєС‚РёСЂР°РЅРµ РЅР° РІСЃРёС‡РєРё РєР»РёРµРЅС‚Рё РѕС‚ OnlineDb СЃ РЅРµРїР»Р°С‚РµРЅРё С‚Р°РєСЃРё РєСЉРј РІСЃРёС‡РєРё РєР». СЃРјРµС‚РєРё */
 DROP PROC IF EXISTS dbo.[SP_LOAD_ONLINE_CUSTOMERS_WITH_UNCOLLECTED_TAX_CONNECTED_TO_ALL_ACCOUNTS]
 GO
 
@@ -4699,7 +4699,7 @@ begin
         on [a].[PART_ID] = [T].[ACCOUNT_DT]
     inner join '+@SqlFullDBName+'.dbo.[DT015] [C] with(nolock)
         on [C].[CODE] = [A].[CLIENT_ID]
-    where	[T].[TAX_STATUS] =  0 /* eTaxActive = 0 // Действаща такса */
+    where	[T].[TAX_STATUS] =  0 /* eTaxActive = 0 // Р”РµР№СЃС‚РІР°С‰Р° С‚Р°РєСЃР° */
         and [T].[COLLECT_FROM_ALL_CUSTOMER_ACCOUNTS] = 1
     ';
 
@@ -4731,7 +4731,7 @@ end
 go
 
 /********************************************************************************************************/
-/* Процедура за зареждане на Данни за Кореспонденция от OnLineDB по сделка по номер и кореспондираща партида */
+/* РџСЂРѕС†РµРґСѓСЂР° Р·Р° Р·Р°СЂРµР¶РґР°РЅРµ РЅР° Р”Р°РЅРЅРё Р·Р° РљРѕСЂРµСЃРїРѕРЅРґРµРЅС†РёСЏ РѕС‚ OnLineDB РїРѕ СЃРґРµР»РєР° РїРѕ РЅРѕРјРµСЂ Рё РєРѕСЂРµСЃРїРѕРЅРґРёСЂР°С‰Р° РїР°СЂС‚РёРґР° */
 DROP PROCEDURE IF EXISTS dbo.[SP_LOAD_ONLINE_DEAL_CORS_DATA]
 GO
 
@@ -4890,7 +4890,7 @@ end
 go
 
 /********************************************************************************************************/
-/* Процедура за зареждане на Данни за сделка от OnLineDB по номер */
+/* РџСЂРѕС†РµРґСѓСЂР° Р·Р° Р·Р°СЂРµР¶РґР°РЅРµ РЅР° Р”Р°РЅРЅРё Р·Р° СЃРґРµР»РєР° РѕС‚ OnLineDB РїРѕ РЅРѕРјРµСЂ */
 DROP PROCEDURE IF EXISTS dbo.[SP_LOAD_ONLINE_DEAL_DATA]
 GO
 
@@ -5035,7 +5035,7 @@ end
 GO
 
 /********************************************************************************************************/
-/* Процедура за зареждане на Данни за Кореспонденция от OnLineDB по сделка по номер и кореспондираща партида */
+/* РџСЂРѕС†РµРґСѓСЂР° Р·Р° Р·Р°СЂРµР¶РґР°РЅРµ РЅР° Р”Р°РЅРЅРё Р·Р° РљРѕСЂРµСЃРїРѕРЅРґРµРЅС†РёСЏ РѕС‚ OnLineDB РїРѕ СЃРґРµР»РєР° РїРѕ РЅРѕРјРµСЂ Рё РєРѕСЂРµСЃРїРѕРЅРґРёСЂР°С‰Р° РїР°СЂС‚РёРґР° */
 DROP PROCEDURE IF EXISTS dbo.[SP_LOAD_ONLINE_TAX_UNCOLECTED_BY_ACC]
 GO
 
@@ -5257,7 +5257,7 @@ BEGIN
 	FROM 	dbo.[CURRENCIES_TA] WITH (NOLOCK)
 	WHERE	[CCY_CODE] = @TO_CCY
 
-	/* Ако двете валути са еднакви връщаме входната сума */
+	/* РђРєРѕ РґРІРµС‚Рµ РІР°Р»СѓС‚Рё СЃР° РµРґРЅР°РєРІРё РІСЂСЉС‰Р°РјРµ РІС…РѕРґРЅР°С‚Р° СЃСѓРјР° */
 	IF( @SUM_CCY IS NULL OR @SUM_CCY = @TO_CCY )
 		RETURN ROUND( ISNULL( @SUMA, 0.0 ), ISNULL(@PRE_TO, 2) )
 
@@ -5334,7 +5334,7 @@ ALTER TABLE dbo.[SYS_LOG_PROC]
 GO
 
 
-/****** Object:  StoredProcedure dbo.[sp_log_proc]    Script Date: 03.05.2022 Рі. 14:44:11 ******/
+/****** Object:  StoredProcedure dbo.[sp_log_proc]    Script Date: 03.05.2022 Р С–. 14:44:11 ******/
 DROP PROCEDURE IF EXISTS dbo.[SP_SYS_LOG_PROC]
 GO
 
@@ -5353,7 +5353,7 @@ GO
 
 
 /********************************************************************************************************/
-/* Процедура за селектиране на всички клиенти от Online базата с активни запори */
+/* РџСЂРѕС†РµРґСѓСЂР° Р·Р° СЃРµР»РµРєС‚РёСЂР°РЅРµ РЅР° РІСЃРёС‡РєРё РєР»РёРµРЅС‚Рё РѕС‚ Online Р±Р°Р·Р°С‚Р° СЃ Р°РєС‚РёРІРЅРё Р·Р°РїРѕСЂРё */
 DROP PROC IF EXISTS dbo.[SP_LOAD_ONLINE_CUSTOMERS_WITH_DISTRAINT]
 GO
 
@@ -5452,7 +5452,7 @@ end
 go
 
 /********************************************************************************************************/
-/* Процедура за селектиране на всички клиенти от OnlineDb с неплатени такси към всички кл. сметки */
+/* РџСЂРѕС†РµРґСѓСЂР° Р·Р° СЃРµР»РµРєС‚РёСЂР°РЅРµ РЅР° РІСЃРёС‡РєРё РєР»РёРµРЅС‚Рё РѕС‚ OnlineDb СЃ РЅРµРїР»Р°С‚РµРЅРё С‚Р°РєСЃРё РєСЉРј РІСЃРёС‡РєРё РєР». СЃРјРµС‚РєРё */
 DROP PROC IF EXISTS dbo.[SP_LOAD_ONLINE_CUSTOMERS_WITH_UNCOLLECTED_TAX_CONNECTED_TO_ALL_ACCOUNTS]
 GO
 
@@ -5499,7 +5499,7 @@ begin
         on [a].[PART_ID] = [T].[ACCOUNT_DT]
     inner join '+@SqlFullDBName+'.dbo.[DT015] [C] with(nolock)
         on [C].[CODE] = [A].[CLIENT_ID]
-    where	[T].[TAX_STATUS] =  0 /* eTaxActive = 0 // Действаща такса */
+    where	[T].[TAX_STATUS] =  0 /* eTaxActive = 0 // Р”РµР№СЃС‚РІР°С‰Р° С‚Р°РєСЃР° */
         and [T].[COLLECT_FROM_ALL_CUSTOMER_ACCOUNTS] = 1
     ';
 

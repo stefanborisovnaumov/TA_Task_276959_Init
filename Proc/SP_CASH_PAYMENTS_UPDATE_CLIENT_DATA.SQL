@@ -1,6 +1,6 @@
 
 /**********************************************************************************************************/
-/* Ïğîöåäóğà çà àêòóàëèçàöèÿ äàííèòå â íà Òàáëèöà dbo.[DT015_CUSTOMERS_ACTIONS_TA] çà òèòóëÿğà è Proxy-òî*/
+/* ĞŸÑ€Ğ¾Ñ†ĞµĞ´ÑƒÑ€Ğ° Ğ·Ğ° Ğ°ĞºÑ‚ÑƒĞ°Ğ»Ğ¸Ğ·Ğ°Ñ†Ğ¸Ñ Ğ´Ğ°Ğ½Ğ½Ğ¸Ñ‚Ğµ Ğ² Ğ½Ğ° Ğ¢Ğ°Ğ±Ğ»Ğ¸Ñ†Ğ° dbo.[DT015_CUSTOMERS_ACTIONS_TA] Ğ·Ğ° Ñ‚Ğ¸Ñ‚ÑƒĞ»ÑÑ€Ğ° Ğ¸ Proxy-Ñ‚Ğ¾*/
 DROP PROCEDURE IF EXISTS dbo.[SP_CASH_PAYMENTS_UPDATE_CLIENT_DATA]
 GO
 
@@ -69,15 +69,15 @@ begin
 	begin 
 		select @Ben_Customer_ID = IsNull([S].[CUSTOMER_ID],-1)
 		from dbo.[RAZPREG_TA] [R] with(nolock)
-		inner join dbo.[AGR_CASH_PAYMENTS_DEALS] [S] with(nolock)
+		inner join dbo.AGR_TA_EXISTING_ONLINE_DATA_DEALS [S] with(nolock)
 			on	[S].[DEAL_TYPE] = 1
 			and [R].[UI_DEAL_NUM] = [S].[DEAL_NUM] 
 		where [R].[ROW_ID] = @DEAL_BEN_ROW_ID
 	end
 
 	/************************************************************************************************************/
-	-- Àêòóàëèçàöèÿ íà äàííèòå çà òèòóëÿğÿ è Proxy-òî...
-	-- Ïúğâî àêòóàëèçèğàìå äàííèòå íà Proxy-òî	
+	-- ĞĞºÑ‚ÑƒĞ°Ğ»Ğ¸Ğ·Ğ°Ñ†Ğ¸Ñ Ğ½Ğ° Ğ´Ğ°Ğ½Ğ½Ğ¸Ñ‚Ğµ Ğ·Ğ° Ñ‚Ğ¸Ñ‚ÑƒĞ»ÑÑ€Ñ Ğ¸ Proxy-Ñ‚Ğ¾...
+	-- ĞŸÑŠÑ€Ğ²Ğ¾ Ğ°ĞºÑ‚ÑƒĞ°Ğ»Ğ¸Ğ·Ğ¸Ñ€Ğ°Ğ¼Ğµ Ğ´Ğ°Ğ½Ğ½Ğ¸Ñ‚Ğµ Ğ½Ğ° Proxy-Ñ‚Ğ¾	
 	if IsNull(@ProxyCustomer_ID,0) > 0 and IsNull(@CUST_PROXY_ROW_ID,0) > 0
 	begin
 		begin try 
@@ -108,7 +108,7 @@ begin
 		end catch
 	end
 
-	-- Aêòóàëèçèğàìå äàííèòå íà Òèòóëÿğà
+	-- AĞºÑ‚ÑƒĞ°Ğ»Ğ¸Ğ·Ğ¸Ñ€Ğ°Ğ¼Ğµ Ğ´Ğ°Ğ½Ğ½Ğ¸Ñ‚Ğµ Ğ½Ğ° Ğ¢Ğ¸Ñ‚ÑƒĞ»ÑÑ€Ğ°
 	begin try 
 		select @Sql2 = N'dbo.[SP_CASH_PAYMENTS_UPDATE_DT015_CUSTOMERS_ACTIONS_TA] @OnlineSqlServerName = '+@OnlineSqlServerName
 					+', @OnlineSqlDataBaseName = '+@OnlineSqlDataBaseName
@@ -134,7 +134,7 @@ begin
 			return 4;
 	end catch
 
-	-- Aêòóàëèçèğàìå äàííèòå íà Áåíåôèöèåíòà
+	-- AĞºÑ‚ÑƒĞ°Ğ»Ğ¸Ğ·Ğ¸Ñ€Ğ°Ğ¼Ğµ Ğ´Ğ°Ğ½Ğ½Ğ¸Ñ‚Ğµ Ğ½Ğ° Ğ‘ĞµĞ½ĞµÑ„Ğ¸Ñ†Ğ¸ĞµĞ½Ñ‚Ğ°
 	if IsNull(@Ben_Customer_ID,0) > 0 and IsNull(@CUST_BEN_ROW_ID,0) > 0
 	begin
 		begin try 

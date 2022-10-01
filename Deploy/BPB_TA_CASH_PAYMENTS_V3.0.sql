@@ -319,13 +319,13 @@ create table dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_LOANS]
 go
 
 /*****************************************************************************/
--- Create INDEX ON table dbo.[AGR_CASH_PAYMENTS_DEALS]
+-- Create INDEX ON table dbo.AGR_CASH_PAYMENTS_DEALS
 --DROP INDEX IF EXISTS [IX_AGR_CASH_PAYMENTS_DEALS_DEAL_CURRENCY_CODE_CUSTOMER_ID_DEAL_NUM] 
---	ON [dbo].[AGR_CASH_PAYMENTS_DEALS]
+--	ON [dbo].AGR_CASH_PAYMENTS_DEALS
 --go
 
 --CREATE NONCLUSTERED INDEX [IX_AGR_CASH_PAYMENTS_DEALS_DEAL_CURRENCY_CODE_CUSTOMER_ID_DEAL_NUM]
---	ON [dbo].[AGR_CASH_PAYMENTS_DEALS] ([DEAL_CURRENCY_CODE],[CUSTOMER_ID],[DEAL_NUM])
+--	ON [dbo].AGR_CASH_PAYMENTS_DEALS ([DEAL_CURRENCY_CODE],[CUSTOMER_ID],[DEAL_NUM])
 --go
 
 
@@ -667,10 +667,10 @@ go
 /********************************************************************************************************/
 /* Процедура за зачистване наданните от TA Таблиците */
 /* 2022/06/98 - v2.6.3 -> актуализацията на сделките с навързаните документи се извършва само за първия тестови случай */
-DROP PROCEDURE IF EXISTS dbo.[SP_CASH_PAYMENTS_CLEAR_TA_TABLES]
+DROP PROCEDURE IF EXISTS dbo.SP_CASH_PAYMENTS_CLEAR_TA_TABLES
 GO
 
-CREATE PROCEDURE dbo.[SP_CASH_PAYMENTS_CLEAR_TA_TABLES]
+CREATE PROCEDURE dbo.SP_CASH_PAYMENTS_CLEAR_TA_TABLES
 (
 	@TestCaseRowID NVARCHAR(16)
 )
@@ -685,7 +685,7 @@ begin
 	;
 	/************************************************************************************************************/
 	/* 1. Log Begining of Procedure execution */
-	if @LogBegEndProc = 1 exec dbo.SP_SYS_LOG_PROC @@PROCID, @TestCaseRowID, '*** Begin Execute Proc ***: dbo.[SP_CASH_PAYMENTS_CLEAR_TA_TABLES]'
+	if @LogBegEndProc = 1 exec dbo.SP_SYS_LOG_PROC @@PROCID, @TestCaseRowID, '*** Begin Execute Proc ***: dbo.SP_CASH_PAYMENTS_CLEAR_TA_TABLES'
 
 
 	/************************************************************************************************************/
@@ -839,7 +839,7 @@ begin
 	begin 
 		select @Msg = 'Duration: '+ dbo.FN_GET_TIME_DIFF(@TimeBeg, GetDate()) + 
 			 + ', TA Row ID: ' + @TestCaseRowID
-		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Msg, '*** End Execute Proc ***: dbo.dbo.[SP_CASH_PAYMENTS_CLEAR_TA_TABLES]'
+		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Msg, '*** End Execute Proc ***: dbo.dbo.SP_CASH_PAYMENTS_CLEAR_TA_TABLES'
 	end
 
 	return 0;
@@ -1347,13 +1347,13 @@ go
 
 /********************************************************************************************************/
 /* Процедура за първоначална инициализация */
-DROP PROCEDURE IF EXISTS dbo.[SP_CASH_PAYMENTS_INIT_DEALS]
+DROP PROCEDURE IF EXISTS dbo.SP_CASH_PAYMENTS_INIT_DEALS
 GO
 
-drop table if exists dbo.[AGR_CASH_PAYMENTS_DEALS]
+drop table if exists dbo.AGR_CASH_PAYMENTS_DEALS
 GO
 
-CREATE PROCEDURE dbo.[SP_CASH_PAYMENTS_INIT_DEALS]
+CREATE PROCEDURE dbo.SP_CASH_PAYMENTS_INIT_DEALS
 (
 	@DB_TYPE				sysname = N'AIR'
 ,	@TestAutomationType		sysname = N'%AIR%'
@@ -1369,7 +1369,7 @@ begin
 		,	@Sql1 nvarchar(4000) = N'', @Sql2 nvarchar(4000) = N'', @Sql3 nvarchar(4000) = N'', @TimeBeg datetime = GetDate()
 	;
 
-	if @LogBegEndProc = 1 exec dbo.SP_SYS_LOG_PROC @@PROCID, @TestAutomationType, '*** Begin Execute Proc ***: dbo.[SP_CASH_PAYMENTS_INIT_DEALS]'
+	if @LogBegEndProc = 1 exec dbo.SP_SYS_LOG_PROC @@PROCID, @TestAutomationType, '*** Begin Execute Proc ***: dbo.SP_CASH_PAYMENTS_INIT_DEALS'
 	;
 
 
@@ -1485,7 +1485,7 @@ begin
 	;
 
 	/* 1.2. Prepare deals  */
-	drop table if exists dbo.[AGR_CASH_PAYMENTS_DEALS]
+	drop table if exists dbo.AGR_CASH_PAYMENTS_DEALS
 	;
 
 	set @Sql1 = N'
@@ -1557,7 +1557,7 @@ begin
 		,	[EX_BITS].*
 		,	CAST( 0 AS SMALLINT )					AS [PROXY_COUNT]
 
-	into dbo.[AGR_CASH_PAYMENTS_DEALS]
+	into dbo.AGR_CASH_PAYMENTS_DEALS
 	from '+@SqlFullDBName+'.dbo.[RAZPREG] [REG] with(nolock) 
 
 	inner join '+@SqlFullDBName+'.dbo.[DT015] [CLC] with(nolock)	
@@ -1653,26 +1653,26 @@ begin
 		return 1
 	end catch 
 
-	select @Rows = (select count(*) from dbo.[AGR_CASH_PAYMENTS_DEALS] with(nolock) ), @Err = @@ERROR;
+	select @Rows = (select count(*) from dbo.AGR_CASH_PAYMENTS_DEALS with(nolock) ), @Err = @@ERROR;
 	if @LogTraceInfo = 1 
 	begin 
-		select  @Msg = N'After: select * into dbo.[AGR_CASH_PAYMENTS_DEALS], Rows affected: ' + str(@Rows,len(@Rows),0), @Sql = @Sql1 + @Sql2 + @Sql3
+		select  @Msg = N'After: select * into dbo.AGR_CASH_PAYMENTS_DEALS, Rows affected: ' + str(@Rows,len(@Rows),0), @Sql = @Sql1 + @Sql2 + @Sql3
 		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql, @Msg
 	end
 	;
 
-	/* 1.2.1 Add Indexes on dbo.[AGR_CASH_PAYMENTS_DEALS] */
-	alter table dbo.[AGR_CASH_PAYMENTS_DEALS]
+	/* 1.2.1 Add Indexes on dbo.AGR_CASH_PAYMENTS_DEALS */
+	alter table dbo.AGR_CASH_PAYMENTS_DEALS
 		add constraint [PK_AGR_CASH_PAYMENTS_DEALS] 
 			primary key clustered ( [ROW_ID] )
 	;
 
 	create index IX_AGR_CASH_PAYMENTS_DEALS_DEAL_NUM_DEAL_TYPE
-		on dbo.[AGR_CASH_PAYMENTS_DEALS] ( [DEAL_NUM], [DEAL_TYPE] )
+		on dbo.AGR_CASH_PAYMENTS_DEALS ( [DEAL_NUM], [DEAL_TYPE] )
 	;
 
 	create index IX_AGR_CASH_PAYMENTS_DEALS_DEAL_ACCOUNT
-		on dbo.[AGR_CASH_PAYMENTS_DEALS] ( [DEAL_ACCOUNT] )
+		on dbo.AGR_CASH_PAYMENTS_DEALS ( [DEAL_ACCOUNT] )
 	;	
 
 	/* 1.3. Prepare TAX UNCOLECTED  */
@@ -1688,7 +1688,7 @@ begin
 	select	[REG].[DEAL_TYPE]
 		,	[REG].[DEAL_NUM]
 
-	from DBO.[AGR_CASH_PAYMENTS_DEALS] [REG] with(nolock)
+	from DBO.AGR_CASH_PAYMENTS_DEALS [REG] with(nolock)
 	where EXISTS (
 		select	*
 		from '+@SqlFullDBName+'.dbo.[TAX_UNCOLLECTED] [T] with(nolock)
@@ -1733,7 +1733,7 @@ begin
 		,	[ACC].[BLK_SUMA_MIN]
 		,	[BAL].[DAY_SALDO] 				AS [DAY_OPERATION_BALANCE] /* Day operation balance */
 
-	from DBO.[AGR_CASH_PAYMENTS_DEALS] [REG] with(nolock)
+	from DBO.AGR_CASH_PAYMENTS_DEALS [REG] with(nolock)
 	inner join '+@SqlFullDBName+'.dbo.[DEALS_CORR] [C] with(nolock)
 		on  [C].[CORR_TYPE]		= @CorrTaxServices
 		and	[C].[DEAL_TYPE]		= @DealType
@@ -1793,7 +1793,7 @@ begin
 		,	[GSI].[PRODUCT_CODE]					AS [DEAL_GS_INDIVIDUAL_PRODUCT_CODE]
 		,	[GSI].[CARD_PRODUCT]					AS [DEAL_GS_INDIVIDUAL_CARD_PRODUCT]
 
-	from DBO.[AGR_CASH_PAYMENTS_DEALS] [REG] with(nolock)
+	from DBO.AGR_CASH_PAYMENTS_DEALS [REG] with(nolock)
 	inner join '+@SqlFullDBName+'.dbo.[GS_INDIVIDUAL_PROGRAMME] [GSI] with(nolock)
 		on  [GSI].[DEAL_TYPE]		= @DealType
 		and [GSI].[DEAL_NUMBER]		= [REG].[DEAL_NUM]
@@ -1831,7 +1831,7 @@ begin
 	select	[REG].[DEAL_TYPE]
 		,	[REG].[DEAL_NUM]
 
-	from dbo.[AGR_CASH_PAYMENTS_DEALS] [REG] with(nolock)
+	from dbo.AGR_CASH_PAYMENTS_DEALS [REG] with(nolock)
 	where EXISTS (
 		select	*
 		from '+@SqlFullDBName+'.dbo.[TRAITEMS_DAY] [T] with(nolock)
@@ -1883,7 +1883,7 @@ begin
 	select	[REG].[DEAL_TYPE] 
 		,	[REG].[DEAL_NUM] 
 
-	from dbo.[AGR_CASH_PAYMENTS_DEALS] [REG] with(nolock) 
+	from dbo.AGR_CASH_PAYMENTS_DEALS [REG] with(nolock) 
 	where EXISTS ( 
 		select TOP (1) *  
 		from '+@SqlFullDBName+'.dbo.BLOCKSUM [B] with(nolock) 
@@ -1925,7 +1925,7 @@ begin
 	select	[REG].[DEAL_TYPE] 
 		,	[REG].[DEAL_NUM] 
 	
-	from dbo.[AGR_CASH_PAYMENTS_DEALS] [REG] with(nolock) 
+	from dbo.AGR_CASH_PAYMENTS_DEALS [REG] with(nolock) 
 	where EXISTS ( 
 		select TOP (1) * 
 		from '+@SqlFullDBName+'.dbo.[PARTS] [P] with(nolock) 
@@ -1967,7 +1967,7 @@ begin
 		,	[CRL].[REPRESENTATIVE_CUSTOMER_ID] 
 		,	[CRL].[CUSTOMER_ROLE_TYPE] 
 
-	from dbo.[AGR_CASH_PAYMENTS_DEALS] [D] with(nolock)
+	from dbo.AGR_CASH_PAYMENTS_DEALS [D] with(nolock)
 	inner join '+@SqlFullDBName+'.dbo.[CUSTOMERS_RIGHTS_AND_LIMITS] [CRL] with(nolock) 
 		on  [CRL].[DEAL_TYPE]	= @DealType 
 		AND	[CRL].[DEAL_NUM]	= [D].[DEAL_NUM] 
@@ -2008,7 +2008,7 @@ begin
 		,	[CRL].[CUSTOMER_ROLE_TYPE]
 
 	into dbo.[AGR_CASH_PAYMENTS_DEALS_ACTIVE_PROXY_CUSTOMERS]
-	from dbo.[AGR_CASH_PAYMENTS_DEALS] [D] with(nolock)
+	from dbo.AGR_CASH_PAYMENTS_DEALS [D] with(nolock)
 	inner join '+@SqlFullDBName+'.dbo.[CUSTOMERS_RIGHTS_AND_LIMITS] [CRL] with(nolock) 
 		on  [CRL].[DEAL_TYPE]	= @DealType 
 		AND	[CRL].[DEAL_NUM]	= [D].[DEAL_NUM] 
@@ -2060,7 +2060,7 @@ begin
 	select	[REG].[DEAL_TYPE]
 		,	[REG].[DEAL_NUM]
 
-	from dbo.[AGR_CASH_PAYMENTS_DEALS] [REG] with(nolock)
+	from dbo.AGR_CASH_PAYMENTS_DEALS [REG] with(nolock)
 	where EXISTS (
 		select	*
 		from '+@SqlFullDBName+'.dbo.[TRAITEMS_DAY] [T] with(nolock)
@@ -2160,7 +2160,7 @@ begin
 	/* 5. update deals: */
 	update [D]
 	set [HAS_TAX_UNCOLECTED] = 1
-	from dbo.[AGR_CASH_PAYMENTS_DEALS] [D]
+	from dbo.AGR_CASH_PAYMENTS_DEALS [D]
 	inner join dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_TAX_UNCOLECTED] [S] with(nolock)
 		on [S].[DEAL_NUM] = [D].[DEAL_NUM]
 		and [S].[DEAL_TYPE] = 1
@@ -2168,7 +2168,7 @@ begin
 
 	update [D]
 	set [HAS_OTHER_TAX_ACCOUNT] = 1
-	from dbo.[AGR_CASH_PAYMENTS_DEALS] [D]
+	from dbo.AGR_CASH_PAYMENTS_DEALS [D]
 	inner join dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_OTHER_TAX_ACCOUNT] [S] with(nolock)
 		on [S].[DEAL_NUM] = [D].[DEAL_NUM]
 		and [S].[DEAL_TYPE] = 1
@@ -2176,7 +2176,7 @@ begin
 
 	update [D]
 	set [HAS_LEGAL_REPRESENTATIVE] = 1
-	from dbo.[AGR_CASH_PAYMENTS_DEALS] [D]
+	from dbo.AGR_CASH_PAYMENTS_DEALS [D]
 	inner join dbo.[AGR_CASH_PAYMENTS_DEALS_LEGAL_REPRESENTATIVE] [S] with(nolock)
 		on [S].[DEAL_NUM] = [D].[DEAL_NUM]
 		and [S].[DEAL_TYPE] = 1
@@ -2184,7 +2184,7 @@ begin
 
 	update [D]
 	set [HAS_PROXY] = 1
-	from dbo.[AGR_CASH_PAYMENTS_DEALS] [D]
+	from dbo.AGR_CASH_PAYMENTS_DEALS [D]
 	inner join dbo.[AGR_CASH_PAYMENTS_DEALS_ACTIVE_PROXY_CUSTOMERS] [S] with(nolock)
 		on [S].[DEAL_NUM] = [D].[DEAL_NUM]
 		and [S].[DEAL_TYPE] = 1
@@ -2192,7 +2192,7 @@ begin
 
 	update [D]
 	set [HAS_DISTRAINT] = 1
-	from dbo.[AGR_CASH_PAYMENTS_DEALS] [D]
+	from dbo.AGR_CASH_PAYMENTS_DEALS [D]
 	inner join dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_DISTRAINT] [S] with(nolock)
 		on [S].[DEAL_NUM] = [D].[DEAL_NUM]
 		and [S].[DEAL_TYPE] = 1
@@ -2200,7 +2200,7 @@ begin
 
 	update [D]
 	set [HAS_GS_INDIVIDUAL_PROGRAMME] = 1
-	from dbo.[AGR_CASH_PAYMENTS_DEALS] [D]
+	from dbo.AGR_CASH_PAYMENTS_DEALS [D]
 	inner join dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_GS_INDIVIDUAL_PROGRAMME] [S] with(nolock)
 		on [S].[DEAL_NUM] = [D].[DEAL_NUM]
 		and [S].[DEAL_TYPE] = 1
@@ -2208,7 +2208,7 @@ begin
 
 	update [D]
 	set [HAS_WNOS_BEL] = 1
-	from dbo.[AGR_CASH_PAYMENTS_DEALS] [D]
+	from dbo.AGR_CASH_PAYMENTS_DEALS [D]
 	inner join dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_WNOS_BEL] [S] with(nolock)
 		on [S].[DEAL_NUM] = [D].[DEAL_NUM]
 		and [S].[DEAL_TYPE] = 1
@@ -2216,7 +2216,7 @@ begin
 
 	update [D]
 	set [HAS_NAR_RAZP] = 1
-	from dbo.[AGR_CASH_PAYMENTS_DEALS] [D]
+	from dbo.AGR_CASH_PAYMENTS_DEALS [D]
 	inner join dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_NAR_RAZP] [S] with(nolock)
 		on [S].[DEAL_NUM] = [D].[DEAL_NUM]
 		and [S].[DEAL_TYPE] = 1
@@ -2224,7 +2224,7 @@ begin
 
 	update [D]
 	set [IS_DORMUNT_ACCOUNT] = 1
-	from dbo.[AGR_CASH_PAYMENTS_DEALS] [D]
+	from dbo.AGR_CASH_PAYMENTS_DEALS [D]
 	inner join dbo.[AGR_CASH_PAYMENTS_DEALS_WITH_DORMUNT_ACCOUNT] [S] with(nolock)
 		on [S].[DEAL_NUM] = [D].[DEAL_NUM]
 		and [S].[DEAL_TYPE] = 1
@@ -2232,7 +2232,7 @@ begin
 
 	update [D]
 	set [PROXY_COUNT] = [S].[CNT]
-	from dbo.[AGR_CASH_PAYMENTS_DEALS] [D]
+	from dbo.AGR_CASH_PAYMENTS_DEALS [D]
 	inner join 
 	(
 		select [P].[DEAL_NUM], COUNT(*) AS [CNT]
@@ -2252,14 +2252,14 @@ begin
 		,	1 							AS [DEAL_TYPE]	
 		,	[s].[DEAL_CURRENCY_CODE]	AS [CURRENCY_CODE] 
 		,	COUNT(*) 					AS [DEAL_COUNT]
-	from dbo.[AGR_CASH_PAYMENTS_DEALS] [s] with(nolock)
+	from dbo.AGR_CASH_PAYMENTS_DEALS [s] with(nolock)
 	group by [s].[CUSTOMER_ID], [s].[DEAL_CURRENCY_CODE]
 	/* having count(*) > 1 */
 	;
 
 	/****** Object:  Index [IX_AGR_CASH_PAYMENTS_DEALS_DEAL_CURRENCY_CODE_DEAL_STD_DOG_CODE_CLIENT_SECTOR_DEAL_IS_JOINT_DEAL]    Script Date: 29.06.2022 г. 15:07:23 ******/
 	CREATE NONCLUSTERED INDEX [IX_AGR_CASH_PAYMENTS_DEALS_DEAL_CURRENCY_CODE_DEAL_STD_DOG_CODE_CLIENT_SECTOR_DEAL_IS_JOINT_DEAL] 
-	ON [dbo].[AGR_CASH_PAYMENTS_DEALS]
+	ON [dbo].AGR_CASH_PAYMENTS_DEALS
 	(
 		[DEAL_CURRENCY_CODE] ASC
 	,	[DEAL_STD_DOG_CODE] ASC
@@ -2272,7 +2272,7 @@ begin
 	;
 
 	CREATE NONCLUSTERED INDEX [IX_AGR_CASH_PAYMENTS_DEALS_DEAL_CURRENCY_CODE_CUSTOMER_ID_DEAL_NUM]
-		ON [dbo].[AGR_CASH_PAYMENTS_DEALS] ( [DEAL_CURRENCY_CODE], [CUSTOMER_ID], [DEAL_NUM] )
+		ON [dbo].AGR_CASH_PAYMENTS_DEALS ( [DEAL_CURRENCY_CODE], [CUSTOMER_ID], [DEAL_NUM] )
 	;
 
 	CREATE NONCLUSTERED INDEX [IX_AGR_CASH_PAYMENTS_DEALS_ACTIVE_PROXY_CUSTOMERS_DEAL_TYPE_DEAL_NUM_CUSTOMER_ROLE_TYPE]
@@ -2282,7 +2282,7 @@ begin
 
 	if @LogTraceInfo = 1
 	begin 
-		select  @Msg = N'After: update bist in [AGR_CASH_PAYMENTS_DEALS]', @Sql1 = N' update [AGR_CASH_PAYMENTS_DEALS] set [HAS_VALID_DOCUMENT] = 1 where ...'
+		select  @Msg = N'After: update bist in AGR_CASH_PAYMENTS_DEALS', @Sql1 = N' update AGR_CASH_PAYMENTS_DEALS set [HAS_VALID_DOCUMENT] = 1 where ...'
 	 	exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg
 	end
 
@@ -2292,7 +2292,7 @@ begin
 	begin
 		select @Msg = 'Duration: '+ dbo.FN_GET_TIME_DIFF(@TimeBeg, GetDate()) + 
 			 + ', AccData: ' + @AccountDate + ', Fileter: ' + @TestAutomationType;
-		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Msg, '*** End Execute Proc ***: dbo.[SP_CASH_PAYMENTS_INIT_DEALS]'
+		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Msg, '*** End Execute Proc ***: dbo.SP_CASH_PAYMENTS_INIT_DEALS'
 	end
 
 	return 0;
@@ -2562,7 +2562,7 @@ begin
         update [D]
             set [DAY_OPERATION_BALANCE] = [S].[DAY_SALDO]
             output [S].[ACCOUNT], INSERTED.[DAY_OPERATION_BALANCE] into @OutputUpdateTbl
-        from dbo.[AGR_CASH_PAYMENTS_DEALS] [D]
+        from dbo.AGR_CASH_PAYMENTS_DEALS [D]
         inner join #TBL_RESULT  [S]
             on [S].[ACCOUNT] = [D].[DEAL_ACCOUNT]
     ;
@@ -2654,7 +2654,7 @@ begin
 	begin 
 		select @Ben_Customer_ID = IsNull([S].[CUSTOMER_ID],-1)
 		from dbo.[RAZPREG_TA] [R] with(nolock)
-		inner join dbo.[AGR_CASH_PAYMENTS_DEALS] [S] with(nolock)
+		inner join dbo.AGR_CASH_PAYMENTS_DEALS [S] with(nolock)
 			on	[S].[DEAL_TYPE] = 1
 			and [R].[UI_DEAL_NUM] = [S].[DEAL_NUM] 
 		where [R].[ROW_ID] = @DEAL_BEN_ROW_ID
@@ -3426,14 +3426,14 @@ begin
 	end
 
 	/*********************************************************************************************************/
-	/* 3. Cleate data before upatede table: dbo.DEALS_CORR_TA; dbo.RAZPREG_TA; dbo.DT015_CUSTOMERS_ACTIONS_TA */
+	/* 3. Clear data before upatede table: dbo.DEALS_CORR_TA; dbo.RAZPREG_TA; dbo.DT015_CUSTOMERS_ACTIONS_TA */
 	begin try
-			exec @Ret = dbo.[SP_CASH_PAYMENTS_CLEAR_TA_TABLES]  @RowIdStr
+			exec @Ret = dbo.SP_CASH_PAYMENTS_CLEAR_TA_TABLES  @RowIdStr
 	end try 	
 	begin catch
 
 		select  @Msg = dbo.FN_GET_EXCEPTION_INFO()
-			,	@Sql = ' exec dbo.[SP_CASH_PAYMENTS_CLEAR_TA_TABLES] @RowIdStr = '+@RowIdStr;
+			,	@Sql = ' exec dbo.SP_CASH_PAYMENTS_CLEAR_TA_TABLES @RowIdStr = '+@RowIdStr;
 
 		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql, @Msg;
 		return 1;
@@ -3492,7 +3492,7 @@ begin
 	/* 5. Update data in tables: dbo.[DEALS_CORR_TA]; dbo.[RAZPREG_TA]; dbo.[DT015_CUSTOMERS_ACTIONS_TA] */
 
 	/******************************************************************************************************/
-	/* 5.1. Updare table dbo.[DEALS_CORR_TA] */
+	/* 5.1. Update table dbo.[DEALS_CORR_TA] */
 	if IsNull(@DEALS_CORR_TA_RowID,-1) > 0
 	begin
 
@@ -3512,7 +3512,7 @@ begin
 	end
 
 	/******************************************************************************************************/
-	/* 5.2. Updare table  dbo.[RAZPREG_TA] */
+	/* 5.2. Update table  dbo.[RAZPREG_TA] */
 	begin try
 			exec dbo.[SP_CASH_PAYMENTS_UPDATE_RAZREG_TA] @OnlineSqlServerName, @OnlineSqlDataBaseName
 			, @RowIdStr, 1, @DealNum, 0, @WithUpdate
@@ -3544,7 +3544,7 @@ begin
 	end	
 
 	/******************************************************************************************************/
-	/* 5.3. Updare table dbo.[DT015_CUSTOMERS_ACTIONS_TA] for Customer and Proxy */
+	/* 5.3. Update table dbo.[DT015_CUSTOMERS_ACTIONS_TA] for Customer and Proxy */
 	begin try
 			exec dbo.[SP_CASH_PAYMENTS_UPDATE_CLIENT_DATA] @OnlineSqlServerName, @OnlineSqlDataBaseName, @CurrAccDate
 			, @RowIdStr, @CustomerID, @ProxyID, @WithUpdate
@@ -3561,7 +3561,7 @@ begin
 	end catch
 
 	/******************************************************************************************************/
-	/* 5.4. Updare table dbo.[PREV_COMMON_TA] for Tax and Preferencial codes  */
+	/* 5.4. Update table dbo.[PREV_COMMON_TA] for Tax and Preferencial codes  */
 	-- @TODO: UPDATE TAX CODE - SP_CASH_PAYMENTS_UPDATE_TAXED_INFO
 	-- begin try
 	-- 		exec dbo.[SP_CASH_PAYMENTS_UPDATE_TAXED_INFO] @OnlineSqlServerName, @OnlineSqlDataBaseName, @CurrAccDate
@@ -3787,7 +3787,7 @@ begin
 	/* prepare tables joint statement:  */
 	-- @SECTOR and @CCY_CODE_DEAL
 	select @Sql2 = N'
-	from dbo.[AGR_CASH_PAYMENTS_DEALS] [DEAL] with(nolock)
+	from dbo.AGR_CASH_PAYMENTS_DEALS [DEAL] with(nolock)
 	inner join dbo.[AGR_CASH_PAYMENTS_CUSTOMERS] [CUST] with(nolock)
 		on	[CUST].[CUSTOMER_ID] = [DEAL].[CUSTOMER_ID]
 		and [DEAL].[CLIENT_SECTOR] = '+str(@SECTOR,len(@SECTOR),0)+N'
@@ -3854,7 +3854,7 @@ begin
 				select top(1)
 						[D].[DEAL_TYPE]	AS	[DEAL_TYPE_BEN] 
 					,	[D].[DEAL_NUM] 	AS	[DEAL_NUM_BEN] 
-				from dbo.[AGR_CASH_PAYMENTS_DEALS] [D] with(nolock)
+				from dbo.AGR_CASH_PAYMENTS_DEALS [D] with(nolock)
 				where	[D].[CUSTOMER_ID] = [DEAL].[CUSTOMER_ID]
 					and [D].[DEAL_CURRENCY_CODE] = '+str(@CCY_CODE_DEAL_BEN,len(@CCY_CODE_DEAL_BEN),0)+'
 					and	[D].[DEAL_NUM] <> [DEAL].[DEAL_NUM]
@@ -3875,7 +3875,7 @@ begin
 				select top(1)
 						[D].[DEAL_TYPE]	AS	[DEAL_TYPE_BEN] 
 					,	[D].[DEAL_NUM] 	AS	[DEAL_NUM_BEN] 
-				from dbo.[AGR_CASH_PAYMENTS_DEALS] [D] with(nolock)
+				from dbo.AGR_CASH_PAYMENTS_DEALS [D] with(nolock)
 				where	[D].[CUSTOMER_ID] <> [DEAL].[CUSTOMER_ID]
 					and [D].[DEAL_CURRENCY_CODE] = '+str(@CCY_CODE_DEAL_BEN,len(@CCY_CODE_DEAL_BEN),0)
 					+ @CND_STD_CONTRACT_BEN + '

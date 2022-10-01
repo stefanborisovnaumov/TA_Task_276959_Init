@@ -1,6 +1,6 @@
 /****************************************************************/
--- Cleare data 
---EXEC DBO.[SP_CASH_PAYMENTS_CLEAR_TA_TABLES] 400049
+-- Clear data 
+--EXEC DBO.SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_CLEAR_CURRENT_DATA 400049
 --GO
 
 DECLARE @Ret int = 0
@@ -8,7 +8,7 @@ DECLARE @Ret int = 0
 
 /****************************************************************/
 -- Find suitable Deal and update TA Tables:
-EXEC @Ret = dbo.[SP_CASH_PAYMENTS_UPDATE_TA_TABLES] @TestCaseID
+EXEC @Ret = dbo.[SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES] @TestCaseID
 ;
 
 /****************************************************************/

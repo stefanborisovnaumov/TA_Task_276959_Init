@@ -1,108 +1,119 @@
-
 /********************************************************************************************************/
-/* Процедура за определяне на критериите който ни пречат да намерим подходяща сделка за датен TestCase */
-DROP PROCEDURE IF EXISTS dbo.[SP_CASH_PAYMENTS_FIND_SUITABLE_DEAL]
-GO
-
-CREATE PROCEDURE dbo.[SP_CASH_PAYMENTS_FIND_SUITABLE_DEAL]
+/* РџСЂРѕС†РµРґСѓСЂР° Р·Р° РѕРїСЂРµРґРµР»СЏРЅРµ РЅР° РєСЂРёС‚РµСЂРёРёС‚Рµ РєРѕР№С‚Рѕ РЅРё РїСЂРµС‡Р°С‚ РґР° РЅР°РјРµСЂРёРј РїРѕРґС…РѕРґСЏС‰Р° СЃРґРµР»РєР° Р·Р° РґР°С‚РµРЅ TestCase */
+CREATE OR ALTER PROCEDURE dbo.[SP_CASH_PAYMENTS_FIND_SUITABLE_DEAL]
 (
-	@TestCaseRowID nvarchar(16)
-,	@CurrAccDate datetime
+	@TestCaseRowID NVARCHAR(16)
+	, @CurrAccDate DATETIME
 )
-AS 
-begin
+AS
+BEGIN
+	DECLARE @LogTraceInfo INT = 1
+		, @LogBegEndProc INT = 1
+		, @TimeBeg DATETIME = GetDate()
+	DECLARE @Msg NVARCHAR(max) = N''
+		, @Rows INT = 0
+		, @Err INT = 0
+		, @Sql NVARCHAR(4000) = N''
 
-	declare @LogTraceInfo int = 1,	@LogBegEndProc int = 1,	@TimeBeg datetime = GetDate();
-	;
-	declare @Msg nvarchar(max) = N'', @Rows int = 0, @Err int = 0,	@Sql nvarchar(4000) = N''
-	;
 	/************************************************************************************************************/
 	/* Log Begining of Procedure execution */
-	if @LogBegEndProc = 1 exec dbo.SP_SYS_LOG_PROC @@PROCID, @TestCaseRowID, '*** Begin Execute Proc ***: dbo.[SP_CASH_PAYMENTS_FIND_SUITABLE_DEAL]'
-	;
+	IF @LogBegEndProc = 1
+		EXEC dbo.SP_SYS_LOG_PROC @@PROCID
+			, @TestCaseRowID
+			, '*** Begin Execute Proc ***: dbo.[SP_CASH_PAYMENTS_FIND_SUITABLE_DEAL]'
 
 	/************************************************************************************************************/
 	/* @TODO: */
 	/**********************************************************************************/
-	drop table if EXISTS dbo.[#TBL_RESULT]
-	;
-	create table dbo.[#TBL_RESULT]
+	DROP TABLE IF EXISTS dbo.[#TBL_RESULT]
+	CREATE TABLE dbo.[#TBL_RESULT]
 	(
-		[TEST_ID]		nvarchar(512) 
-	,	[DEAL_TYPE]		smallint
-	,	[DEAL_NUM]		INT 	
-	,	[CUSTOMER_ID]	INT
-	,	[REPRESENTATIVE_CUSTOMER_ID] INT
-	,	[DEAL_TYPE_BEN]	SMALLINT
-	,	[DEAL_NUM_BEN]	INT
+		[TEST_ID] NVARCHAR(512)
+		, [DEAL_TYPE] SMALLINT
+		, [DEAL_NUM] INT
+		, [CUSTOMER_ID] INT
+		, [REPRESENTATIVE_CUSTOMER_ID] INT
+		, [DEAL_TYPE_BEN] SMALLINT
+		, [DEAL_NUM_BEN] INT
 	)
-	;
 
-	declare @CondCount int = 0, @FistCondRowID int = 0, @ScipCondIndex int = 4, @ScipTblRowId int = 0
-	;
+	DECLARE @CondCount INT = 0
+		, @FistCondRowID INT = 0
+		, @ScipCondIndex INT = 4
+		, @ScipTblRowId INT = 0
 
-	select @CondCount = count(*), @FistCondRowID = min([ID])
-	from dbo.[AGR_CASH_PAYMENTS_SQL_CONDITIONS] with (nolock)
-	where [TEST_ID] = @TestCaseRowID
-	;
+	SELECT @CondCount = count(*)
+		, @FistCondRowID = min([ID])
+	FROM dbo.[AGR_CASH_PAYMENTS_SQL_CONDITIONS] WITH (NOLOCK)
+	WHERE [TEST_ID] = @TestCaseRowID
 
-	while @Rows = 0 AND @ScipCondIndex < @CondCount
-	begin
+	WHILE @Rows = 0
+		AND @ScipCondIndex < @CondCount
+	BEGIN
+		TRUNCATE TABLE dbo.[#TBL_RESULT]
 
-		truncate table dbo.[#TBL_RESULT]
-		;
-
-		select  @Sql = N'', @Rows = 0, @ScipTblRowId = @FistCondRowID + @ScipCondIndex
-		;
+		SELECT @Sql = N''
+			, @Rows = 0
+			, @ScipTblRowId = @FistCondRowID + @ScipCondIndex
 
 		-- Prepare Sql to execute: 
-		select @Sql += [CND].[COUND] 
-		from dbo.[AGR_CASH_PAYMENTS_SQL_CONDITIONS] WITH(NOLOCK)
-		cross apply (
-			select case when [ID] = @ScipTblRowId 
-					then '' else [SQL_COND] end	as [COUND] 
-		) [CND]
-		where [TEST_ID] = @TestCaseRowID 
-		order by [ID]
+		SELECT @Sql += [CND].[COUND]
+		FROM dbo.[AGR_CASH_PAYMENTS_SQL_CONDITIONS] WITH (NOLOCK)
+		CROSS APPLY (
+			SELECT CASE 
+					WHEN [ID] = @ScipTblRowId
+						THEN ''
+					ELSE [SQL_COND]
+					END AS [COUND]
+			) [CND]
+		WHERE [TEST_ID] = @TestCaseRowID
+		ORDER BY [ID]
 
 		-- Execute Sql:
-		begin try
-			insert into dbo.[#TBL_RESULT]
-			exec sp_executesql @Sql
-		end try
+		BEGIN TRY
+			INSERT INTO dbo.[#TBL_RESULT]
+			EXEC sp_executesql @Sql
+		END TRY
 
-		begin catch
-			select @Msg = 'Error execute Sql:' + dbo.FN_GET_EXCEPTION_INFO()
-			from dbo.[AGR_CASH_PAYMENTS_SQL_CONDITIONS] with(nolock)
-			where [ID] = @ScipTblRowId
+		BEGIN CATCH
+			SELECT @Msg = 'Error execute Sql:' + dbo.FN_GET_EXCEPTION_INFO()
+			FROM dbo.[AGR_CASH_PAYMENTS_SQL_CONDITIONS] WITH (NOLOCK)
+			WHERE [ID] = @ScipTblRowId
 
-			exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql, @Msg
-		end catch
+			EXEC dbo.SP_SYS_LOG_PROC @@PROCID
+				, @Sql
+				, @Msg
+		END CATCH
 
-		select @Rows = count(*)
-		from dbo.[#TBL_RESULT] with(nolock)
+		SELECT @Rows = count(*)
+		FROM dbo.[#TBL_RESULT] WITH (NOLOCK)
 
 		-- Test Result:
-		if @Rows > 0
-		begin
-			select @Msg = 'Test Case ID:'+[TEST_ID]+'; Found records: '+str(@Rows,3,0)+'; Skiped condition info: "'+[DESCR]+'"; Skiped SQL condition: "'+[SQL_COND]+'";'
-			from dbo.[AGR_CASH_PAYMENTS_SQL_CONDITIONS] with(nolock)
-			where [id] = @ScipTblRowId
-			exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql, @Msg
-		end
+		IF @Rows > 0
+		BEGIN
+			SELECT @Msg = 'Test Case ID:' + [TEST_ID] + ' Found records: ' + str(@Rows, 3, 0) + ' Skiped condition info: "' + [DESCR] + '" Skiped SQL condition: "' + [SQL_COND] + '"'
+			FROM dbo.[AGR_CASH_PAYMENTS_SQL_CONDITIONS] WITH (NOLOCK)
+			WHERE [id] = @ScipTblRowId
 
-		set @ScipCondIndex += 1;
-	end
-	
+			EXEC dbo.SP_SYS_LOG_PROC @@PROCID
+				, @Sql
+				, @Msg
+		END
+
+		SET @ScipCondIndex += 1
+	END
+
 	/************************************************************************************************************/
 	/* Log End Of Procedure */
-	if @LogBegEndProc = 1
-	begin 
-		select @Msg = 'Duration: '+ dbo.FN_GET_TIME_DIFF(@TimeBeg, GetDate())+', TA Row ID: '+@TestCaseRowID+'; Found Records: '+str(@Rows,2,0)+'.';
-		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Msg, '*** End Execute Proc ***: dbo.dbo.[SP_CASH_PAYMENTS_FIND_SUITABLE_DEAL]'
-	end
+	IF @LogBegEndProc = 1
+	BEGIN
+		SELECT @Msg = 'Duration: ' + dbo.FN_GET_TIME_DIFF(@TimeBeg, GetDate()) + ', TA Row ID: ' + @TestCaseRowID + ' Found Records: ' + str(@Rows, 2, 0) + '.'
 
-	return 0;
-end 
-go
+		EXEC dbo.SP_SYS_LOG_PROC @@PROCID
+			, @Msg
+			, '*** End Execute Proc ***: dbo.dbo.[SP_CASH_PAYMENTS_FIND_SUITABLE_DEAL]'
+	END
 
+	RETURN 0
+END
+GO

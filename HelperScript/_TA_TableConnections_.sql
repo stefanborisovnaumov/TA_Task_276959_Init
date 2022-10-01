@@ -1,12 +1,12 @@
---вносна бележка--
+--РІРЅРѕСЃРЅР° Р±РµР»РµР¶РєР°--
 select 'PREV' AS [REG], * 
 from PREV_COMMON_TA
-where ROW_ID = '400003'--сделка--
+where ROW_ID = '400003'--СЃРґРµР»РєР°--
 go
 
 select 'DEAL' AS [REG], * 
 from RAZPREG_TA
-	where ROW_ID = '200010'--титуляр
+	where ROW_ID = '200010'--С‚РёС‚СѓР»СЏСЂ
 go
 
 select 'CUST' AS [REG], * 
@@ -14,14 +14,14 @@ from DT015_CUSTOMERS_ACTIONS_TA
 	where ROW_ID = '100025'
 go
 
---има ли титуляра пълномощник:
+--РёРјР° Р»Рё С‚РёС‚СѓР»СЏСЂР° РїСЉР»РЅРѕРјРѕС‰РЅРёРє:
 select 'SPEC' AS [REG], * 
 from PROXY_SPEC_TA
-	where REF_ID = '100025'--кой е пълномощника пълномощник:
+	where REF_ID = '100025'--РєРѕР№ Рµ РїСЉР»РЅРѕРјРѕС‰РЅРёРєР° РїСЉР»РЅРѕРјРѕС‰РЅРёРє:
 go
 
 --select PROXY_CLIENT_ID from PROXY_SPEC_TA
---	where REF_ID = '100025'--Kъде трябва да се актуализират данните за пълномощника
+--	where REF_ID = '100025'--KСЉРґРµ С‚СЂСЏР±РІР° РґР° СЃРµ Р°РєС‚СѓР°Р»РёР·РёСЂР°С‚ РґР°РЅРЅРёС‚Рµ Р·Р° РїСЉР»РЅРѕРјРѕС‰РЅРёРєР°
 --go
 
 select 'PROXY' AS [REG], * 
@@ -29,12 +29,12 @@ from DT015_CUSTOMERS_ACTIONS_TA
 	where ROW_ID = '100400'
 go
 
---Има и връзка между Prev_common_ta и DT015_CUSTOMERS_ACTIONS_TA, която изповаме за да знаем с кое ЕГН да влезем в сесия, когато влизаме с пълномощник.
+--РРјР° Рё РІСЂСЉР·РєР° РјРµР¶РґСѓ Prev_common_ta Рё DT015_CUSTOMERS_ACTIONS_TA, РєРѕСЏС‚Рѕ РёР·РїРѕРІР°РјРµ Р·Р° РґР° Р·РЅР°РµРј СЃ РєРѕРµ Р•Р“Рќ РґР° РІР»РµР·РµРј РІ СЃРµСЃРёСЏ, РєРѕРіР°С‚Рѕ РІР»РёР·Р°РјРµ СЃ РїСЉР»РЅРѕРјРѕС‰РЅРёРє.
 select PROXY_ROW_ID from PREV_COMMON_TA
-	where ROW_ID = '400003'--така пак се стига до тук:
+	where ROW_ID = '400003'--С‚Р°РєР° РїР°Рє СЃРµ СЃС‚РёРіР° РґРѕ С‚СѓРє:
 go
 
---Пълномощник--
+--РџСЉР»РЅРѕРјРѕС‰РЅРёРє--
 select * from DT015_CUSTOMERS_ACTIONS_TA
 where ROW_ID in
 (select PROXY_ROW_ID from PREV_COMMON_TA
@@ -43,7 +43,7 @@ where ROW_ID in
 )
 go
 
---Титуляр--
+--РўРёС‚СѓР»СЏСЂ--
 select * from DT015_CUSTOMERS_ACTIONS_TA
 where ROW_ID in (select REF_ID from RAZPREG_TA where ROW_ID in (select REF_ID from PREV_COMMON_TA where ROW_ID = '400003') )
 go
@@ -51,25 +51,25 @@ go
 /******************************************************************/
 declare @TestCaseID int = '400002'
 ;
--- View което показва само данните подлежащи на актуализация
+-- View РєРѕРµС‚Рѕ РїРѕРєР°Р·РІР° СЃР°РјРѕ РґР°РЅРЅРёС‚Рµ РїРѕРґР»РµР¶Р°С‰Рё РЅР° Р°РєС‚СѓР°Р»РёР·Р°С†РёСЏ
 select * from dbo.[VIEW_CASH_PAYMENT_TEST_CASE_DATA]
 where [ROW_ID] = @TestCaseID
 ;
 
--- Преглед на всички данни:
+-- РџСЂРµРіР»РµРґ РЅР° РІСЃРёС‡РєРё РґР°РЅРЅРё:
 select * 
---вносна бележка--
+--РІРЅРѕСЃРЅР° Р±РµР»РµР¶РєР°--
 from dbo.[PREV_COMMON_TA] [PREV] WITH(NOLOCK)
-/* Сделка */
+/* РЎРґРµР»РєР° */
 INNER JOIN dbo.[RAZPREG_TA] [DEAL] WITH(NOLOCK)
 	ON [PREV].[REF_ID] = [DEAL].[ROW_ID]
-/* Титуляр */
+/* РўРёС‚СѓР»СЏСЂ */
 INNER JOIN dbo.[DT015_CUSTOMERS_ACTIONS_TA] [CUST] WITH(NOLOCK)
 	ON [CUST].[ROW_ID] = [DEAL].[REF_ID]
-/* Връзка към пълномощник */
+/* Р’СЂСЉР·РєР° РєСЉРј РїСЉР»РЅРѕРјРѕС‰РЅРёРє */
 LEFT OUTER JOIN dbo.[PROXY_SPEC_TA] [PSPEC] WITH(NOLOCK)
 	ON [PSPEC].[REF_ID] = [DEAL].[REF_ID]
-/* Даннни за пълномощник */
+/* Р”Р°РЅРЅРЅРё Р·Р° РїСЉР»РЅРѕРјРѕС‰РЅРёРє */
 LEFT OUTER JOIN dbo.[DT015_CUSTOMERS_ACTIONS_TA] [PROXY] WITH(NOLOCK)
 	ON [PROXY].[ROW_ID] = [PSPEC].[PROXY_CLIENT_ID]
 where [PREV].[ROW_ID] = @TestCaseID 

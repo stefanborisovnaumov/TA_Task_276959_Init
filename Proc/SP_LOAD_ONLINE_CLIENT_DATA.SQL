@@ -1,6 +1,6 @@
 
 /********************************************************************************************************/
-/* Процедура за зареждане на Клиентски данни от OnLineDB по CustomerID */
+/* РџСЂРѕС†РµРґСѓСЂР° Р·Р° Р·Р°СЂРµР¶РґР°РЅРµ РЅР° РљР»РёРµРЅС‚СЃРєРё РґР°РЅРЅРё РѕС‚ OnLineDB РїРѕ CustomerID */
 DROP PROCEDURE IF EXISTS dbo.[SP_LOAD_ONLINE_CLIENT_DATA]
 GO
 
@@ -54,9 +54,9 @@ begin
 		,	[CUST].[COMPANY_EFN]				AS [COMPANY_EFN]	
 		,	[MCLC].[CL_CODE]					AS [MAIN_CLIENT_CODE]
 		,	[NOTE].[HAS_POPUP_NOTE]				AS [UI_NOTES_EXIST]
-		,	[XF].[IS_ZAPOR]						AS [IS_ZAPOR]			/* [IS_ZAPOR] : (дали има съдебен запор някоя от сделките на клиента) */
-		,	IsNull([DOC].[DOCUMENT_TYPE],-1)	AS [ID_DOCUMENT_TYPE]	/* Тип на личния документ - код от NM405 */
-		,	IsNull([DOC].[ID_NUMBER], '''')		AS [ID_NUMBER]			/* [ID_NUMBER] Номера на: лична карта; паспорт; шофьорска книжка ... */
+		,	[XF].[IS_ZAPOR]						AS [IS_ZAPOR]			/* [IS_ZAPOR] : (РґР°Р»Рё РёРјР° СЃСЉРґРµР±РµРЅ Р·Р°РїРѕСЂ РЅСЏРєРѕСЏ РѕС‚ СЃРґРµР»РєРёС‚Рµ РЅР° РєР»РёРµРЅС‚Р°) */
+		,	IsNull([DOC].[DOCUMENT_TYPE],-1)	AS [ID_DOCUMENT_TYPE]	/* РўРёРї РЅР° Р»РёС‡РЅРёСЏ РґРѕРєСѓРјРµРЅС‚ - РєРѕРґ РѕС‚ NM405 */
+		,	IsNull([DOC].[ID_NUMBER], '''')		AS [ID_NUMBER]			/* [ID_NUMBER] РќРѕРјРµСЂР° РЅР°: Р»РёС‡РЅР° РєР°СЂС‚Р°; РїР°СЃРїРѕСЂС‚; С€РѕС„СЊРѕСЂСЃРєР° РєРЅРёР¶РєР° ... */
 		,	[XF].[SERVICE_GROUP_EGFN]			AS [SERVICE_GROUP_EGFN]	/* TODO: [SERVICE_GROUP_EGFN]: */
 		,	[XF].[IS_ACTUAL]					AS [IS_ACTUAL]			/* TODO: [IS_ACTUAL]: ?!?*/
 		,	[PR].[PROXY_COUNT]					AS [PROXY_COUNT]
@@ -85,7 +85,7 @@ begin
 		from '+@SqlFullDBName+'.dbo.[DT015_NOTES] [n] with(nolock)
 		where	[n].[CUSTOMER_ID] = [CUST].[CUSTOMER_ID]
 			and [n].[CLIENT_NOTETYPE] = 1 /* enum ClientNoteType : ClientNoteTypeExtraData = 1 */
-			and DATALENGTH([n].[NOTE]) > 1 /* Да има поне един символ освен нулевия терминатор */
+			and DATALENGTH([n].[NOTE]) > 1 /* Р”Р° РёРјР° РїРѕРЅРµ РµРґРёРЅ СЃРёРјРІРѕР» РѕСЃРІРµРЅ РЅСѓР»РµРІРёСЏ С‚РµСЂРјРёРЅР°С‚РѕСЂ */
 	) [NOTE]
 	outer apply (
 		select top(1) [NM405_DOCUMENT_TYPE]	as [DOCUMENT_TYPE]
@@ -93,7 +93,7 @@ begin
 			,	[ISSUER_COUNTRY_CODE]		as [ISSUER_COUNTRY_CODE]
 		from '+@SqlFullDBName+'.dbo.[DT015_IDENTITY_DOCUMENTS] [d] with(nolock)
 		where [d].[CUSTOMER_ID] = [CUST].[CUSTOMER_ID]
-			and [d].[NM405_DOCUMENT_TYPE] IN (1, 7, 8) /* 1 - Лична карта; 7 - Паспорт; 8 - Шофьорска книжка */
+			and [d].[NM405_DOCUMENT_TYPE] IN (1, 7, 8) /* 1 - Р›РёС‡РЅР° РєР°СЂС‚Р°; 7 - РџР°СЃРїРѕСЂС‚; 8 - РЁРѕС„СЊРѕСЂСЃРєР° РєРЅРёР¶РєР° */
 		order by [d].[NM405_DOCUMENT_TYPE]
 	) [DOC]
 	where [CUST].[CUSTOMER_ID] = ' + str(@CUSTOMER_ID,len(@CUSTOMER_ID),0)

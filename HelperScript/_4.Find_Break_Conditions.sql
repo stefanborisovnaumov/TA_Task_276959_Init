@@ -12,7 +12,7 @@ create table dbo.[#TBL_RESULT]
 )
 go
 
-/* 1.2. Cleare Test Case conditions table */
+/* 1.2. Clear Test Case conditions table */
 truncate table [AGR_CASH_PAYMENTS_SQL_CONDITIONS]
 go
 
@@ -20,9 +20,9 @@ go
 --go
 
 /*********************************************************************************************************/
-/* 2. Търсим подходящи сделки за вскички Тестови случай: */
+/* 2. РўСЉСЂСЃРёРј РїРѕРґС…РѕРґСЏС‰Рё СЃРґРµР»РєРё Р·Р° РІСЃРєРёС‡РєРё РўРµСЃС‚РѕРІРё СЃР»СѓС‡Р°Р№: */
 
-declare	@Curr_Acc_Date datetime = Getdate() /* може да използваме текущата счетоводната дата на системата */
+declare	@Curr_Acc_Date datetime = Getdate() /* РјРѕР¶Рµ РґР° РёР·РїРѕР»Р·РІР°РјРµ С‚РµРєСѓС‰Р°С‚Р° СЃС‡РµС‚РѕРІРѕРґРЅР°С‚Р° РґР°С‚Р° РЅР° СЃРёСЃС‚РµРјР°С‚Р° */
 ;
 declare curTestCase cursor for 
 select [ROW_ID], [TA_TYPE]
@@ -37,7 +37,7 @@ fetch next from curTestCase into @TA_ID, @TA_Type
 while @@FETCH_STATUS = 0 
 begin
 
-	exec @Ret = dbo.[SP_CASH_PAYMENTS_UPDATE_TA_TABLES_PREPARE_CONDITIONS]	
+	exec @Ret = dbo.[SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_PREPARE_CONDITIONS]	
 		@TestCaseRowID = @TA_ID, @CurrAccDate = @Curr_Acc_Date, @SaveTAConditions = 1
 
 	fetch next from curTestCase into @TA_ID, @TA_Type
@@ -50,14 +50,14 @@ deallocate curTestCase;
 go
 
 /*********************************************************************************************************/
-/* 3. Тестови случай за който по текущите критерии не са намерени сделки: */
+/* 3. РўРµСЃС‚РѕРІРё СЃР»СѓС‡Р°Р№ Р·Р° РєРѕР№С‚Рѕ РїРѕ С‚РµРєСѓС‰РёС‚Рµ РєСЂРёС‚РµСЂРёРё РЅРµ СЃР° РЅР°РјРµСЂРµРЅРё СЃРґРµР»РєРё: */
 select distinct [TEST_ID] 
 from [AGR_CASH_PAYMENTS_SQL_CONDITIONS] with(nolock)
 go
 
 /*********************************************************************************************************/
 /* 4. Find one unaccepted condition: */
-declare	@Curr_Acc_Date datetime = Getdate() /* може да използваме текущата счетоводната дата на системата */
+declare	@Curr_Acc_Date datetime = Getdate() /* РјРѕР¶Рµ РґР° РёР·РїРѕР»Р·РІР°РјРµ С‚РµРєСѓС‰Р°С‚Р° СЃС‡РµС‚РѕРІРѕРґРЅР°С‚Р° РґР°С‚Р° РЅР° СЃРёСЃС‚РµРјР°С‚Р° */
 ;
 
 declare curTestCase cursor for 

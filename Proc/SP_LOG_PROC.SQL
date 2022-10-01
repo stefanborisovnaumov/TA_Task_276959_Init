@@ -112,7 +112,7 @@ BEGIN
 	FROM 	dbo.[CURRENCIES_TA] WITH (NOLOCK)
 	WHERE	[CCY_CODE] = @TO_CCY
 
-	/* Ако двете валути са еднакви връщаме входната сума */
+	/* РђРєРѕ РґРІРµС‚Рµ РІР°Р»СѓС‚Рё СЃР° РµРґРЅР°РєРІРё РІСЂСЉС‰Р°РјРµ РІС…РѕРґРЅР°С‚Р° СЃСѓРјР° */
 	IF( @SUM_CCY IS NULL OR @SUM_CCY = @TO_CCY )
 		RETURN ROUND( ISNULL( @SUMA, 0.0 ), ISNULL(@PRE_TO, 2) )
 
@@ -189,7 +189,7 @@ ALTER TABLE dbo.[SYS_LOG_PROC]
 GO
 
 
-/****** Object:  StoredProcedure dbo.[sp_log_proc]    Script Date: 03.05.2022 Рі. 14:44:11 ******/
+/****** Object:  StoredProcedure dbo.[sp_log_proc]    Script Date: 03.05.2022 Р С–. 14:44:11 ******/
 DROP PROCEDURE IF EXISTS dbo.[SP_SYS_LOG_PROC]
 GO
 
@@ -208,7 +208,7 @@ GO
 
 
 /********************************************************************************************************/
-/* Процедура за селектиране на всички клиенти от Online базата с активни запори */
+/* РџСЂРѕС†РµРґСѓСЂР° Р·Р° СЃРµР»РµРєС‚РёСЂР°РЅРµ РЅР° РІСЃРёС‡РєРё РєР»РёРµРЅС‚Рё РѕС‚ Online Р±Р°Р·Р°С‚Р° СЃ Р°РєС‚РёРІРЅРё Р·Р°РїРѕСЂРё */
 DROP PROC IF EXISTS dbo.[SP_LOAD_ONLINE_CUSTOMERS_WITH_DISTRAINT]
 GO
 
@@ -307,7 +307,7 @@ end
 go
 
 /********************************************************************************************************/
-/* Процедура за селектиране на всички клиенти от OnlineDb с неплатени такси към всички кл. сметки */
+/* РџСЂРѕС†РµРґСѓСЂР° Р·Р° СЃРµР»РµРєС‚РёСЂР°РЅРµ РЅР° РІСЃРёС‡РєРё РєР»РёРµРЅС‚Рё РѕС‚ OnlineDb СЃ РЅРµРїР»Р°С‚РµРЅРё С‚Р°РєСЃРё РєСЉРј РІСЃРёС‡РєРё РєР». СЃРјРµС‚РєРё */
 DROP PROC IF EXISTS dbo.[SP_LOAD_ONLINE_CUSTOMERS_WITH_UNCOLLECTED_TAX_CONNECTED_TO_ALL_ACCOUNTS]
 GO
 
@@ -354,7 +354,7 @@ begin
         on [a].[PART_ID] = [T].[ACCOUNT_DT]
     inner join '+@SqlFullDBName+'.dbo.[DT015] [C] with(nolock)
         on [C].[CODE] = [A].[CLIENT_ID]
-    where	[T].[TAX_STATUS] =  0 /* eTaxActive = 0 // Действаща такса */
+    where	[T].[TAX_STATUS] =  0 /* eTaxActive = 0 // Р”РµР№СЃС‚РІР°С‰Р° С‚Р°РєСЃР° */
         and [T].[COLLECT_FROM_ALL_CUSTOMER_ACCOUNTS] = 1
     ';
 

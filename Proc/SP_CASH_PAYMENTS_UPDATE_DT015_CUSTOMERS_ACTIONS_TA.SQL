@@ -1,6 +1,6 @@
 
 /********************************************************************************************************/
-/* Процедура за актуализация на Таблица dbo.[DT015_CUSTOMERS_ACTIONS_TA] */
+/* РџСЂРѕС†РµРґСѓСЂР° Р·Р° Р°РєС‚СѓР°Р»РёР·Р°С†РёСЏ РЅР° РўР°Р±Р»РёС†Р° dbo.[DT015_CUSTOMERS_ACTIONS_TA] */
 DROP PROCEDURE IF EXISTS dbo.[SP_CASH_PAYMENTS_UPDATE_DT015_CUSTOMERS_ACTIONS_TA]
 GO
 
@@ -83,16 +83,16 @@ begin
 	if @LogResultTable = 1 select * from dbo.[#TBL_ONLINE_DT015_INFO] with(nolock)
 	;
 
-	/* Тези данни ще ги заредим от вече 'кешираниет'  */
+	/* РўРµР·Рё РґР°РЅРЅРё С‰Рµ РіРё Р·Р°СЂРµРґРёРј РѕС‚ РІРµС‡Рµ 'РєРµС€РёСЂР°РЅРёРµС‚'  */
 	declare @IS_ZAPOR int = 0,	@SERVICE_GROUP_EGFN varchar(16) = N''
 	;
-	/* Дали клиента има запори по някоя от сделките: */
+	/* Р”Р°Р»Рё РєР»РёРµРЅС‚Р° РёРјР° Р·Р°РїРѕСЂРё РїРѕ РЅСЏРєРѕСЏ РѕС‚ СЃРґРµР»РєРёС‚Рµ: */
 	select top(1) @IS_ZAPOR = 1 
-	from dbo.[AGR_CASH_PAYMENTS_CUSTOMERS_WITH_DISTRAINT] [D] with(nolock)
+	from dbo.[AGR_TA_EXISTING_ONLINE_DATA_CUSTOMERS_WITH_DISTRAINT] [D] with(nolock)
 	where [D].[CUSTOMER_ID] = @OnlineDbCustomer_ID
 	;
 
-	/* За клиентите със служебни EGFN-та да заредим Оригиналното: */
+	/* Р—Р° РєР»РёРµРЅС‚РёС‚Рµ СЃСЉСЃ СЃР»СѓР¶РµР±РЅРё EGFN-С‚Р° РґР° Р·Р°СЂРµРґРёРј РћСЂРёРіРёРЅР°Р»РЅРѕС‚Рѕ: */
 	DECLARE @ClientIdentifier varchar(32) = N''
 		,	@HasDublClientIDs int = 0
 		,	@IsOrioginalID int = 0
@@ -100,7 +100,7 @@ begin
 	select @ClientIdentifier	= [CLIENT_IDENTIFIER]	
 		,	@HasDublClientIDs	= [HAS_DUBL_CLIENT_IDS]
 		,	@IsOrioginalID		= [IS_ORIGINAL_EGFN]
-	from  dbo.[AGR_CASH_PAYMENTS_CUSTOMERS] [CUST] with(nolock)
+	from  dbo.[AGR_TA_EXISTING_ONLINE_DATA_CUSTOMERS] [CUST] with(nolock)
 	where [CUST].[CUSTOMER_ID] = @OnlineDbCustomer_ID
 
 	if @HasDublClientIDs = 1
@@ -110,7 +110,7 @@ begin
 		if @IsOrioginalID = 0
 		begin
 			select top(1) @SERVICE_GROUP_EGFN = [EGFN]
-			from [AGR_CASH_PAYMENTS_CUSTOMERS_DUBL_EGFN] with(nolock)
+			from [AGR_TA_EXISTING_ONLINE_DATA_CUSTOMERS_DUPLICATED_EGFN] with(nolock)
 			where [EGFN] = CAST(RIGHT(RTRIM(@ClientIdentifier), 13) as bigint)
 		end
 	end 
@@ -125,12 +125,12 @@ begin
 			,	[COMPANY_EFN]			= [S].[COMPANY_EFN]				 -- DT015_CUSTOMERS_ACTIONS_TA	COMPANY_EFN
 			,	[UI_CLIENT_CODE]		= [S].[UI_CLIENT_CODE]			 -- DT015_CUSTOMERS_ACTIONS_TA	UI_CLIENT_CODE
 			,	[UI_NOTES_EXIST]		= IsNull([S].[UI_NOTES_EXIST],0) -- DT015_CUSTOMERS_ACTIONS_TA	UI_NOTES_EXIST
-			,	[IS_ZAPOR]				= @IS_ZAPOR						 -- DT015_CUSTOMERS_ACTIONS_TA	IS_ZAPOR (дали има съдебен запор някоя от сделките на клиента) 	Да се разработи обслужване в тестовете
-			,	[ID_TYPE]				= [S].[ID_DOCUMENT_TYPE]		-- DT015_CUSTOMERS_ACTIONS_TA  ID_TYPE типа на документа за самоличност 
-			,	[ID_NUMBER]				= IsNull([S].[ID_NUMBER], '')	 -- DT015_CUSTOMERS_ACTIONS_TA	ID_NUMBER номер на лична карта
-			,	[SERVICE_GROUP_EGFN]	= @SERVICE_GROUP_EGFN			 -- DT015_CUSTOMERS_ACTIONS_TA	SERVICE_GROUP_EGFN	EGFN, което се попълва в допълнителния диалог за търсене според IS_SERVICE
-			,	[IS_ACTUAL]				= [S].[IS_ACTUAL]				 -- DT015_CUSTOMERS_ACTIONS_TA	IS_ACTUAL (1; 0)	Да се разработи обслужване в тестовете на клиенти с неактуални данни при 1
-			,	[PROXY_COUNT]			= IsNull([S].[PROXY_COUNT],0)	 -- DT015_CUSTOMERS_ACTIONS_TA	PROXY_COUNT	Брой активни пълномощници
+			,	[IS_ZAPOR]				= @IS_ZAPOR						 -- DT015_CUSTOMERS_ACTIONS_TA	IS_ZAPOR (РґР°Р»Рё РёРјР° СЃСЉРґРµР±РµРЅ Р·Р°РїРѕСЂ РЅСЏРєРѕСЏ РѕС‚ СЃРґРµР»РєРёС‚Рµ РЅР° РєР»РёРµРЅС‚Р°) 	Р”Р° СЃРµ СЂР°Р·СЂР°Р±РѕС‚Рё РѕР±СЃР»СѓР¶РІР°РЅРµ РІ С‚РµСЃС‚РѕРІРµС‚Рµ
+			,	[ID_TYPE]				= [S].[ID_DOCUMENT_TYPE]		-- DT015_CUSTOMERS_ACTIONS_TA  ID_TYPE С‚РёРїР° РЅР° РґРѕРєСѓРјРµРЅС‚Р° Р·Р° СЃР°РјРѕР»РёС‡РЅРѕСЃС‚ 
+			,	[ID_NUMBER]				= IsNull([S].[ID_NUMBER], '')	 -- DT015_CUSTOMERS_ACTIONS_TA	ID_NUMBER РЅРѕРјРµСЂ РЅР° Р»РёС‡РЅР° РєР°СЂС‚Р°
+			,	[SERVICE_GROUP_EGFN]	= @SERVICE_GROUP_EGFN			 -- DT015_CUSTOMERS_ACTIONS_TA	SERVICE_GROUP_EGFN	EGFN, РєРѕРµС‚Рѕ СЃРµ РїРѕРїСЉР»РІР° РІ РґРѕРїСЉР»РЅРёС‚РµР»РЅРёСЏ РґРёР°Р»РѕРі Р·Р° С‚СЉСЂСЃРµРЅРµ СЃРїРѕСЂРµРґ IS_SERVICE
+			,	[IS_ACTUAL]				= [S].[IS_ACTUAL]				 -- DT015_CUSTOMERS_ACTIONS_TA	IS_ACTUAL (1; 0)	Р”Р° СЃРµ СЂР°Р·СЂР°Р±РѕС‚Рё РѕР±СЃР»СѓР¶РІР°РЅРµ РІ С‚РµСЃС‚РѕРІРµС‚Рµ РЅР° РєР»РёРµРЅС‚Рё СЃ РЅРµР°РєС‚СѓР°Р»РЅРё РґР°РЅРЅРё РїСЂРё 1
+			,	[PROXY_COUNT]			= IsNull([S].[PROXY_COUNT],0)	 -- DT015_CUSTOMERS_ACTIONS_TA	PROXY_COUNT	Р‘СЂРѕР№ Р°РєС‚РёРІРЅРё РїСЉР»РЅРѕРјРѕС‰РЅРёС†Рё
 		from dbo.[DT015_CUSTOMERS_ACTIONS_TA] [D]
 		inner join dbo.[#TBL_ONLINE_DT015_INFO] [S] with(nolock)
 			on [S].[CUSTOMR_ID] = @OnlineDbCustomer_ID
