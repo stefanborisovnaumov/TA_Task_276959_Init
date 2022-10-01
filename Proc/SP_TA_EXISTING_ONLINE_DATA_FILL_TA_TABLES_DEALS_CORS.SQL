@@ -1,10 +1,9 @@
-
 /********************************************************************************************************/
 /* Процедура за актуализация на Таблица dbo.[DEALS_CORR_TA] */
-DROP PROCEDURE IF EXISTS dbo.[SP_CASH_PAYMENTS_UPDATE_DEALS_CORS_TA]
+DROP PROCEDURE IF EXISTS dbo.[SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_DEALS_CORS]
 GO
 
-CREATE PROCEDURE dbo.[SP_CASH_PAYMENTS_UPDATE_DEALS_CORS_TA]
+CREATE PROCEDURE dbo.[SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_DEALS_CORS]
 (
 	@OnlineSqlServerName	sysname
 ,	@OnlineSqlDataBaseName	sysname
@@ -26,7 +25,7 @@ begin
 	;
 	/************************************************************************************************************/
 	/* Log Begining of Procedure execution */
-	if @LogBegEndProc = 1 exec dbo.SP_SYS_LOG_PROC @@PROCID, @TestCaseRowID, '*** Begin Execute Proc ***: dbo.[SP_CASH_PAYMENTS_UPDATE_DEALS_CORS_TA]'
+	if @LogBegEndProc = 1 exec dbo.SP_SYS_LOG_PROC @@PROCID, @TestCaseRowID, '*** Begin Execute Proc ***: dbo.[SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_DEALS_CORS]'
 	;
 
 	/************************************************************************************************************/
@@ -37,7 +36,7 @@ begin
 
 	select	@DealRowID = [DEAL_ROW_ID]
 		,	@TBL_ROW_ID = [CORS_ROW_ID]
-	from dbo.[VIEW_CASH_PAYMENTS_CONDITIONS] with(nolock)
+	from dbo.[VIEW_TA_EXISTING_ONLINE_DATA_CONDITIONS] with(nolock)
 	where [ROW_ID] = @TA_RowID
 
 	if IsNull(@TBL_ROW_ID,0) <= 0
@@ -188,9 +187,10 @@ begin
 	begin 
 		select @Msg = 'Duration: '+ dbo.FN_GET_TIME_DIFF(@TimeBeg, GetDate()) + 
 			 + ', TA Row ID: ' + @TestCaseRowID
-		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Msg, '*** End Execute Proc ***: dbo.dbo.[SP_CASH_PAYMENTS_UPDATE_DEALS_CORS_TA]'
+		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Msg, '*** End Execute Proc ***: dbo.dbo.[SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_DEALS_CORS]'
 	end
 
 	return 0;
 end 
 GO
+

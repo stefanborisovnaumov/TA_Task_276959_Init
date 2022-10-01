@@ -1,4 +1,3 @@
-
 /********************************************************************************************************/
 /* Процедура за зареждане на дневните обороти от OnLineDB по сметка */
 DROP PROCEDURE IF EXISTS dbo.[SP_LOAD_ONLINE_ACCOUNT_DAY_OPERATION_BALANCE]
@@ -105,3 +104,4 @@ begin
 	return 0;
 end
 GO
+

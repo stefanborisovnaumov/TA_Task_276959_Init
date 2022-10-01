@@ -1,4 +1,3 @@
-
 /********************************************************************************************************/
 /* Процедура за визличане на Sql Online Server name и Onle Database name */
 DROP PROCEDURE IF EXISTS dbo.[SP_TA_GET_DATASOURCE]
@@ -64,3 +63,4 @@ begin
 	return 0;
 end 
 go
+

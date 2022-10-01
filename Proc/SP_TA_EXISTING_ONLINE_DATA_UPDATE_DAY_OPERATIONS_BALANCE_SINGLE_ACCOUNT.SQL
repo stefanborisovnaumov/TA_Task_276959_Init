@@ -1,6 +1,6 @@
 /********************************************************************************************************/
 /* Процедура за актуализация на дневните салда в TA базата, след обработка на тестови случай */
-CREATE OR ALTER PROCEDURE dbo.[SP_CASH_PAYMENTS_UPDATE_ACCOUNT_DAY_OPERATION_BALANCE]
+CREATE OR ALTER PROCEDURE dbo.[SP_TA_EXISTING_ONLINE_DATA_UPDATE_DAY_OPERATIONS_BALANCE_SINGLE_ACCOUNT]
 (
 	@OnlineSqlServerName SYSNAME
 	, @OnlineSqlDataBaseName SYSNAME
@@ -23,8 +23,8 @@ BEGIN
 	/* 1. Log Begining of Procedure execution */
 	IF @LogBegEndProc = 1
 	BEGIN
-		SELECT @Sql = 'dbo.[SP_CASH_PAYMENTS_UPDATE_ACCOUNT_DAY_OPERATION_BALANCE] @OnlineSqlServerName = ''' + @OnlineSqlServerName + '''' + N', @OnlineSqlDataBaseName = ''' + @OnlineSqlDataBaseName + '''' + N', @TestCaseRowID = ' + @RowIdStr + N', @DEAL_ROW_ID = ' + str(@DEAL_ROW_ID, len(@DEAL_ROW_ID), 0) + N', @REG_NAME = ''' + @REG_NAME + '''' + N', @UPDATE_MODE = ' + str(@UPDATE_MODE, len(@UPDATE_MODE), 0)
-			, @Msg = '*** Begin Execute Proc ***: dbo.[SP_CASH_PAYMENTS_UPDATE_ACCOUNT_DAY_OPERATION_BALANCE]';
+		SELECT @Sql = 'dbo.[SP_TA_EXISTING_ONLINE_DATA_UPDATE_DAY_OPERATIONS_BALANCE_SINGLE_ACCOUNT] @OnlineSqlServerName = ''' + @OnlineSqlServerName + '''' + N', @OnlineSqlDataBaseName = ''' + @OnlineSqlDataBaseName + '''' + N', @TestCaseRowID = ' + @RowIdStr + N', @DEAL_ROW_ID = ' + str(@DEAL_ROW_ID, len(@DEAL_ROW_ID), 0) + N', @REG_NAME = ''' + @REG_NAME + '''' + N', @UPDATE_MODE = ' + str(@UPDATE_MODE, len(@UPDATE_MODE), 0)
+			, @Msg = '*** Begin Execute Proc ***: dbo.[SP_TA_EXISTING_ONLINE_DATA_UPDATE_DAY_OPERATIONS_BALANCE_SINGLE_ACCOUNT]';
 
 		EXEC dbo.SP_SYS_LOG_PROC @@PROCID
 			, @Sql
@@ -145,9 +145,10 @@ BEGIN
 
 		EXEC dbo.SP_SYS_LOG_PROC @@PROCID
 			, @Msg
-			, '*** End Execute Proc ***: dbo.dbo.[SP_CASH_PAYMENTS_UPDATE_ACCOUNT_DAY_OPERATION_BALANCE]'
+			, '*** End Execute Proc ***: dbo.dbo.[SP_TA_EXISTING_ONLINE_DATA_UPDATE_DAY_OPERATIONS_BALANCE_SINGLE_ACCOUNT]'
 	END
 
 	RETURN 0;
 END
 GO
+

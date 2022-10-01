@@ -2,7 +2,7 @@
 /*  Save Current data */
 select * 
 into cstemp_old_data
-from dbo.VIEW_CASH_PAYMENT_TEST_CASE_DATA with(nolock)
+from dbo.VIEW_TA_EXISTING_ONLINE_DATA_TEST_CASE_DATA with(nolock)
 go
 
 /********************************************************************************************/
@@ -16,7 +16,7 @@ declare @TA_MaxRowID	 int = 0
 		, @Count		 int = 0
 ;
 select @TA_MaxRowID = MAX([ROW_ID])
-from dbo.[VIEW_CASH_PAYMENTS_CONDITIONS]
+from dbo.[VIEW_TA_EXISTING_ONLINE_DATA_CONDITIONS]
 ;
 declare @Ret int = 0
 	,	@Msg nvarchar(max) = N'', @Sql nvarchar(max) = N''
@@ -30,7 +30,7 @@ begin
 		,	@DealRowID		= [DEAL_ROW_ID]
 		,	@CorsRowID		= [CORS_ROW_ID]
 		,	@CustomerRowID	= [CUST_ROW_ID]
-	from dbo.[VIEW_CASH_PAYMENTS_CONDITIONS]
+	from dbo.[VIEW_TA_EXISTING_ONLINE_DATA_CONDITIONS]
 	where [ROW_ID] > @TA_RowID 
 	order by [ROW_ID] 
 	;
@@ -56,27 +56,27 @@ GO
 /********************************************************************************************/
 /*  Load One Test Case */
 declare @TestCaseID int = 400003, @Ret int = 0
-select * from dbo.VIEW_CASH_PAYMENT_TEST_CASE_DATA with(nolock)
+select * from dbo.VIEW_TA_EXISTING_ONLINE_DATA_TEST_CASE_DATA with(nolock)
 where row_id = @TestCaseID
 ;
-select * from dbo.VIEW_CASH_PAYMENTS_CONDITIONS with(nolock)
+select * from dbo.VIEW_TA_EXISTING_ONLINE_DATA_CONDITIONS with(nolock)
 where row_id = @TestCaseID
 ;
 
 exec @Ret = dbo.[SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES] @TestCaseID
 ;
-select * from dbo.VIEW_CASH_PAYMENT_TEST_CASE_DATA with(nolock)
+select * from dbo.VIEW_TA_EXISTING_ONLINE_DATA_TEST_CASE_DATA with(nolock)
 where row_id = @TestCaseID
 go
 
 /********************************************************************************************/
 /*  Load All */
 declare curTestCase cursor for
-select [ROW_ID] from dbo.[VIEW_CASH_PAYMENTS_CONDITIONS]
+select [ROW_ID] from dbo.[VIEW_TA_EXISTING_ONLINE_DATA_CONDITIONS]
 order by [ROW_ID]
 ;
 
-truncate table dbo.[AGR_CASH_PAYMENTS_SQL_CONDITIONS]
+truncate table dbo.[AGR_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_SQL_CONDITIONS]
 ;
 
 declare @TestCaseID int, @Ret int = 0 

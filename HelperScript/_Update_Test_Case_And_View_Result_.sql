@@ -43,7 +43,7 @@ select 	[v].[ROW_ID]
 	,	[D].[UI_CORR_ACCOUNT]
 	,	[D].[TAX_UNCOLLECTED_SUM]
 
-from dbo.[VIEW_CASH_PAYMENTS_CONDITIONS] [v]
+from dbo.[VIEW_TA_EXISTING_ONLINE_DATA_CONDITIONS] [v]
 
 inner join dbo.[DT015_CUSTOMERS_ACTIONS_TA] [c]
 	on [c].[ROW_ID] = [v].[CUST_ROW_ID]

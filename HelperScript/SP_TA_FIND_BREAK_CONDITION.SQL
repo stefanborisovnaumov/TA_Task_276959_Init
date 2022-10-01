@@ -32,7 +32,7 @@ begin
 
 	/* 1.2. Clear Test Case conditions table */
 	declare @LastLogId int =  IsNull( (select max(id) from dbo.[SYS_LOG_PROC] with(nolock)), 0)
-		,	@LastCndTblId int = IsNull( (select max(id) from dbo.[AGR_CASH_PAYMENTS_SQL_CONDITIONS] with(nolock)), 0)
+		,	@LastCndTblId int = IsNull( (select max(id) from dbo.[AGR_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_SQL_CONDITIONS] with(nolock)), 0)
 	;
 
 	/******************************************************************/
@@ -41,7 +41,7 @@ begin
 	;
 	select [ROW_ID], [TA_TYPE]
 	into dbo.[#TBL_WITH_TEST_CASES]
-	from dbo.[VIEW_CASH_PAYMENTS_CONDITIONS] 
+	from dbo.[VIEW_TA_EXISTING_ONLINE_DATA_CONDITIONS] 
 	WHERE TA_TYPE LIKE @TA_Type_Filter
 		and [ROW_ID] = IsNull(@Test_Case_ID,[ROW_ID])
 	order by [ROW_ID]
@@ -78,7 +78,7 @@ begin
 	/* 4. Find one unaccepted condition: */
 	declare curTestCase cursor for 
 	select DISTINCT [c].[TEST_ID]
-	from dbo.[AGR_CASH_PAYMENTS_SQL_CONDITIONS] [c] with(nolock)
+	from dbo.[AGR_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_SQL_CONDITIONS] [c] with(nolock)
 	inner join dbo.[#TBL_WITH_TEST_CASES] [F]
 		on [F].ROW_ID = [c].[TEST_ID]
 		and [c].[ID] > @LastCndTblId
@@ -91,7 +91,7 @@ begin
 	while @@FETCH_STATUS = 0 
 	begin
 
-		exec @Ret = dbo.[SP_CASH_PAYMENTS_FIND_SUITABLE_DEAL]
+		exec @Ret = dbo.[SP_TA_EXISTING_ONLINE_DATA_TEST_PROCEDURES_FIND_SUITABLE_DEAL]
 			@TestCaseRowID = @TA_ID, @CurrAccDate = @Curr_Acc_Date
 
 		fetch next from curTestCase into @TA_ID
@@ -103,7 +103,7 @@ begin
 	/*********************************************************************************************************/
 	/* 5. Find one unaccepted condition: */
 	select distinct [TEST_ID] 
-	from [AGR_CASH_PAYMENTS_SQL_CONDITIONS] with(nolock)
+	from [AGR_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_SQL_CONDITIONS] with(nolock)
 	where [id] > @LastCndTblId
 	order by [TEST_ID] 
 	;
@@ -115,7 +115,7 @@ begin
 	;
 
 	select *
-	from [AGR_CASH_PAYMENTS_SQL_CONDITIONS] with(nolock)
+	from [AGR_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_SQL_CONDITIONS] with(nolock)
 	where id > @LastCndTblId
 	order by [TEST_ID]
 	;

@@ -13,7 +13,7 @@ create table dbo.[#TBL_RESULT]
 go
 
 /* 1.2. Clear Test Case conditions table */
-truncate table [AGR_CASH_PAYMENTS_SQL_CONDITIONS]
+truncate table [AGR_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_SQL_CONDITIONS]
 go
 
 --truncate table SYS_LOG_PROC
@@ -26,7 +26,7 @@ declare	@Curr_Acc_Date datetime = Getdate() /* може да използвам�
 ;
 declare curTestCase cursor for 
 select [ROW_ID], [TA_TYPE]
-from dbo.[VIEW_CASH_PAYMENTS_CONDITIONS]
+from dbo.[VIEW_TA_EXISTING_ONLINE_DATA_CONDITIONS]
 order by [ROW_ID]
 ;
 declare @TA_ID int= 0 , @TA_Type varchar(126) = N'', @Ret int = 0
@@ -52,7 +52,7 @@ go
 /*********************************************************************************************************/
 /* 3. Тестови случай за който по текущите критерии не са намерени сделки: */
 select distinct [TEST_ID] 
-from [AGR_CASH_PAYMENTS_SQL_CONDITIONS] with(nolock)
+from [AGR_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_SQL_CONDITIONS] with(nolock)
 go
 
 /*********************************************************************************************************/
@@ -62,7 +62,7 @@ declare	@Curr_Acc_Date datetime = Getdate() /* може да използвам�
 
 declare curTestCase cursor for 
 select DISTINCT [TEST_ID]
-from dbo.[AGR_CASH_PAYMENTS_SQL_CONDITIONS] with(nolock)
+from dbo.[AGR_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_SQL_CONDITIONS] with(nolock)
 order by [TEST_ID]
 ;
 declare @TA_ID int= 0 , @TA_Type varchar(126) = N'', @Ret int = 0
@@ -73,7 +73,7 @@ fetch next from curTestCase into @TA_ID
 while @@FETCH_STATUS = 0 
 begin
 
-	exec @Ret = dbo.[SP_CASH_PAYMENTS_FIND_SUITABLE_DEAL]
+	exec @Ret = dbo.[SP_TA_EXISTING_ONLINE_DATA_TEST_PROCEDURES_FIND_SUITABLE_DEAL]
 		@TestCaseRowID = @TA_ID, @CurrAccDate = @Curr_Acc_Date
 
 	fetch next from curTestCase into @TA_ID
@@ -86,7 +86,7 @@ go
 /*********************************************************************************************************/
 /* 5. Find one unaccepted condition: */
 select distinct [TEST_ID] 
-from [AGR_CASH_PAYMENTS_SQL_CONDITIONS] with(nolock)
+from [AGR_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_SQL_CONDITIONS] with(nolock)
 order by [TEST_ID] 
 go
 

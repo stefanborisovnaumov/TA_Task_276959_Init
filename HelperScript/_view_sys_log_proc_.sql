@@ -28,6 +28,6 @@ go
 
 --Not found correspondence from TA ROW_ID : 
 -- Not found Customer from TA ROW_ID : 400001
-select * from dbo.[VIEW_CASH_PAYMENT_TEST_CASE_DATA]
+select * from dbo.[VIEW_TA_EXISTING_ONLINE_DATA_TEST_CASE_DATA]
 order by row_id
 go

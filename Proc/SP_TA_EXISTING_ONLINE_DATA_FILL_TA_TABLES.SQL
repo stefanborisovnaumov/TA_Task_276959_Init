@@ -34,12 +34,12 @@ BEGIN
 
 	IF NOT EXISTS (
 			SELECT *
-			FROM dbo.[VIEW_CASH_PAYMENTS_CONDITIONS] WITH (NOLOCK)
+			FROM dbo.[VIEW_TA_EXISTING_ONLINE_DATA_CONDITIONS] WITH (NOLOCK)
 			WHERE [ROW_ID] = IsNull(@TestCaseRowID, - 1)
 			)
 	BEGIN
 		SELECT @Msg = N'Error not found condition with [ROW_ID] :' + @RowIdStr
-			, @Sql = N'select * from dbo.[VIEW_CASH_PAYMENTS_CONDITIONS] with(nolock) where [ROW_ID] = IsNull(' + @RowIdStr + ', -1)'
+			, @Sql = N'select * from dbo.[VIEW_TA_EXISTING_ONLINE_DATA_CONDITIONS] with(nolock) where [ROW_ID] = IsNull(' + @RowIdStr + ', -1)'
 
 		EXEC dbo.SP_SYS_LOG_PROC @@PROCID
 			, @Sql
@@ -57,7 +57,7 @@ BEGIN
 		, @DEALS_CORR_TA_RowID = [CORS_ROW_ID]
 		, @TYPE_ACTION = [TYPE_ACTION]
 		, @RUNNING_ORDER = IsNull([RUNNING_ORDER], 1)
-	FROM dbo.[VIEW_CASH_PAYMENTS_CONDITIONS] WITH (NOLOCK)
+	FROM dbo.[VIEW_TA_EXISTING_ONLINE_DATA_CONDITIONS] WITH (NOLOCK)
 	WHERE [ROW_ID] = IsNull(@TestCaseRowID, - 1)
 
 	IF /* @TYPE_ACTION = 'CashPayment' and */ @RUNNING_ORDER > 1
@@ -148,7 +148,7 @@ BEGIN
 	END
 
 	/*********************************************************************************************************/
-	/* Clear data before update table: dbo.DEALS_CORR_TA dbo.RAZPREG_TA dbo.DT015_CUSTOMERS_ACTIONS_TA */
+	/* Clear data before update table: dbo.DEALS_CORR_TA, dbo.RAZPREG_TA, dbo.DT015_CUSTOMERS_ACTIONS_TA */
 
 	BEGIN TRY
 		EXEC @Ret = dbo.SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_CLEAR_CURRENT_DATA @RowIdStr
@@ -235,7 +235,7 @@ BEGIN
 	IF IsNull(@DEALS_CORR_TA_RowID, - 1) > 0
 	BEGIN
 		BEGIN TRY
-			EXEC @Ret = dbo.[SP_CASH_PAYMENTS_UPDATE_DEALS_CORS_TA] @OnlineSqlServerName
+			EXEC @Ret = dbo.[SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_DEALS_CORS] @OnlineSqlServerName
 				, @OnlineSqlDataBaseName
 				, @RowIdStr
 				, 1
@@ -247,7 +247,7 @@ BEGIN
 
 		BEGIN CATCH
 			SELECT @Msg = dbo.FN_GET_EXCEPTION_INFO()
-				, @Sql = ' exec dbo.[SP_CASH_PAYMENTS_UPDATE_DEALS_CORS_TA] @RowIdStr, @CurrAccDate, 1, @DealNum, @CustID, @ProxyID'
+				, @Sql = ' exec dbo.[SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_DEALS_CORS] @RowIdStr, @CurrAccDate, 1, @DealNum, @CustID, @ProxyID'
 
 			EXEC dbo.SP_SYS_LOG_PROC @@PROCID
 				, @Sql
@@ -260,7 +260,7 @@ BEGIN
 	/************************************************************************************************************/
 	/* Update table dbo.[RAZPREG_TA] */
 	BEGIN TRY
-		EXEC dbo.[SP_CASH_PAYMENTS_UPDATE_RAZREG_TA] @OnlineSqlServerName
+		EXEC dbo.[SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_RAZPREG] @OnlineSqlServerName
 			, @OnlineSqlDataBaseName
 			, @RowIdStr
 			, 1
@@ -271,7 +271,7 @@ BEGIN
 
 	BEGIN CATCH
 		SELECT @Msg = dbo.FN_GET_EXCEPTION_INFO()
-			, @Sql = ' exec dbo.[SP_CASH_PAYMENTS_UPDATE_RAZREG_TA] @RowIdStr, @CurrAccDate, 1, @DealNum, 0 '
+			, @Sql = ' exec dbo.[SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_RAZPREG] @RowIdStr, @CurrAccDate, 1, @DealNum, 0 '
 
 		EXEC dbo.SP_SYS_LOG_PROC @@PROCID
 			, @Sql
@@ -286,7 +286,7 @@ BEGIN
 		AND @DealTypBen > 0
 	BEGIN
 		BEGIN TRY
-			EXEC dbo.[SP_CASH_PAYMENTS_UPDATE_RAZREG_TA] @OnlineSqlServerName
+			EXEC dbo.[SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_RAZPREG] @OnlineSqlServerName
 				, @OnlineSqlDataBaseName
 				, @RowIdStr
 				, 1
@@ -297,7 +297,7 @@ BEGIN
 
 		BEGIN CATCH
 			SELECT @Msg = dbo.FN_GET_EXCEPTION_INFO()
-				, @Sql = ' exec dbo.[SP_CASH_PAYMENTS_UPDATE_RAZREG_TA] @RowIdStr, @CurrAccDate, 1, @DealNumBen, 1 '
+				, @Sql = ' exec dbo.[SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_RAZPREG] @RowIdStr, @CurrAccDate, 1, @DealNumBen, 1 '
 
 			EXEC dbo.SP_SYS_LOG_PROC @@PROCID
 				, @Sql
@@ -310,7 +310,7 @@ BEGIN
 	/************************************************************************************************************/
 	/* Update table dbo.[DT015_CUSTOMERS_ACTIONS_TA] for Customer and Proxy */
 	BEGIN TRY
-		EXEC dbo.[SP_CASH_PAYMENTS_UPDATE_CLIENT_DATA] @OnlineSqlServerName
+		EXEC dbo.[SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_CUSTOMERS] @OnlineSqlServerName
 			, @OnlineSqlDataBaseName
 			, @CurrAccDate
 			, @RowIdStr
@@ -321,7 +321,7 @@ BEGIN
 
 	BEGIN CATCH
 		SELECT @Msg = dbo.FN_GET_EXCEPTION_INFO()
-			, @Sql = ' exec dbo.[SP_CASH_PAYMENTS_UPDATE_CLIENT_DATA] @OnlineSqlServerName, @OnlineSqlDataBaseName, @CurrAccDate' + ', @RowIdStr, @CustomerID, @ProxyID, @WithUpdate'
+			, @Sql = ' exec dbo.[SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_CUSTOMERS] @OnlineSqlServerName, @OnlineSqlDataBaseName, @CurrAccDate' + ', @RowIdStr, @CustomerID, @ProxyID, @WithUpdate'
 
 		EXEC dbo.SP_SYS_LOG_PROC @@PROCID
 			, @Sql
@@ -359,3 +359,4 @@ BEGIN
 	RETURN 0
 END
 GO
+

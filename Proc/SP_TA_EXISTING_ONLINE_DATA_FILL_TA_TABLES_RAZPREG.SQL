@@ -1,10 +1,9 @@
-
 /********************************************************************************************************/
-/* Процедура за актуализация на Таблица dbo.[SP_CASH_PAYMENTS_UPDATE_RAZREG_TA] */
-DROP PROCEDURE IF EXISTS dbo.[SP_CASH_PAYMENTS_UPDATE_RAZREG_TA]
+/* Процедура за актуализация на Таблица dbo.[SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_RAZPREG] */
+DROP PROCEDURE IF EXISTS dbo.[SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_RAZPREG]
 GO
 
-CREATE PROCEDURE dbo.[SP_CASH_PAYMENTS_UPDATE_RAZREG_TA]
+CREATE PROCEDURE dbo.[SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_RAZPREG]
 (
 	@OnlineSqlServerName	sysname
 ,	@OnlineSqlDataBaseName	sysname
@@ -24,7 +23,7 @@ begin
 		,	@TA_RowID int = cast ( @TestCaseRowID as int );
 	/************************************************************************************************************/
 	/* Log Begining of Procedure execution */
-	if @LogBegEndProc = 1 exec dbo.SP_SYS_LOG_PROC @@PROCID, @TestCaseRowID, '*** Begin Execute Proc ***: dbo.[SP_CASH_PAYMENTS_UPDATE_RAZREG_TA]'
+	if @LogBegEndProc = 1 exec dbo.SP_SYS_LOG_PROC @@PROCID, @TestCaseRowID, '*** Begin Execute Proc ***: dbo.[SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_RAZPREG]'
 	;
 
 	IF LEN(@OnlineSqlServerName) > 1 AND LEFT(@OnlineSqlServerName,1) <> N'['
@@ -41,7 +40,7 @@ begin
 	declare @TBL_ROW_ID int = 0
 	;
 	select	@TBL_ROW_ID = case when @IS_DEAL_BEN = 1 then [DEAL_BEN_ROW_ID] else [DEAL_ROW_ID] end
-	from dbo.[VIEW_CASH_PAYMENTS_CONDITIONS] with(nolock)
+	from dbo.[VIEW_TA_EXISTING_ONLINE_DATA_CONDITIONS] with(nolock)
 	where [ROW_ID] = @TA_RowID
 
 	if IsNull(@TBL_ROW_ID,0) <= 0
@@ -188,9 +187,10 @@ begin
 			 + ', TA Row ID: ' + @TestCaseRowID 
 			 + ', Deal num: ' + str(@DEAL_NUM,len(@DEAL_NUM),0)
 			 + ', Is Ben deal: ' + str(@IS_DEAL_BEN,len(@IS_DEAL_BEN),0)
-		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Msg, '*** End Execute Proc ***: dbo.dbo.[SP_CASH_PAYMENTS_UPDATE_RAZREG_TA]'
+		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Msg, '*** End Execute Proc ***: dbo.dbo.[SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_RAZPREG]'
 	end
 
 	return 0;
 end 
 GO
+

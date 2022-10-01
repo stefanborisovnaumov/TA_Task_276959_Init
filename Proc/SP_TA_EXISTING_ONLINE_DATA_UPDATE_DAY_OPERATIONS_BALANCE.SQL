@@ -1,10 +1,9 @@
-
 /********************************************************************************************************/
 /* Процедура за актуализация на дневните салда в TA базата, след обработка на тестови случай */
-DROP PROCEDURE IF EXISTS dbo.[SP_CASH_PAYMENTS_UPDATE_ACCOUNTS_DAY_OPERATION_BAL]
+DROP PROCEDURE IF EXISTS dbo.[SP_TA_EXISTING_ONLINE_DATA_UPDATE_DAY_OPERATIONS_BALANCE]
 GO
 
-CREATE PROCEDURE dbo.[SP_CASH_PAYMENTS_UPDATE_ACCOUNTS_DAY_OPERATION_BAL]
+CREATE PROCEDURE dbo.[SP_TA_EXISTING_ONLINE_DATA_UPDATE_DAY_OPERATIONS_BALANCE]
 (
 	@TestCaseRowID  int
 ,   @UpdateMode     int = 1
@@ -21,19 +20,19 @@ begin
 	/* 1. Log Begining of Procedure execution */
 	if @LogBegEndProc = 1 
 	begin	
-		select @Sql = 'dbo.[SP_CASH_PAYMENTS_UPDATE_ACCOUNTS_DAY_OPERATION_BAL] @RowIdStr = '+@RowIdStr
+		select @Sql = 'dbo.[SP_TA_EXISTING_ONLINE_DATA_UPDATE_DAY_OPERATIONS_BALANCE] @RowIdStr = '+@RowIdStr
 					+', @UpdateMode = '+str(@UpdateMode, len(@UpdateMode),0)
-			,  @Msg =  '*** Begin Execute Proc ***: dbo.[SP_CASH_PAYMENTS_UPDATE_ACCOUNTS_DAY_OPERATION_BAL]'
+			,  @Msg =  '*** Begin Execute Proc ***: dbo.[SP_TA_EXISTING_ONLINE_DATA_UPDATE_DAY_OPERATIONS_BALANCE]'
 		;
 		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql, @Msg
 	end
 
 	/************************************************************************************************************/
 	/* 2. Find TA Conditions: */
-	if not exists (select * from dbo.[VIEW_CASH_PAYMENTS_CONDITIONS] with(nolock) where [ROW_ID] = IsNull(@TestCaseRowID, -1))
+	if not exists (select * from dbo.[VIEW_TA_EXISTING_ONLINE_DATA_CONDITIONS] with(nolock) where [ROW_ID] = IsNull(@TestCaseRowID, -1))
 	begin 
 		select  @Msg = N'Error not found condition with [ROW_ID] :' + @RowIdStr
-			,	@Sql = N'select * from dbo.[VIEW_CASH_PAYMENTS_CONDITIONS] with(nolock) where [ROW_ID] = IsNull('+@RowIdStr+', -1)'
+			,	@Sql = N'select * from dbo.[VIEW_TA_EXISTING_ONLINE_DATA_CONDITIONS] with(nolock) where [ROW_ID] = IsNull('+@RowIdStr+', -1)'
 		;
 		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql, @Msg
 		return -1;
@@ -48,7 +47,7 @@ begin
         ,   @DEAL_ROW_ID        = IsNull([DEAL_ROW_ID], -1)
 		,	@CORS_ROW_ID        = IsNull([CORS_ROW_ID], -1)
         ,   @DEAL_BEN_ROW_ID    = IsNull([DEAL_BEN_ROW_ID],-1)
-	from dbo.[VIEW_CASH_PAYMENTS_CONDITIONS] with(nolock) where [ROW_ID] = IsNull(@TestCaseRowID, -1)
+	from dbo.[VIEW_TA_EXISTING_ONLINE_DATA_CONDITIONS] with(nolock) where [ROW_ID] = IsNull(@TestCaseRowID, -1)
 	;
 
 	/************************************************************************************************************/
@@ -89,12 +88,12 @@ begin
     if IsNull(@DEAL_ROW_ID,-1) > 0 
     begin 
 		begin try
-			exec @Ret = dbo.[SP_CASH_PAYMENTS_UPDATE_ACCOUNT_DAY_OPERATION_BALANCE] @OnlineSqlServerName 
+			exec @Ret = dbo.[SP_TA_EXISTING_ONLINE_DATA_UPDATE_DAY_OPERATIONS_BALANCE_SINGLE_ACCOUNT] @OnlineSqlServerName 
 				, @OnlineSqlDataBaseName, @TestCaseRowID, @DEAL_ROW_ID, N'RAZPREG_TA', @UpdAccont
 		end try
 		begin catch
     		select @Msg = dbo.FN_GET_EXCEPTION_INFO();
-	    	exec dbo.SP_SYS_LOG_PROC @@PROCID, 'dbo.[SP_CASH_PAYMENTS_UPDATE_ACCOUNT_DAY_OPERATION_BALANCE] @MainAccount', @Msg
+	    	exec dbo.SP_SYS_LOG_PROC @@PROCID, 'dbo.[SP_TA_EXISTING_ONLINE_DATA_UPDATE_DAY_OPERATIONS_BALANCE_SINGLE_ACCOUNT] @MainAccount', @Msg
 		    return 1;
 		end catch
     end
@@ -104,12 +103,12 @@ begin
     if IsNull(@DEAL_BEN_ROW_ID,-1) > 0 and (IsNull(@DEAL_ROW_ID,-1) != IsNull(@DEAL_BEN_ROW_ID,-2))
     begin 
 		begin try
-			exec @Ret = dbo.[SP_CASH_PAYMENTS_UPDATE_ACCOUNT_DAY_OPERATION_BALANCE] @OnlineSqlServerName 
+			exec @Ret = dbo.[SP_TA_EXISTING_ONLINE_DATA_UPDATE_DAY_OPERATIONS_BALANCE_SINGLE_ACCOUNT] @OnlineSqlServerName 
 				, @OnlineSqlDataBaseName, @TestCaseRowID, @DEAL_BEN_ROW_ID, N'RAZPREG_TA', @UpdAccont
 		end try
 		begin catch
     		select @Msg = dbo.FN_GET_EXCEPTION_INFO();
-	    	exec dbo.SP_SYS_LOG_PROC @@PROCID, 'dbo.[SP_CASH_PAYMENTS_UPDATE_ACCOUNT_DAY_OPERATION_BALANCE] @BenAccount', @Msg
+	    	exec dbo.SP_SYS_LOG_PROC @@PROCID, 'dbo.[SP_TA_EXISTING_ONLINE_DATA_UPDATE_DAY_OPERATIONS_BALANCE_SINGLE_ACCOUNT] @BenAccount', @Msg
 		    return 2;
 		end catch
     end
@@ -119,12 +118,12 @@ begin
     if IsNull(@CORS_ROW_ID,-1) > 0
     begin 
 		begin try
-			exec @Ret = dbo.[SP_CASH_PAYMENTS_UPDATE_ACCOUNT_DAY_OPERATION_BALANCE] @OnlineSqlServerName 
+			exec @Ret = dbo.[SP_TA_EXISTING_ONLINE_DATA_UPDATE_DAY_OPERATIONS_BALANCE_SINGLE_ACCOUNT] @OnlineSqlServerName 
 				, @OnlineSqlDataBaseName, @TestCaseRowID, @CORS_ROW_ID, N'DEALS_CORR_TA', @UpdAccont
 		end try
 		begin catch
     		select @Msg = dbo.FN_GET_EXCEPTION_INFO();
-	    	exec dbo.SP_SYS_LOG_PROC @@PROCID, 'dbo.[SP_CASH_PAYMENTS_UPDATE_ACCOUNT_DAY_OPERATION_BALANCE] @CorespondentAccount', @Msg
+	    	exec dbo.SP_SYS_LOG_PROC @@PROCID, 'dbo.[SP_TA_EXISTING_ONLINE_DATA_UPDATE_DAY_OPERATIONS_BALANCE_SINGLE_ACCOUNT] @CorespondentAccount', @Msg
 		    return 3;
 		end catch
     end
@@ -134,9 +133,10 @@ begin
 	if @LogBegEndProc = 1
 	begin 
 		select @Msg = 'Duration: '+ dbo.FN_GET_TIME_DIFF(@TimeBeg, GetDate()) + '; TA Row ID: ' + @RowIdStr;
-		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Msg, '*** End Execute Proc ***: dbo.dbo.[SP_CASH_PAYMENTS_UPDATE_ACCOUNTS_DAY_OPERATION_BAL]'
+		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Msg, '*** End Execute Proc ***: dbo.dbo.[SP_TA_EXISTING_ONLINE_DATA_UPDATE_DAY_OPERATIONS_BALANCE]'
 	end
 
     return 0;
 end    
 GO
+

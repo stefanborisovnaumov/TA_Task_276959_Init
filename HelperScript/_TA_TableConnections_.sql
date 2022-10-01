@@ -52,7 +52,7 @@ go
 declare @TestCaseID int = '400002'
 ;
 -- View което показва само данните подлежащи на актуализация
-select * from dbo.[VIEW_CASH_PAYMENT_TEST_CASE_DATA]
+select * from dbo.[VIEW_TA_EXISTING_ONLINE_DATA_TEST_CASE_DATA]
 where [ROW_ID] = @TestCaseID
 ;
 

@@ -8,7 +8,7 @@ declare @TA_MaxRowID	 int = 0
 ;
 
 select @TA_MaxRowID = MAX([ROW_ID])
-from dbo.[VIEW_CASH_PAYMENTS_CONDITIONS]
+from dbo.[VIEW_TA_EXISTING_ONLINE_DATA_CONDITIONS]
 ;
 
 declare @Ret int = 0
@@ -21,7 +21,7 @@ begin
 		,	@DealRowID		= [DEAL_ROW_ID]
 		,	@CorsRowID		= [CORS_ROW_ID]
 		,	@CustomerRowID	= [CUST_ROW_ID]
-	from dbo.[VIEW_CASH_PAYMENTS_CONDITIONS]
+	from dbo.[VIEW_TA_EXISTING_ONLINE_DATA_CONDITIONS]
 	where [ROW_ID] > @TA_RowID 
 	order by [ROW_ID] 
 	;
@@ -73,7 +73,7 @@ select 	[v].[ROW_ID]
 	,	[D].[UI_CORR_ACCOUNT]
 	,	[D].[TAX_UNCOLLECTED_SUM]
 
-from dbo.[VIEW_CASH_PAYMENTS_CONDITIONS] [v]
+from dbo.[VIEW_TA_EXISTING_ONLINE_DATA_CONDITIONS] [v]
 
 inner join dbo.[DT015_CUSTOMERS_ACTIONS_TA] [c]
 	on [c].[ROW_ID] = [v].[CUST_ROW_ID]
@@ -118,7 +118,7 @@ select 	[v].[ROW_ID]
 	,	[D].[UI_CORR_ACCOUNT]
 	,	[D].[TAX_UNCOLLECTED_SUM]
 
-from [BPB_TA_NEXT_SS@2022.05.12_v2].dbo.[VIEW_CASH_PAYMENTS_CONDITIONS] [v]
+from [BPB_TA_NEXT_SS@2022.05.12_v2].dbo.[VIEW_TA_EXISTING_ONLINE_DATA_CONDITIONS] [v]
 
 inner join [BPB_TA_NEXT_SS@2022.05.12_v2].dbo.[DT015_CUSTOMERS_ACTIONS_TA] [c]
 	on [c].[ROW_ID] = [v].[CUST_ROW_ID]

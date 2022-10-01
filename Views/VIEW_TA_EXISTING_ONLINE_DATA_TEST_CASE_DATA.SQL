@@ -1,6 +1,6 @@
 /********************************************************************************************************/
 /* Помощно view за визуализация на данните от TA таблиците, който подлежат на актуализация */
-CREATE OR ALTER VIEW dbo.[VIEW_CASH_PAYMENT_TEST_CASE_DATA]
+CREATE OR ALTER VIEW dbo.[VIEW_TA_EXISTING_ONLINE_DATA_TEST_CASE_DATA]
 AS
 	SELECT [v].[ROW_ID]
 		, [v].TA_TYPE
@@ -67,7 +67,7 @@ AS
 		/* Данни за таксата */
 		, [v].[TAX_CODE] AS [TAX_CODE]
 		, [v].[PREF_CODE] AS [PREF_CODE]
-	FROM dbo.[VIEW_CASH_PAYMENTS_CONDITIONS] [v]
+	FROM dbo.[VIEW_TA_EXISTING_ONLINE_DATA_CONDITIONS] [v]
 	INNER JOIN dbo.[DT015_CUSTOMERS_ACTIONS_TA] [c]
 		ON [c].[ROW_ID] = [v].[CUST_ROW_ID]
 	INNER JOIN dbo.[RAZPREG_TA] [R]
@@ -83,3 +83,4 @@ AS
 	LEFT JOIN dbo.[DT015_CUSTOMERS_ACTIONS_TA] [CUST_BEN]
 		ON [CUST_BEN].[ROW_ID] = [DBEN].[REF_ID]
 GO
+

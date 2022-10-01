@@ -1,6 +1,6 @@
 /********************************************************************************************************/
 /* Създаване на помощно view за Условията към тестовите сценарии */
-CREATE OR ALTER VIEW dbo.[VIEW_CASH_PAYMENTS_CONDITIONS]
+CREATE OR ALTER VIEW dbo.[VIEW_TA_EXISTING_ONLINE_DATA_CONDITIONS]
 AS
 	WITH [CTE_CUST_EGFN_TYPE] AS 
 	(
@@ -158,3 +158,4 @@ AS
 		OR (BLOCKSUM_TA.DB_TYPE = 'AIR' AND BLOCKSUM_TA.TA_TYPE LIKE N'%AIR%')
 
 GO
+

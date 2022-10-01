@@ -12,7 +12,7 @@
 --GO
 
 select * 
-from dbo.[VIEW_CASH_PAYMENT_TEST_CASE_DATA] 
+from dbo.[VIEW_TA_EXISTING_ONLINE_DATA_TEST_CASE_DATA] 
 where	ROW_ID > 1 
 	and PROXY_ROW_ID is not null
 order by ROW_ID
@@ -25,7 +25,7 @@ exec dbo.[SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES] 400019
 go
 
 select * 
-from dbo.[VIEW_CASH_PAYMENT_TEST_CASE_DATA] 
+from dbo.[VIEW_TA_EXISTING_ONLINE_DATA_TEST_CASE_DATA] 
 where PROXY_ROW_ID is not null
 	and ROW_ID = 400002
 order by ROW_ID

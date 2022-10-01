@@ -1,6 +1,6 @@
 /********************************************************************************************************/
 /* Процедура за определяне на критериите който ни пречат да намерим подходяща сделка за датен TestCase */
-CREATE OR ALTER PROCEDURE dbo.[SP_CASH_PAYMENTS_FIND_SUITABLE_DEAL]
+CREATE OR ALTER PROCEDURE dbo.[SP_TA_EXISTING_ONLINE_DATA_TEST_PROCEDURES_FIND_SUITABLE_DEAL]
 (
 	@TestCaseRowID NVARCHAR(16)
 	, @CurrAccDate DATETIME
@@ -20,7 +20,7 @@ BEGIN
 	IF @LogBegEndProc = 1
 		EXEC dbo.SP_SYS_LOG_PROC @@PROCID
 			, @TestCaseRowID
-			, '*** Begin Execute Proc ***: dbo.[SP_CASH_PAYMENTS_FIND_SUITABLE_DEAL]'
+			, '*** Begin Execute Proc ***: dbo.[SP_TA_EXISTING_ONLINE_DATA_TEST_PROCEDURES_FIND_SUITABLE_DEAL]'
 
 	/************************************************************************************************************/
 	/* @TODO: */
@@ -44,7 +44,7 @@ BEGIN
 
 	SELECT @CondCount = count(*)
 		, @FistCondRowID = min([ID])
-	FROM dbo.[AGR_CASH_PAYMENTS_SQL_CONDITIONS] WITH (NOLOCK)
+	FROM dbo.[AGR_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_SQL_CONDITIONS] WITH (NOLOCK)
 	WHERE [TEST_ID] = @TestCaseRowID
 
 	WHILE @Rows = 0
@@ -58,7 +58,7 @@ BEGIN
 
 		-- Prepare Sql to execute: 
 		SELECT @Sql += [CND].[COUND]
-		FROM dbo.[AGR_CASH_PAYMENTS_SQL_CONDITIONS] WITH (NOLOCK)
+		FROM dbo.[AGR_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_SQL_CONDITIONS] WITH (NOLOCK)
 		CROSS APPLY (
 			SELECT CASE 
 					WHEN [ID] = @ScipTblRowId
@@ -77,7 +77,7 @@ BEGIN
 
 		BEGIN CATCH
 			SELECT @Msg = 'Error execute Sql:' + dbo.FN_GET_EXCEPTION_INFO()
-			FROM dbo.[AGR_CASH_PAYMENTS_SQL_CONDITIONS] WITH (NOLOCK)
+			FROM dbo.[AGR_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_SQL_CONDITIONS] WITH (NOLOCK)
 			WHERE [ID] = @ScipTblRowId
 
 			EXEC dbo.SP_SYS_LOG_PROC @@PROCID
@@ -92,7 +92,7 @@ BEGIN
 		IF @Rows > 0
 		BEGIN
 			SELECT @Msg = 'Test Case ID:' + [TEST_ID] + ' Found records: ' + str(@Rows, 3, 0) + ' Skiped condition info: "' + [DESCR] + '" Skiped SQL condition: "' + [SQL_COND] + '"'
-			FROM dbo.[AGR_CASH_PAYMENTS_SQL_CONDITIONS] WITH (NOLOCK)
+			FROM dbo.[AGR_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_SQL_CONDITIONS] WITH (NOLOCK)
 			WHERE [id] = @ScipTblRowId
 
 			EXEC dbo.SP_SYS_LOG_PROC @@PROCID
@@ -111,9 +111,10 @@ BEGIN
 
 		EXEC dbo.SP_SYS_LOG_PROC @@PROCID
 			, @Msg
-			, '*** End Execute Proc ***: dbo.dbo.[SP_CASH_PAYMENTS_FIND_SUITABLE_DEAL]'
+			, '*** End Execute Proc ***: dbo.dbo.[SP_TA_EXISTING_ONLINE_DATA_TEST_PROCEDURES_FIND_SUITABLE_DEAL]'
 	END
 
 	RETURN 0
 END
 GO
+

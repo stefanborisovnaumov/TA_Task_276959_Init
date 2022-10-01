@@ -1,4 +1,3 @@
-
 /********************************************************************************************************/
 /* Процедура за селектиране на всички клиенти от OnlineDb с неплатени такси към всички кл. сметки */
 DROP PROC IF EXISTS dbo.[SP_LOAD_ONLINE_CUSTOMERS_WITH_UNCOLLECTED_TAX_CONNECTED_TO_ALL_ACCOUNTS]
@@ -77,3 +76,4 @@ begin
 	return 0
 end
 go
+

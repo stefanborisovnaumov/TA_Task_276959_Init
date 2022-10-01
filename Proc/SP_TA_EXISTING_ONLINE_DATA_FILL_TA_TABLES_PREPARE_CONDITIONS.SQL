@@ -1,4 +1,3 @@
-
 /********************************************************************************************************/
 /* Процедура формираща SQL заявката за търсене на подходяща сделка по ID на тестови случай */
 /* 2022/06/98 - v2.6.3 -> търсена на подходящи сделките за навързаните документи се извършва само за първия тестови случай */
@@ -91,9 +90,9 @@ begin
 		, 	@UI_STD_DOG_CODE_BEN		int = -1
 	;
 
-	drop table if EXISTS dbo.[#TBL_SQL_CONDITIONS]
+	drop table if EXISTS dbo.[#TEMP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_SQL_CONDITIONS]
 	;
-	create table dbo.[#TBL_SQL_CONDITIONS]
+	create table dbo.[#TEMP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_SQL_CONDITIONS]
 	(
 		[ID] INT IDENTITY(1,1)
 	,	[SQL_COND] nvarchar(1000)
@@ -109,7 +108,7 @@ begin
 	;
 	select [V].*
 	into dbo.[#TBL_TA_CONDITIONS] 
-	from dbo.[VIEW_CASH_PAYMENTS_CONDITIONS] [V] with(nolock) where [V].[ROW_ID] = IsNull(@TestCaseRowID, -1)
+	from dbo.[VIEW_TA_EXISTING_ONLINE_DATA_CONDITIONS] [V] with(nolock) where [V].[ROW_ID] = IsNull(@TestCaseRowID, -1)
 	;
 
 	select top(1) /* Client conditions: */
@@ -185,7 +184,7 @@ begin
 		+ case when IsNull(@TYPE_ACTION,'') IN ( 'CT', 'DD' ) and IsNull(@UI_INOUT_TRANSFER,'-1') = '3' and IsNull(@BETWEEN_OWN_ACCOUNTS,-1) in (0,1)
 			then ', [DEAL_BEN].[DEAL_TYPE_BEN], [DEAL_BEN].[DEAL_NUM_BEN] '
 			else ', NULL AS [DEAL_TYPE_BEN],  NULL AS [DEAL_NUM_BEN]' end + @CrLf
-	insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR], [IS_BASE_select] )
+	insert into dbo.[#TEMP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_SQL_CONDITIONS] ( [SQL_COND], [DESCR], [IS_BASE_select] )
 	select	@Sql2,	N'SELECT ...', 1
 	;
 	select @Sql += @Sql2
@@ -202,7 +201,7 @@ begin
 		and [DEAL].[DEAL_CURRENCY_CODE] = '+str(@CCY_CODE_DEAL,len(@CCY_CODE_DEAL),0)+' ';
 
 	-- [DT015_CUSTOMERS_ACTIONS_TA].[SECTOR] and [RAZPREG_TA].[UI_CURRENCY_CODE]
-	insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
+	insert into dbo.[#TEMP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 	select	(@Sql2 + @CrLf), N' BASE join: SECTOR = '+str(@SECTOR,len(@SECTOR),0)+' & [UI_CURRENCY_CODE] = '+str(@CCY_CODE_DEAL,len(@CCY_CODE_DEAL),0)+' '
 	select @Sql += @Sql2
 
@@ -227,7 +226,7 @@ begin
 		';
 
 		-- [DT015_CUSTOMERS_ACTIONS_TA].[UI_RAZPOREDITEL] -- 0 - Пълномощник; 1 - Законен представител
-		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
+		insert into dbo.[#TEMP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 		select	(@Sql2 + @CrLf), N'@UI_RAZPOREDITEL: '+STR(@UI_RAZPOREDITEL,len(@UI_RAZPOREDITEL),0)+' '
 		select @Sql += @Sql2;
 	end
@@ -240,7 +239,7 @@ begin
 		';
 
 		-- Base join clause: 
-		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
+		insert into dbo.[#TEMP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 		select	(@Sql2 + @CrLf), N' WITHOUT PROXY: [PROXY].[CUSTOMER_ID] = [DEAL].[CUSTOMER_ID]'
 		select @Sql += @Sql2;
 	end
@@ -292,7 +291,7 @@ begin
 		end
 
 		-- Base join clause: 
-		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
+		insert into dbo.[#TEMP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 		select	(@Sql2 + @CrLf), N' Add additiona join for document Credit Transfer; @BETWEEN_OWN_ACCOUNTS :'+str(@BETWEEN_OWN_ACCOUNTS,len(@BETWEEN_OWN_ACCOUNTS),0)
 		select @Sql += @Sql2;
 	end
@@ -302,7 +301,7 @@ begin
 	-- [DT015_CUSTOMERS_ACTIONS_TA].[DB_CLIENT_TYPE] => @DB_CLIENT_TYPE_DT300:
 	select @Sql2 = N'
 	where [CUST].[CLIENT_TYPE_DT300_CODE] = '+str(@DB_CLIENT_TYPE_DT300,len(@DB_CLIENT_TYPE_DT300),0);
-	insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
+	insert into dbo.[#TEMP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 	select	(@Sql2 + @CrLf), ' BASE @DB_CLIENT_TYPE_DT300 : ' + @Sql2
 	select @Sql += @Sql2
 
@@ -313,7 +312,7 @@ begin
 				+ STR(@CUSTOMER_BIRTH_DATE_MIN,LEN(@CUSTOMER_BIRTH_DATE_MIN),0)+' AND ' 
 				+ STR(@CUSTOMER_BIRTH_DATE_MAX,LEN(@CUSTOMER_BIRTH_DATE_MAX),0)+' ' + @CrLf;
 
-		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
+		insert into dbo.[#TEMP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 		select	@Sql2, '[CUSTOMER_AGE] '+@CUSTOMER_AGE+' - between YEAR : ' 
 				+ STR(@CUSTOMER_BIRTH_DATE_MIN,LEN(@CUSTOMER_BIRTH_DATE_MIN),0) + ' AND '
 				+ STR(@CUSTOMER_BIRTH_DATE_MAX,LEN(@CUSTOMER_BIRTH_DATE_MAX),0) + @CrLf;
@@ -326,7 +325,7 @@ begin
 	if @UNIFIED <> -1
 	begin 
 		select @Sql2 = ' AND [CUST].[HAS_MANY_CLIENT_CODES] = ' + case when @UNIFIED = 0 THEN '0' ELSE '1' END + @CrLf;
-		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
+		insert into dbo.[#TEMP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 		select	@Sql2
 			,	'[UNIFIED] : ' + str(@UNIFIED,len(@UNIFIED),0 )
 
@@ -337,7 +336,7 @@ begin
 	if @IS_SERVICE <> -1
 	begin 
 		select @Sql2 = ' AND [CUST].[HAS_DUBL_CLIENT_IDS] = ' + case when @IS_SERVICE = 0 then '0' else '1' end + @CrLf;
-		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
+		insert into dbo.[#TEMP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 		select	@Sql2
 			,	'[IS_SERVICE] : ' + str(@IS_SERVICE,len(@IS_SERVICE),0 )
 
@@ -347,7 +346,7 @@ begin
 		begin 
 			select @Sql2 = ' AND [CUST].[IS_ORIGINAL_EGFN] = ' + case when @IS_SERVICE = 1 then '1' else '0' end + @CrLf;
 
-			insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
+			insert into dbo.[#TEMP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 			select	@Sql2
 				,	'[IS_SERVICE] : ' + str(@IS_SERVICE,len(@IS_SERVICE),0 )
 
@@ -360,7 +359,7 @@ begin
 	begin 
 		select @Sql2 = ' AND [CUST].[CLIENT_IDENTIFIER_TYPE] = ' + str(@CODE_EGFN_TYPE,len(@CODE_EGFN_TYPE),0) + @CrLf;
 
-		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
+		insert into dbo.[#TEMP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 		select	@Sql2
 			,	'[CODE_EGFN_TYPE] : ' + str(@CODE_EGFN_TYPE,len(@CODE_EGFN_TYPE),0 )
 
@@ -372,7 +371,7 @@ begin
 	begin
 		select @Sql2 = ' AND [PROXY].[HAS_VALID_DOCUMENT] = 1' + @CrLf;
 
-		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
+		insert into dbo.[#TEMP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 		select	@Sql2
 			,	'[VALID_ID] : ' + str(@VALID_ID,len(@VALID_ID),0 )
 
@@ -395,7 +394,7 @@ begin
 				/* and [TA_CUST].[TA_TYPE] = '+@TA_TYPE+' */
 		)' + @CrLf;
 
-		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
+		insert into dbo.[#TEMP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 		select	@Sql2
 			,	'[VALID_ID] : ' + str(@VALID_ID,len(@VALID_ID),0 )
 
@@ -409,7 +408,7 @@ begin
 	if IsNull(@HAVE_CREDIT, -1) in ( 0, 1 )
 	begin
 		select @Sql2 = ' AND [CUST].[HAS_LOAN] = '+STR(@HAVE_CREDIT,LEN(@HAVE_CREDIT),0) + @CrLf;
-		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
+		insert into dbo.[#TEMP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 		select	@Sql2
 			,	'[HAS_LOAN] : ' + str(@VALID_ID,len(@VALID_ID),0 )
 
@@ -421,7 +420,7 @@ begin
 	begin
 		select @StrIntVal = STR(@COLLECT_TAX_FROM_ALL_ACC,LEN(@COLLECT_TAX_FROM_ALL_ACC),0);
 		select @Sql2 = ' AND [CUST].[HAS_UNCOLLECTED_TAX_CONNECTED_TO_ALL_ACC] = ' + @StrIntVal + @CrLf;
-		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
+		insert into dbo.[#TEMP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 		select	@Sql2
 			,	'[COLLECT_TAX_FROM_ALL_ACC] : ' + @StrIntVal
 
@@ -435,7 +434,7 @@ begin
 		begin
 			select @Sql2 = ' AND [DEAL].[PROXY_COUNT] > 0' + @CrLf;
 
-			insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
+			insert into dbo.[#TEMP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 			select	@Sql2
 				,	'[UI_RAZPOREDITEL] : ' + str(@UI_RAZPOREDITEL,len(@UI_RAZPOREDITEL),0 )
 
@@ -453,7 +452,7 @@ begin
 	begin 
 		select @Sql2 = ' AND [DEAL].[DEAL_STD_DOG_CODE] = '+STR(@UI_STD_DOG_CODE, LEN(@UI_STD_DOG_CODE),0) + @CrLf;
 
-		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
+		insert into dbo.[#TEMP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 		select	@Sql2
 			,	'[UI_STD_DOG_CODE] : ' + STR(@UI_STD_DOG_CODE, LEN(@UI_STD_DOG_CODE),0);
 
@@ -465,7 +464,7 @@ begin
 	begin 
 		select @Sql2 = ' AND [DEAL].[DEAL_IS_INDIVIDUAL_DEAL] = '+STR(@UI_INDIVIDUAL_DEAL, LEN(@UI_INDIVIDUAL_DEAL),0) + @CrLf;
 
-		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
+		insert into dbo.[#TEMP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 		select	@Sql2
 			,	'[UI_INDIVIDUAL_DEAL] : ' + STR(@UI_INDIVIDUAL_DEAL, LEN(@UI_INDIVIDUAL_DEAL),0);
 
@@ -476,7 +475,7 @@ begin
 		begin
 			select @Sql2 = ' AND [DEAL].[INT_COND_STDCONTRACT] = '+STR(@INT_COND_STDCONTRACT, LEN(@INT_COND_STDCONTRACT),0) + @CrLf;
 
-			insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
+			insert into dbo.[#TEMP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 			select	@Sql2
 				,	'[INT_COND_STDCONTRACT] : ' + +STR(@INT_COND_STDCONTRACT, LEN(@INT_COND_STDCONTRACT),0);
 
@@ -487,7 +486,7 @@ begin
 		begin
 			select @Sql2 = ' AND [DEAL].[DEAL_STD_DOG_CODE] = '+STR(@UI_STD_DOG_CODE, LEN(@UI_STD_DOG_CODE),0) + @CrLf;
 
-			insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
+			insert into dbo.[#TEMP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 			select	@Sql2
 				,	'[UI_STD_DOG_CODE] : ' + STR(@UI_STD_DOG_CODE, LEN(@UI_STD_DOG_CODE),0) + '/* for individual deal: [UI_INDIVIDUAL_DEAL] = 1 */';
 
@@ -501,7 +500,7 @@ begin
 	begin 
 		select @Sql2 = ' AND [DEAL].[DEAL_NM342_BUNDLE_PRODUCT_CODE] = '+ STR(@CODE_UI_NM342,LEN(@CODE_UI_NM342),0) + @CrLf;
 
-		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
+		insert into dbo.[#TEMP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 		select	@Sql2
 			,	'[CODE_UI_NM342] : ' + STR(@CODE_UI_NM342,LEN(@CODE_UI_NM342),0);
 
@@ -513,7 +512,7 @@ begin
 	begin 
 		select @Sql2 = ' AND [DEAL].[HAS_OTHER_TAX_ACCOUNT] = ' + str(@UI_OTHER_ACCOUNT_FOR_TAX,len(@UI_OTHER_ACCOUNT_FOR_TAX),0) + @CrLf;
 
-		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
+		insert into dbo.[#TEMP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 		select	@Sql2
 			,	'[UI_OTHER_ACCOUNT_FOR_TAX] : ' + str(@UI_OTHER_ACCOUNT_FOR_TAX,len(@UI_OTHER_ACCOUNT_FOR_TAX),0);
 
@@ -525,7 +524,7 @@ begin
 	begin 
 		select @Sql2 = ' AND [DEAL].[DEAL_NO_AUTO_PAY_TAX] = '+@UI_NOAUTOTAX + @CrLf;
 
-		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
+		insert into dbo.[#TEMP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 		select	@Sql2
 			,	'[UI_NOAUTOTAX] : ' + @UI_NOAUTOTAX
 
@@ -537,7 +536,7 @@ begin
 	begin 
 		select @Sql2 = ' AND [DEAL].[DEAL_IS_DENY_MANUAL_TAX_ASSIGN] = '+@UI_DENY_MANUAL_TAX_ASSIGN + @CrLf;
 
-		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
+		insert into dbo.[#TEMP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 		select	@Sql2
 			,	'[UI_DENY_MANUAL_TAX_ASSIGN] : ' + @UI_DENY_MANUAL_TAX_ASSIGN
 
@@ -549,7 +548,7 @@ begin
 	begin 
 		select @Sql2 = ' AND [DEAL].[DEAL_CAPIT_ON_BASE_DATE_OPEN] = '+@UI_CAPIT_ON_BASE_DATE_OPEN + @CrLf;
 
-		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
+		insert into dbo.[#TEMP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 		select	@Sql2
 			,	'[UI_CAPIT_ON_BASE_DATE_OPEN] : ' + @UI_CAPIT_ON_BASE_DATE_OPEN
 
@@ -561,7 +560,7 @@ begin
 	begin 
 		select @Sql2 = ' AND [DEAL].[DEAL_EXCLUDE_FROM_BANK_COLLECTIONS] = '+@UI_BANK_RECEIVABLES + @CrLf;
 		
-		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
+		insert into dbo.[#TEMP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 		select	@Sql2
 			,	'[UI_BANK_RECEIVABLES] : ' + @UI_BANK_RECEIVABLES
 
@@ -574,7 +573,7 @@ begin
 
 		select @Sql2 = ' AND [DEAL].[DEAL_IS_JOINT_DEAL] = ' + str(@UI_JOINT_TYPE,len(@UI_JOINT_TYPE),0) + @CrLf;
 
-		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
+		insert into dbo.[#TEMP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 		select	@Sql2
 			,	'[UI_JOINT_TYPE] : ' + str(@UI_JOINT_TYPE,len(@UI_JOINT_TYPE),0);
 
@@ -585,7 +584,7 @@ begin
 		begin 
 			select @Sql2 = ' AND [DEAL].[DEAL_JOINT_ACCESS_TO_FUNDS_TYPE] = 0' + @CrLf;
 
-			insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
+			insert into dbo.[#TEMP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 			select	@Sql2
 				,	'[UI_JOINT_TYPE] (Access type: 0 - Separate; 1 Always Together) : ';
 
@@ -598,7 +597,7 @@ begin
 	begin 
 		select @Sql2 = ' AND ([DEAL].[ACCOUNT_BEG_DAY_BALANCE] - [DEAL].[BLK_SUMA_MIN] + [DEAL].[DAY_OPERATION_BALANCE]) ' + REPLACE(@LIMIT_AVAILABILITY, ' ','') + @CrLf;
 
-		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
+		insert into dbo.[#TEMP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 		select	@Sql2, '[LIMIT_AVAILABILITY] : ' + @LIMIT_AVAILABILITY;
 
 		select @Sql += @Sql2
@@ -609,7 +608,7 @@ begin
 	begin 
 		select @Sql2 = ' AND [DEAL].[IS_DORMUNT_ACCOUNT] = 0' + @CrLf;
 
-		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
+		insert into dbo.[#TEMP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 		select	@Sql2, '[DEAL_STATUS] : ' + str(@DEAL_STATUS,len(@DEAL_STATUS),0);
 
 		select @Sql += @Sql2
@@ -620,7 +619,7 @@ begin
 	begin 
 		select @Sql2 = ' AND [DEAL].[HAS_TAX_UNCOLECTED] = ' + str(@LIMIT_TAX_UNCOLLECTED,len(@LIMIT_TAX_UNCOLLECTED),0) + @CrLf;
 
-		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
+		insert into dbo.[#TEMP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 		select	@Sql2
 			,	'[LIMIT_TAX_UNCOLLECTED] : ' + str(@LIMIT_TAX_UNCOLLECTED,len(@LIMIT_TAX_UNCOLLECTED),0);
 
@@ -635,7 +634,7 @@ begin
 		begin 
 			select @Sql2 = ' AND [DEAL].[HAS_DISTRAINT] = 0' + @CrLf;
 
-			insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
+			insert into dbo.[#TEMP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 			select	@Sql2
 				,	'[LIMIT_ZAPOR] : ' + str(@LIMIT_ZAPOR,len(@LIMIT_ZAPOR),0);
 
@@ -646,7 +645,7 @@ begin
 		begin
 			select @Sql2 = ' AND [DEAL].[HAS_DISTRAINT] = 1 AND [DEAL].[BLK_SUMA_MIN] > 0.0' + @CrLf;
 
-			insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
+			insert into dbo.[#TEMP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 			select	@Sql2
 				,	'[LIMIT_ZAPOR] : ' + str(@LIMIT_ZAPOR,len(@LIMIT_ZAPOR),0);
 
@@ -659,7 +658,7 @@ begin
 	begin
 		select @Sql2 = ' AND [DEAL].[HAS_WNOS_BEL] = ' + (case when @RUNNING_ORDER > 1 then '1' else '0' end)  + @CrLf;
 
-		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
+		insert into dbo.[#TEMP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 		select	@Sql2
 			,	'[TYPE_ACTION] = ''CashPayment'' and [RUNNING_ORDER] : ' + str(@RUNNING_ORDER,len(@RUNNING_ORDER),0);
 
@@ -671,7 +670,7 @@ begin
 	begin
 		select @Sql2 = ' AND [DEAL].[HAS_NAR_RAZP] = ' + (case when @RUNNING_ORDER > 1 then '1' else '0' end)  + @CrLf;
 
-		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
+		insert into dbo.[#TEMP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 		select	@Sql2
 			,	'[TYPE_ACTION] = ''CashW'' and [RUNNING_ORDER] : ' + str(@RUNNING_ORDER,len(@RUNNING_ORDER),0);
 
@@ -686,7 +685,7 @@ begin
 			where  [TAX].[CORR_ACCOUNT] =  [DEAL].[DEAL_ACCOUNT]
 		)' + @CrLf;
 
-		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
+		insert into dbo.[#TEMP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 		select	@Sql2
 			,	'[IS_CORR] : ' + str(@IS_CORR,len(@IS_CORR),0);
 
@@ -702,7 +701,7 @@ begin
 				and ( [TA].[IS_BEN] IS NULL OR [TA].[IS_BEN] <> 1 )  
 		)' + @CrLf;
 
-		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
+		insert into dbo.[#TEMP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 		select	@Sql2
 			,	'[IS_UNIQUE_DEAL] : ' + str(@IS_UNIQUE_DEAL,len(@IS_UNIQUE_DEAL),0)
 
@@ -722,7 +721,7 @@ begin
 				and [GS].[DEAL_GS_INDIVIDUAL_PRODUCT_CODE] = '+STR(@GS_PRODUCT_CODE,LEN(@GS_PRODUCT_CODE),0)+'
 		)' + @CrLf;
 
-		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
+		insert into dbo.[#TEMP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 		select	@Sql2
 			,	'[CODE_GS_PROGRAMME] : ' + str(@CODE_GS_PROGRAMME,len(@CODE_GS_PROGRAMME),0)
 				+', [CODE_GS_CARD] : ' + str(@CODE_GS_CARD,len(@CODE_GS_CARD),0)
@@ -743,7 +742,7 @@ begin
 
 		select @Sql2 += ')' + @CrLf;
 
-		insert into dbo.[#TBL_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
+		insert into dbo.[#TEMP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_SQL_CONDITIONS] ( [SQL_COND], [DESCR] )
 		select	@Sql2
 			,	'[CCY_CODE_CORS] : ' + str(@CCY_CODE_CORS,len(@CCY_CODE_CORS),0) + ', [LIMIT_AVAILABILITY_CORS] : ' + @LIMIT_AVAILABILITY_CORS
 
@@ -779,14 +778,14 @@ begin
 
 	if @Rows <= 0 and @SaveTAConditions = 1
 	begin
-		insert into dbo.[AGR_CASH_PAYMENTS_SQL_CONDITIONS]
+		insert into dbo.[AGR_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_SQL_CONDITIONS]
 		( [TEST_ID], [SQL_COND], [DESCR], [IS_BASE_SELECT], [IS_SELECT_COUNT] )
 		SELECT	@TestCaseRowID	 AS [TEST_ID]
 			,	[S].[SQL_COND]
 			,	[S].[DESCR]
 			,	[S].[IS_BASE_SELECT]
 			,	[S].[IS_SELECT_COUNT]
-		FROM dbo.[#TBL_SQL_CONDITIONS] [S] WITH(NOLOCK)
+		FROM dbo.[#TEMP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_SQL_CONDITIONS] [S] WITH(NOLOCK)
 	end
 		
 	/************************************************************************************************************/
@@ -801,3 +800,4 @@ begin
 	return 0;
 end 
 go
+
