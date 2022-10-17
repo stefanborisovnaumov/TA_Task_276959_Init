@@ -1,7 +1,7 @@
 -- /*****************************************************************************/
 -- -- Init table dbo.[TEST_AUTOMATION_TA_TYPE]
--- drop table if exists dbo.[TEST_AUTOMATION_TA_TYPE]
--- go
+drop table if exists dbo.[TEST_AUTOMATION_TA_TYPE]
+go
 
 -- create table dbo.[TEST_AUTOMATION_TA_TYPE]
 -- (
@@ -224,20 +224,6 @@ create table dbo.[AGR_TA_EXISTING_ONLINE_DATA_DEALS_LEGAL_REPRESENTATIVE]
 )
 go
 
-/*****************************************************************************/
--- Create table dbo.[AGR_TA_EXISTING_ONLINE_DATA_DEALS_ACTIVE_PROXY_CUSTOMERS]
-drop table if exists dbo.[AGR_TA_EXISTING_ONLINE_DATA_DEALS_ACTIVE_PROXY_CUSTOMERS]
-go
-
-create table dbo.[AGR_TA_EXISTING_ONLINE_DATA_DEALS_ACTIVE_PROXY_CUSTOMERS]
-(
-	[DEAL_TYPE]						smallint
-,	[DEAL_NUM]						int
-,	[REPRESENTATIVE_CUSTOMER_ID]	int 
-,	[CUSTOMER_ROLE_TYPE] 			int
-)
-go
-
 
 /*****************************************************************************/
 -- Create table dbo.[AGR_TA_EXISTING_ONLINE_DATA_CUSTOMERS_DUPLICATED_EGFN]
@@ -309,13 +295,4 @@ create table dbo.[AGR_TA_EXISTING_ONLINE_DATA_CUSTOMERS_WITH_LOANS]
 )
 go
 
-/*****************************************************************************/
--- Create INDEX ON table dbo.AGR_TA_EXISTING_ONLINE_DATA_DEALS
---DROP INDEX IF EXISTS [IX_AGR_TA_EXISTING_ONLINE_DATA_DEALS_DEAL_CURRENCY_CODE_CUSTOMER_ID_DEAL_NUM] 
---	ON [dbo].AGR_TA_EXISTING_ONLINE_DATA_DEALS
---go
-
---CREATE NONCLUSTERED INDEX [IX_AGR_TA_EXISTING_ONLINE_DATA_DEALS_DEAL_CURRENCY_CODE_CUSTOMER_ID_DEAL_NUM]
---	ON [dbo].AGR_TA_EXISTING_ONLINE_DATA_DEALS ([DEAL_CURRENCY_CODE],[CUSTOMER_ID],[DEAL_NUM])
---go
 

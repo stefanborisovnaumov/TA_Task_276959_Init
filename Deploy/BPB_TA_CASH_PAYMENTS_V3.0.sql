@@ -1,15 +1,16 @@
 /***************************************************************************************************************/
--- Име          : Янко Янков
--- Дата и час   : 10.08.2022
--- Задача       : Task 282617 (v2.9.3)
+-- Име          : Стефан Наумов
+-- Дата и час   : 17.10.2022 г. 15:40
+-- Задача       : Support Task ; Task 291975
 -- Класификация : Test Automation
--- Описание     : Автоматизация на тестовете за Кредитните преводи с използване на наличните данни от Online базата
+-- Описание     : Добавяне на BLOCKSUM_TA като отправна точка за тестове за блокировки
 -- Параметри    : Няма
 /***************************************************************************************************************/
+
 -- /*****************************************************************************/
 -- -- Init table dbo.[TEST_AUTOMATION_TA_TYPE]
--- drop table if exists dbo.[TEST_AUTOMATION_TA_TYPE]
--- go
+drop table if exists dbo.[TEST_AUTOMATION_TA_TYPE]
+go
 
 -- create table dbo.[TEST_AUTOMATION_TA_TYPE]
 -- (
@@ -232,20 +233,6 @@ create table dbo.[AGR_TA_EXISTING_ONLINE_DATA_DEALS_LEGAL_REPRESENTATIVE]
 )
 go
 
-/*****************************************************************************/
--- Create table dbo.[AGR_TA_EXISTING_ONLINE_DATA_DEALS_ACTIVE_PROXY_CUSTOMERS]
-drop table if exists dbo.[AGR_TA_EXISTING_ONLINE_DATA_DEALS_ACTIVE_PROXY_CUSTOMERS]
-go
-
-create table dbo.[AGR_TA_EXISTING_ONLINE_DATA_DEALS_ACTIVE_PROXY_CUSTOMERS]
-(
-	[DEAL_TYPE]						smallint
-,	[DEAL_NUM]						int
-,	[REPRESENTATIVE_CUSTOMER_ID]	int 
-,	[CUSTOMER_ROLE_TYPE] 			int
-)
-go
-
 
 /*****************************************************************************/
 -- Create table dbo.[AGR_TA_EXISTING_ONLINE_DATA_CUSTOMERS_DUPLICATED_EGFN]
@@ -317,15 +304,6 @@ create table dbo.[AGR_TA_EXISTING_ONLINE_DATA_CUSTOMERS_WITH_LOANS]
 )
 go
 
-/*****************************************************************************/
--- Create INDEX ON table dbo.AGR_TA_EXISTING_ONLINE_DATA_DEALS
---DROP INDEX IF EXISTS [IX_AGR_TA_EXISTING_ONLINE_DATA_DEALS_DEAL_CURRENCY_CODE_CUSTOMER_ID_DEAL_NUM] 
---	ON [dbo].AGR_TA_EXISTING_ONLINE_DATA_DEALS
---go
-
---CREATE NONCLUSTERED INDEX [IX_AGR_TA_EXISTING_ONLINE_DATA_DEALS_DEAL_CURRENCY_CODE_CUSTOMER_ID_DEAL_NUM]
---	ON [dbo].AGR_TA_EXISTING_ONLINE_DATA_DEALS ([DEAL_CURRENCY_CODE],[CUSTOMER_ID],[DEAL_NUM])
---go
 
 /********************************************************************************************************/
 /* Създаване на помощно view за Условията към тестовите сценарии */
@@ -377,9 +355,13 @@ AS
 		) X([ID], [NAME])		
 	)
 	SELECT DISTINCT
-		COALESCE([PREV].[ROW_ID], BLOCKSUM_TA.ROW_ID) AS [ROW_ID]
+		CASE 
+			WHEN PREV.ROW_ID IS NOT NULL THEN 'PREV_COMMON_TA'
+			WHEN BLOCKSUM_TA.ROW_ID IS NOT NULL THEN 'BLOCKSUM_TA' END AS REGISTER_TYPE
+		, COALESCE([PREV].[ROW_ID], BLOCKSUM_TA.ROW_ID) AS [ROW_ID]
 		, COALESCE([PREV].[TA_TYPE], BLOCKSUM_TA.TA_TYPE) AS [TA_TYPE]
 		, COALESCE([PREV].[DB_TYPE], BLOCKSUM_TA.DB_TYPE) AS [DB_TYPE]
+		, COALESCE([PREV].[RUNNING_ORDER], BLOCKSUM_TA.RUNNING_ORDER) AS [RUNNING_ORDER]
 		, [CUST].[ROW_ID] AS [CUST_ROW_ID]
 		, [DREG].[ROW_ID] AS [DEAL_ROW_ID]
 		, [CORS].[ROW_ID] AS [CORS_ROW_ID]
@@ -440,7 +422,6 @@ AS
 		/*,	[CORS].[LIMIT_TAX_UNCOLLECTED] AS [LIMIT_TAX_UNCOLLECTED_CORS] */
 		/*,	[PROXY_ACC_TA]  Пълномощника, да има права за действието по избраната сметка */
 		/* Условия за вносната бележка [PREV_COMMON_TA] */
-		, [PREV].[RUNNING_ORDER] AS [RUNNING_ORDER]
 		, [PREV].[TYPE_ACTION] AS [TYPE_ACTION]
 		, [PREV].TAX_CODE AS [TAX_CODE]
 		, [PREV].PREF_CODE AS [PREF_CODE]
@@ -1599,8 +1580,6 @@ BEGIN
 END
 GO
 
-
-
 /********************************************************************************************************/
 /* Help procedure: */
 DROP PROCEDURE IF EXISTS  dbo.[SP_SYS_GET_ACCOUNT_DATE_FROM_DB]
@@ -1675,193 +1654,13 @@ AS
 		VALUES( OBJECT_NAME( @ProcID ), @Sql, @Msg, GetDate() )
 GO
 
-
-
-
-/********************************************************************************************************/
-/* Процедура за селектиране на всички клиенти от Online базата с активни запори */
-DROP PROC IF EXISTS dbo.[SP_LOAD_ONLINE_CUSTOMERS_WITH_DISTRAINT]
-GO
-
-CREATE PROC dbo.[SP_LOAD_ONLINE_CUSTOMERS_WITH_DISTRAINT]
-(
-	@OnlineSqlServerName	sysname 
-,	@OnlineSqlDataBaseName	sysname 
-)
-as 
-begin
-
-	declare @LogTraceInfo int = 0,	@LogBegEndProc int = 1,	@TimeBeg datetime = GetDate()
-        ,   @Sql1 nvarchar(2000) = N'', @Msg nvarchar(2000) = N''
-    ;
-	/************************************************************************************************************/
-	/* 1.Log Begining of Procedure execution */
-	if @LogBegEndProc = 1 
-	begin	
-		select @Sql1 = 'dbo.[SP_LOAD_ONLINE_CUSTOMERS_WITH_DISTRAINT] @OnlineSqlServerName ='+@OnlineSqlServerName
-					+', @OnlineSqlDataBaseName = '+@OnlineSqlDataBaseName
-			,  @Msg =  '*** Begin Execute Proc ***: dbo.[SP_LOAD_ONLINE_CUSTOMERS_WITH_DISTRAINT]'
-		;
-		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg
-	end    
-
-	/************************************************************************************************************/
-	/* 2.1. Prepare Online Database FullName */
-	if LEN(@OnlineSqlServerName) > 1 and LEFT(@OnlineSqlServerName,1) <> N'['
-		select @OnlineSqlServerName = QUOTENAME(@OnlineSqlServerName)
-
-	if LEN(@OnlineSqlDataBaseName) > 1 and LEFT(@OnlineSqlDataBaseName,1) <> N'['
-		select @OnlineSqlDataBaseName = QUOTENAME(@OnlineSqlDataBaseName)
-
-	declare @Sql nvarchar(4000) = N'', @Ret int = 0
-		,	@SqlFullDBName sysname = @OnlineSqlServerName +'.'+@OnlineSqlDataBaseName;
-	;
-
-	/************************************************************************************************************/
-	/* 2.2. Prepare SQL statement */
-	select @Sql = 
-	'declare @Ret int = 0
-		,	@StsBlockReasonDistraint int = dbo.SETBIT(cast(0 as binary(4)), 11, 1) /* STS_BLOCK_REASON_DISTRAINT (11)*/ 
-	;
-	
-	declare @Tbl_Distraint_Codes TABLE ( [CODE] INT )
-	;
-
-	insert into @Tbl_Distraint_Codes
-	SELECT [n].[CODE]
-	from '+@SqlFullDBName+'.dbo.[NOMS] [n] with(nolock)
-	where	[n].[NOMID] = 136
-		and ([n].[sTATUS] & @StsBlockReasonDistraint) = @StsBlockReasonDistraint
-	;
-	WITH [CTE_X] AS
-	(
-		SELECT [CODE] 
-		FROM @Tbl_Distraint_Codes 
-	)
-	SELECT distinct [CLC].[CUSTOMER_ID]
-	FROM '+@SqlFullDBName+'.dbo.[BLOCKSUM] [BLK] with(nolock)
-	inner join [CTE_X] [X] with(nolock)
-		on	[BLK].[WHYFREEZED] = [X].[CODE]
-		and [BLK].[CLOSED_FROZEN_SUM] <> 1
-		and [BLK].[SUMA] > 0.0
-	inner join '+@SqlFullDBName+'.dbo.[PARTS] [ACC] with(nolock)
-		on [ACC].[PART_ID] = [BLK].[PARTIDA]
-	inner join '+@SqlFullDBName+'.dbo.[dt015] [CLC] with(nolock)
-		on [CLC].[CODE] = [ACC].[CLIENT_ID]
-	';
-
-	/************************************************************************************************************/
-	/* 3. Execute SQL statement */
-	begin try
-        exec @Ret = sp_executesql @Sql
-    end try
-	begin catch
-		select @Msg = dbo.FN_GET_EXCEPTION_INFO()
-		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg
-		return 1;
-	end catch
-
-	/************************************************************************************************************/
-	/* Log End Of Procedure */
-	if @LogBegEndProc = 1
-	begin 
-		select @Sql1 = 'dbo.[SP_LOAD_ONLINE_CUSTOMERS_WITH_DISTRAINT] @OnlineSqlServerName ='+@OnlineSqlServerName
-					+', @OnlineSqlDataBaseName = '+@OnlineSqlDataBaseName
-			,	@Msg = '*** End Execute Proc ***: dbo.[SP_LOAD_ONLINE_CUSTOMERS_WITH_DISTRAINT], Duration: '
-					+ dbo.FN_GET_TIME_DIFF(@TimeBeg, GetDate())
-		;
-		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg
-	end    
-
-	return 0
-end
-go
-
-/********************************************************************************************************/
-/* Процедура за селектиране на всички клиенти от OnlineDb с неплатени такси към всички кл. сметки */
-DROP PROC IF EXISTS dbo.[SP_LOAD_ONLINE_CUSTOMERS_WITH_UNCOLLECTED_TAX_CONNECTED_TO_ALL_ACCOUNTS]
-GO
-
-CREATE PROC dbo.[SP_LOAD_ONLINE_CUSTOMERS_WITH_UNCOLLECTED_TAX_CONNECTED_TO_ALL_ACCOUNTS]
-(
-	@OnlineSqlServerName	sysname 
-,	@OnlineSqlDataBaseName	sysname 
-)
-as 
-begin
-
-	declare @LogTraceInfo int = 0,	@LogBegEndProc int = 1,	@TimeBeg datetime = GetDate()
-        ,   @Sql1 nvarchar(2000) = N'', @Msg nvarchar(2000) = N''
-    ;
-	/************************************************************************************************************/
-	/* 1.Log Begining of Procedure execution */
-	if @LogBegEndProc = 1 
-	begin	
-		select @Sql1 = 'dbo.[SP_LOAD_ONLINE_CUSTOMERS_WITH_UNCOLLECTED_TAX_CONNECTED_TO_ALL_ACCOUNTS] @OnlineSqlServerName ='+@OnlineSqlServerName
-					+', @OnlineSqlDataBaseName = '+@OnlineSqlDataBaseName
-			,  @Msg =  '*** Begin Execute Proc ***: dbo.[SP_LOAD_ONLINE_CUSTOMERS_WITH_UNCOLLECTED_TAX_CONNECTED_TO_ALL_ACCOUNTS]'
-		;
-		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg
-	end   
-
-    /************************************************************************************************************/
-	/* 2.1. Prepare Online Database FullName */
-	if LEN(@OnlineSqlServerName) > 1 and LEFT(@OnlineSqlServerName,1) <> N'['
-		select @OnlineSqlServerName = QUOTENAME(@OnlineSqlServerName)
-
-	if LEN(@OnlineSqlDataBaseName) > 1 and LEFT(@OnlineSqlDataBaseName,1) <> N'['
-		select @OnlineSqlDataBaseName = QUOTENAME(@OnlineSqlDataBaseName)
-
-	declare @Sql nvarchar(4000) = N'', @Ret int = 0
-		,	@SqlFullDBName sysname = @OnlineSqlServerName +'.'+@OnlineSqlDataBaseName;
-	;
-
-	/************************************************************************************************************/
-	/* 2.2. Prepare SQL statement */
-	select @Sql = '
-    select distinct [C].[CUSTOMER_ID] 
-    from '+@SqlFullDBName+'.dbo.[TAX_UNCOLLECTED] [T] with(nolock)
-    inner join '+@SqlFullDBName+'.dbo.[PARTS] [A] with(nolock)
-        on [a].[PART_ID] = [T].[ACCOUNT_DT]
-    inner join '+@SqlFullDBName+'.dbo.[DT015] [C] with(nolock)
-        on [C].[CODE] = [A].[CLIENT_ID]
-    where	[T].[TAX_STATUS] =  0 /* eTaxActive = 0 // Действаща такса */
-        and [T].[COLLECT_FROM_ALL_CUSTOMER_ACCOUNTS] = 1
-    ';
-
-	/************************************************************************************************************/
-	/* 3. Execute SQL statement */
-	begin try
-        exec @Ret = sp_executesql @Sql
-    end try
-	begin catch
-		select @Msg = dbo.FN_GET_EXCEPTION_INFO()
-		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg
-		return 1;
-	end catch    
-
-	/************************************************************************************************************/
-	/* Log End Of Procedure */
-	if @LogBegEndProc = 1
-	begin 
-		select @Sql1 = 'dbo.[SP_LOAD_ONLINE_CUSTOMERS_WITH_UNCOLLECTED_TAX_CONNECTED_TO_ALL_ACCOUNTS] @OnlineSqlServerName ='+@OnlineSqlServerName
-					+', @OnlineSqlDataBaseName = '+@OnlineSqlDataBaseName
-			,	@Msg = '*** End Execute Proc ***: dbo.[SP_LOAD_ONLINE_CUSTOMERS_WITH_UNCOLLECTED_TAX_CONNECTED_TO_ALL_ACCOUNTS], Duration: '
-					+ dbo.FN_GET_TIME_DIFF(@TimeBeg, GetDate())
-		;
-		exec dbo.SP_SYS_LOG_PROC @@PROCID, @Sql1, @Msg
-	end    
-
-	return 0
-end
-go
-
 /********************************************************************************************************/
 /* Процедура за актуализация на Таблиците по ID на тестови case */
 /* 2022/06/98 - v2.6.3 -> актуализация на TA таблиците за навързаните документи се извършва само за първия тестови случай */
 CREATE OR ALTER PROCEDURE dbo.[SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES]
 (
 	@TestCaseRowID INT
+	, @REGISTER_TYPE NVARCHAR(256)
 )
 AS
 BEGIN
@@ -1894,6 +1693,7 @@ BEGIN
 			SELECT *
 			FROM dbo.[VIEW_TA_EXISTING_ONLINE_DATA_CONDITIONS] WITH (NOLOCK)
 			WHERE [ROW_ID] = IsNull(@TestCaseRowID, - 1)
+				AND REGISTER_TYPE = @REGISTER_TYPE
 			)
 	BEGIN
 		SELECT @Msg = N'Error not found condition with [ROW_ID] :' + @RowIdStr
@@ -1917,11 +1717,12 @@ BEGIN
 		, @RUNNING_ORDER = IsNull([RUNNING_ORDER], 1)
 	FROM dbo.[VIEW_TA_EXISTING_ONLINE_DATA_CONDITIONS] WITH (NOLOCK)
 	WHERE [ROW_ID] = IsNull(@TestCaseRowID, - 1)
+		AND REGISTER_TYPE = @REGISTER_TYPE
 
-	IF /* @TYPE_ACTION = 'CashPayment' and */ @RUNNING_ORDER > 1
+	IF @RUNNING_ORDER > 1
 	BEGIN
-		SELECT @Msg = N'Update cash payment with [ROW_ID] ' + @RowIdStr + ' and  [RUNNING_ORDER] <> 1 not allowed.'
-			, @Sql = @TestCaseRowID
+		SELECT @Msg = N'Update with [ROW_ID] ' + @RowIdStr + ' and  [RUNNING_ORDER] <> 1 not allowed.'
+			, @Sql = @TestCaseRowID + ', ' + @REGISTER_TYPE
 
 		EXEC dbo.SP_SYS_LOG_PROC @@PROCID
 			, @Sql
@@ -2009,7 +1810,7 @@ BEGIN
 	/* Clear data before update table: dbo.DEALS_CORR_TA, dbo.RAZPREG_TA, dbo.DT015_CUSTOMERS_ACTIONS_TA */
 
 	BEGIN TRY
-		EXEC @Ret = dbo.SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_CLEAR_CURRENT_DATA @RowIdStr
+		EXEC @Ret = dbo.SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_CLEAR_CURRENT_DATA @RowIdStr, @REGISTER_TYPE
 	END TRY
 
 	BEGIN CATCH
@@ -2037,8 +1838,7 @@ BEGIN
 		, [DEAL_NUM_BEN] INT
 		)
 
-	EXEC @Ret = dbo.[SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_PREPARE_CONDITIONS] @RowIdStr
-		, @CurrAccDate
+	EXEC @Ret = dbo.[SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_PREPARE_CONDITIONS] @RowIdStr, @REGISTER_TYPE, @CurrAccDate
 
 	IF @Ret <> 0
 	BEGIN
@@ -2096,6 +1896,7 @@ BEGIN
 			EXEC @Ret = dbo.[SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_DEALS_CORS] @OnlineSqlServerName
 				, @OnlineSqlDataBaseName
 				, @RowIdStr
+				, @REGISTER_TYPE
 				, 1
 				, @DealNum
 				, @CustomerID
@@ -2121,6 +1922,7 @@ BEGIN
 		EXEC dbo.[SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_RAZPREG] @OnlineSqlServerName
 			, @OnlineSqlDataBaseName
 			, @RowIdStr
+			, @REGISTER_TYPE
 			, 1
 			, @DealNum
 			, 0
@@ -2147,6 +1949,7 @@ BEGIN
 			EXEC dbo.[SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_RAZPREG] @OnlineSqlServerName
 				, @OnlineSqlDataBaseName
 				, @RowIdStr
+				, @REGISTER_TYPE
 				, 1
 				, @DealNumBen
 				, 1
@@ -2172,6 +1975,7 @@ BEGIN
 			, @OnlineSqlDataBaseName
 			, @CurrAccDate
 			, @RowIdStr
+			, @REGISTER_TYPE
 			, @CustomerID
 			, @ProxyID
 			, @WithUpdate
@@ -2225,6 +2029,7 @@ GO
 CREATE OR ALTER PROCEDURE dbo.SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_CLEAR_CURRENT_DATA
 (
 	@TestCaseRowID NVARCHAR(16)
+	, @REGISTER_TYPE NVARCHAR(256)
 )
 AS
 BEGIN
@@ -2265,11 +2070,11 @@ BEGIN
 		, @RAZPREG_TA_BEN_RowID = IsNull([DEAL_BEN_ROW_ID], - 1)
 	FROM dbo.[VIEW_TA_EXISTING_ONLINE_DATA_CONDITIONS] WITH (NOLOCK)
 	WHERE [ROW_ID] = @TA_RowID
+		AND REGISTER_TYPE = @REGISTER_TYPE
 
 	DECLARE @IsNotFirstCashPaymentWithAccumulatedTax BIT = 0
 
-	IF IsNull(@TYPE_ACTION, '') = 'CashPayment'
-		AND IsNull(@RUNNING_ORDER, - 1) > 1
+	IF IsNull(@TYPE_ACTION, '') = 'CashPayment' AND IsNull(@RUNNING_ORDER, - 1) > 1
 		SELECT @IsNotFirstCashPaymentWithAccumulatedTax = 1
 
 	IF IsNull(@RAZPREG_TA_RowID, 0) <= 0
@@ -2365,7 +2170,7 @@ BEGIN
 		END
 
 		-- Актуализация данните за документа ( за сега само код на такса и преференция )
-		IF @IsNotFirstCashPaymentWithAccumulatedTax = 0
+		IF @IsNotFirstCashPaymentWithAccumulatedTax = 0 AND @REGISTER_TYPE = 'PREV_COMMON_TA'
 		BEGIN
 			UPDATE [D]
 			SET [TAX_CODE] = 0 /* код на такса */
@@ -2428,13 +2233,14 @@ GO
 
 CREATE PROCEDURE dbo.[SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_CUSTOMERS]
 (
-	@OnlineSqlServerName	sysname
-,	@OnlineSqlDataBaseName	sysname
-,	@CurrAccountDate		datetime
-,	@TestCaseRowID			nvarchar(16)
-,	@Customer_ID			int
-,	@ProxyCustomer_ID		int
-,	@WithUpdate				int = 0
+	@OnlineSqlServerName		sysname
+	, @OnlineSqlDataBaseName	sysname
+	, @CurrAccountDate			datetime
+	, @TestCaseRowID			nvarchar(16)
+	, @REGISTER_TYPE 			NVARCHAR(256)
+	, @Customer_ID				int
+	, @ProxyCustomer_ID			int
+	, @WithUpdate				int = 0
 )
 AS 
 begin
@@ -2472,6 +2278,7 @@ begin
 		,	@DEAL_BEN_ROW_ID	= IsNull([DEAL_BEN_ROW_ID],-1)
 	from dbo.[VIEW_TA_EXISTING_ONLINE_DATA_CONDITIONS] with(nolock)
 	where [ROW_ID] = @TA_RowID
+		AND REGISTER_TYPE = @REGISTER_TYPE
 	;
 
 	if IsNull(@CUSTOMER_ROW_ID,-1) <= 0 
@@ -2505,15 +2312,23 @@ begin
 		begin try 
 
 			select @Sql2 = N'dbo.[SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_CUSTOMERS_ACTIONS] @OnlineSqlServerName = '+@OnlineSqlServerName
-						+', @OnlineSqlDataBaseName = '+@OnlineSqlDataBaseName
-						+', @CurrAccountDate = '+convert(varchar(16), @CurrAccountDate,23)
-						+', @TestCaseRowID = '+@TestCaseRowID
-						+', @OnlineDbCustomer_ID = '+str(@ProxyCustomer_ID,len(@ProxyCustomer_ID),0)
-						+', @TA_CUST_ROW_ID = ' +str(@CUST_PROXY_ROW_ID,len(@CUST_PROXY_ROW_ID),0)+ '/* for Proxy */'
-						+', @WithUpdate = '+str(@WithUpdate,len(@WithUpdate),0)
+						+', @OnlineSqlDataBaseName = ' + @OnlineSqlDataBaseName
+						+', @CurrAccountDate = ' + convert(varchar(16), @CurrAccountDate,23)
+						+', @TestCaseRowID = ' + @TestCaseRowID
+						+', @REGISTER_TYPE = ' + @REGISTER_TYPE
+						+', @OnlineDbCustomer_ID = ' +  str(@ProxyCustomer_ID,len(@ProxyCustomer_ID),0)
+						+', @TA_CUST_ROW_ID = ' + str(@CUST_PROXY_ROW_ID,len(@CUST_PROXY_ROW_ID),0)+ '/* for Proxy */'
+						+', @WithUpdate = ' + str(@WithUpdate,len(@WithUpdate),0)
 
-			exec @Ret = dbo.[SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_CUSTOMERS_ACTIONS] @OnlineSqlServerName, @OnlineSqlDataBaseName
-				, @CurrAccountDate, @TestCaseRowID, @ProxyCustomer_ID, @CUST_PROXY_ROW_ID, @WithUpdate;
+			exec @Ret = dbo.[SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_CUSTOMERS_ACTIONS] 
+				@OnlineSqlServerName
+				, @OnlineSqlDataBaseName
+				, @CurrAccountDate
+				, @TestCaseRowID
+				, @REGISTER_TYPE
+				, @ProxyCustomer_ID
+				, @CUST_PROXY_ROW_ID
+				, @WithUpdate
 
 			if @Ret <> 0
 			begin 
@@ -2536,12 +2351,20 @@ begin
 					+', @OnlineSqlDataBaseName = '+@OnlineSqlDataBaseName
 					+', @CurrAccountDate = '+convert(varchar(16), @CurrAccountDate,23)
 					+', @TestCaseRowID = '+@TestCaseRowID
+					+', @REGISTER_TYPE = ' + @REGISTER_TYPE
 					+', @OnlineDbCustomer_ID = '+str(@Customer_ID,len(@Customer_ID),0)
 					+', @TA_CUST_ROW_ID = ' +str(@CUSTOMER_ROW_ID,len(@CUSTOMER_ROW_ID),0)+ '/* for Main Customer */'
 					+', @WithUpdate = '+str(@WithUpdate,len(@WithUpdate),0)
 
-		exec @Ret = dbo.[SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_CUSTOMERS_ACTIONS] @OnlineSqlServerName, @OnlineSqlDataBaseName
-			, @CurrAccountDate, @TestCaseRowID, @Customer_ID, @CUSTOMER_ROW_ID, @WithUpdate;
+		exec @Ret = dbo.[SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_CUSTOMERS_ACTIONS]
+			@OnlineSqlServerName
+			, @OnlineSqlDataBaseName
+			, @CurrAccountDate
+			, @TestCaseRowID
+			, @REGISTER_TYPE
+			, @Customer_ID
+			, @CUSTOMER_ROW_ID
+			, @WithUpdate
 
 		if @Ret <> 0
 		begin 
@@ -2564,13 +2387,21 @@ begin
 						+', @OnlineSqlDataBaseName = '+@OnlineSqlDataBaseName
 						+', @CurrAccountDate = '+convert(varchar(16), @CurrAccountDate,23)
 						+', @TestCaseRowID = '+@TestCaseRowID
+						+', @REGISTER_TYPE = ' + @REGISTER_TYPE
 						+', @OnlineDbCustomer_ID = '+str(@Ben_Customer_ID,len(@Ben_Customer_ID),0)
 						+', @TA_CUST_ROW_ID = ' +str(@CUST_BEN_ROW_ID,len(@CUST_BEN_ROW_ID),0)+ '/* for Beneficiary */'
 						+', @WithUpdate = '+str(@WithUpdate,len(@WithUpdate),0)
 
 
-			exec @Ret = dbo.[SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_CUSTOMERS_ACTIONS] @OnlineSqlServerName, @OnlineSqlDataBaseName
-				, @CurrAccountDate, @TestCaseRowID, @Ben_Customer_ID, @CUST_BEN_ROW_ID, @WithUpdate;
+			exec @Ret = dbo.[SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_CUSTOMERS_ACTIONS]
+				@OnlineSqlServerName
+				, @OnlineSqlDataBaseName
+				, @CurrAccountDate
+				, @TestCaseRowID
+				, @REGISTER_TYPE
+				, @Ben_Customer_ID
+				, @CUST_BEN_ROW_ID
+				, @WithUpdate
 
 			if @Ret <> 0
 			begin 
@@ -2608,13 +2439,14 @@ GO
 
 CREATE PROCEDURE dbo.[SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_CUSTOMERS_ACTIONS]
 (
-	@OnlineSqlServerName	sysname
-,	@OnlineSqlDataBaseName	sysname
-,	@CurrAccountDate		datetime
-,	@TestCaseRowID			nvarchar(16)
-,	@OnlineDbCustomer_ID	int
-,	@TA_CUST_ROW_ID			int
-,	@WithUpdate				int = 0
+	@OnlineSqlServerName		sysname
+	, @OnlineSqlDataBaseName	sysname
+	, @CurrAccountDate			datetime
+	, @TestCaseRowID			nvarchar(16)
+	, @REGISTER_TYPE 			NVARCHAR(256)
+	, @OnlineDbCustomer_ID		int
+	, @TA_CUST_ROW_ID			int
+	, @WithUpdate				int = 0
 )
 AS 
 begin
@@ -2769,14 +2601,15 @@ GO
 
 CREATE PROCEDURE dbo.[SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_DEALS_CORS]
 (
-	@OnlineSqlServerName	sysname
-,	@OnlineSqlDataBaseName	sysname
-,	@TestCaseRowID			nvarchar(16)
-,	@DEAL_TYPE				int 
-,	@DEAL_NUM				int 
-,	@CUSTOMER_ID			int
-,	@PROXY_ID				int
-,	@WithUpdate				int = 0
+	@OnlineSqlServerName		sysname
+	, @OnlineSqlDataBaseName	sysname
+	, @TestCaseRowID			nvarchar(16)
+	, @REGISTER_TYPE 			NVARCHAR(256)
+	, @DEAL_TYPE				int 
+	, @DEAL_NUM					int 
+	, @CUSTOMER_ID				int
+	, @PROXY_ID					int
+	, @WithUpdate				int = 0
 )
 AS 
 begin
@@ -2802,6 +2635,7 @@ begin
 		,	@TBL_ROW_ID = [CORS_ROW_ID]
 	from dbo.[VIEW_TA_EXISTING_ONLINE_DATA_CONDITIONS] with(nolock)
 	where [ROW_ID] = @TA_RowID
+		AND REGISTER_TYPE = @REGISTER_TYPE
 
 	if IsNull(@TBL_ROW_ID,0) <= 0
 	begin  
@@ -2967,8 +2801,9 @@ GO
 CREATE PROCEDURE dbo.[SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_PREPARE_CONDITIONS]
 (
 	@TestCaseRowID nvarchar(16)
-,	@CurrAccDate datetime
-,	@SaveTAConditions tinyint = 0
+	, @REGISTER_TYPE NVARCHAR(256)
+	,	@CurrAccDate datetime
+	,	@SaveTAConditions tinyint = 0
 )
 AS 
 begin
@@ -3068,7 +2903,9 @@ begin
 	;
 	select [V].*
 	into dbo.[#TBL_TA_CONDITIONS] 
-	from dbo.[VIEW_TA_EXISTING_ONLINE_DATA_CONDITIONS] [V] with(nolock) where [V].[ROW_ID] = IsNull(@TestCaseRowID, -1)
+	from dbo.[VIEW_TA_EXISTING_ONLINE_DATA_CONDITIONS] [V] with(nolock) 
+	where [V].[ROW_ID] = IsNull(@TestCaseRowID, -1)
+		AND REGISTER_TYPE = @REGISTER_TYPE
 	;
 
 	select top(1) /* Client conditions: */
@@ -3768,13 +3605,14 @@ GO
 
 CREATE PROCEDURE dbo.[SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_RAZPREG]
 (
-	@OnlineSqlServerName	sysname
-,	@OnlineSqlDataBaseName	sysname
-,	@TestCaseRowID			nvarchar(16)
-,	@DEAL_TYPE				int 
-,	@DEAL_NUM				int 
-,	@IS_DEAL_BEN			bit = 0 
-,	@WithUpdate				int = 0
+	@OnlineSqlServerName		sysname
+	, @OnlineSqlDataBaseName	sysname
+	, @TestCaseRowID			nvarchar(16)
+	, @REGISTER_TYPE 			NVARCHAR(256)
+	, @DEAL_TYPE				int 
+	, @DEAL_NUM					int 
+	, @IS_DEAL_BEN				bit = 0 
+	, @WithUpdate				int = 0
 )
 AS 
 begin
@@ -3805,6 +3643,7 @@ begin
 	select	@TBL_ROW_ID = case when @IS_DEAL_BEN = 1 then [DEAL_BEN_ROW_ID] else [DEAL_ROW_ID] end
 	from dbo.[VIEW_TA_EXISTING_ONLINE_DATA_CONDITIONS] with(nolock)
 	where [ROW_ID] = @TA_RowID
+		AND REGISTER_TYPE = @REGISTER_TYPE
 
 	if IsNull(@TBL_ROW_ID,0) <= 0
 	begin  
@@ -3995,7 +3834,7 @@ BEGIN
 	IF @Ret <> 0
 	BEGIN
 		SELECT @Msg = N'Error execute proc, Error code: ' + str(@Ret, len(@Ret), 0) + '  Result: @OnlineSqlServerName = "' + @OnlineSqlServerName + '", @OnlineSqlDataBaseName = "' + @OnlineSqlDataBaseName + '"'
-			, @Sql = N'exec dbo.[SP_SYS_GET_ACCOUNT_DATE_FROM_DB] @DB_TYPE = ' + @DB_TYPE + N', @DB_ALIAS = ' + @DB_ALIAS + N', @OnlineSqlServerName OUT, @OnlineSqlDataBaseName OUT'
+			, @Sql = N'exec dbo.[SP_TA_GET_DATASOURCE] @DB_TYPE = ' + @DB_TYPE + N', @DB_ALIAS = ' + @DB_ALIAS + N', @OnlineSqlServerName OUT, @OnlineSqlDataBaseName OUT'
 
 		EXEC dbo.SP_SYS_LOG_PROC @@PROCID
 			, @Sql
@@ -4007,7 +3846,7 @@ BEGIN
 	IF @LogTraceInfo = 1
 	BEGIN
 		SELECT @Msg = N'After: exec dbo.[SP_TA_GET_DATASOURCE], @OnlineSqlServerName: ' + @OnlineSqlServerName + ', @OnlineSqlDataBaseName = ' + @OnlineSqlDataBaseName + ' '
-			, @Sql = N'exec dbo.[SP_SYS_GET_ACCOUNT_DATE_FROM_DB] @DB_TYPE = ' + @DB_TYPE + N', @DB_ALIAS = ' + @DB_ALIAS + N', @OnlineSqlServerName OUT, @OnlineSqlDataBaseName OUT'
+			, @Sql = N'exec dbo.[SP_TA_GET_DATASOURCE] @DB_TYPE = ' + @DB_TYPE + N', @DB_ALIAS = ' + @DB_ALIAS + N', @OnlineSqlServerName OUT, @OnlineSqlDataBaseName OUT'
 
 		EXEC dbo.SP_SYS_LOG_PROC @@PROCID
 			, @Sql
@@ -4074,7 +3913,7 @@ BEGIN
 	IF @LogTraceInfo = 1
 	BEGIN
 		SELECT @Msg = N'After: exec dbo.[SP_TA_EXISTING_ONLINE_DATA_INIT_CUSTOMERS], @DB_TYPE = ' + @DB_TYPE + N', @TestAutomationType = ' + @TestAutomationType + N', @OnlineSqlServerName = ' + @OnlineSqlServerName + N', @OnlineSqlDataBaseName = ' + @OnlineSqlDataBaseName + N', @AccountDateChar = ' + @AccountDateChar
-			, @Sql = N'exec dbo.[SP_SYS_GET_ACCOUNT_DATE_FROM_DB] ' + @DB_TYPE + ', ' + @TestAutomationType + ', ' + @OnlineSqlServerName + N', ' + @OnlineSqlDataBaseName + N', @CurrAccDate OUT'
+			, @Sql = N'exec dbo.[SP_TA_EXISTING_ONLINE_DATA_INIT_CUSTOMERS] ' + @DB_TYPE + ', ' + @TestAutomationType + ', ' + @OnlineSqlServerName + N', ' + @OnlineSqlDataBaseName + N', ' + @AccountDateChar
 
 		EXEC dbo.SP_SYS_LOG_PROC @@PROCID
 			, @Sql
@@ -4082,9 +3921,9 @@ BEGIN
 	END
 
 	/************************************************************************************************************/
-	/* Init customers data: */
+	/* Init deals data: */
 	BEGIN TRY
-		EXEC dbo.[SP_TA_EXISTING_ONLINE_DATA_INIT_CUSTOMERS] @DB_TYPE
+		EXEC dbo.[SP_TA_EXISTING_ONLINE_DATA_INIT_DEALS] @DB_TYPE
 			, @TestAutomationType
 			, @OnlineSqlServerName
 			, @OnlineSqlDataBaseName
@@ -4103,8 +3942,8 @@ BEGIN
 
 	IF @LogTraceInfo = 1
 	BEGIN
-		SELECT @Msg = N'After: exec dbo.[SP_TA_EXISTING_ONLINE_DATA_INIT_CUSTOMERS], @DB_TYPE = ' + @DB_TYPE + N', @TestAutomationType = ' + @TestAutomationType + N', @OnlineSqlServerName = ' + @OnlineSqlServerName + N', @OnlineSqlDataBaseName = ' + @OnlineSqlDataBaseName + N', @AccountDateChar = ' + @AccountDateChar
-			, @Sql = N'exec dbo.[SP_SYS_GET_ACCOUNT_DATE_FROM_DB] ' + @DB_TYPE + ', ' + @TestAutomationType + ', ' + @OnlineSqlServerName + N', ' + @OnlineSqlDataBaseName + N', @CurrAccDate OUT'
+		SELECT @Msg = N'After: exec dbo.[SP_TA_EXISTING_ONLINE_DATA_INIT_DEALS], @DB_TYPE = ' + @DB_TYPE + N', @TestAutomationType = ' + @TestAutomationType + N', @OnlineSqlServerName = ' + @OnlineSqlServerName + N', @OnlineSqlDataBaseName = ' + @OnlineSqlDataBaseName + N', @AccountDateChar = ' + @AccountDateChar
+			, @Sql = N'exec dbo.[SP_TA_EXISTING_ONLINE_DATA_INIT_DEALS] ' + @DB_TYPE + ', ' + @TestAutomationType + ', ' + @OnlineSqlServerName + N', ' + @OnlineSqlDataBaseName + N', ' + @AccountDateChar
 
 		EXEC dbo.SP_SYS_LOG_PROC @@PROCID
 			, @Sql
@@ -4162,7 +4001,7 @@ CREATE OR ALTER PROCEDURE dbo.[SP_TA_EXISTING_ONLINE_DATA_INIT_CUSTOMERS]
 )
 AS
 BEGIN
-	DECLARE @Sql VARCHAR(max) = N''
+	DECLARE @Sql NVARCHAR(max) = N''
 		, @Msg NVARCHAR(max) = N''
 		, @LogBegEndProc INT = 1
 		, @Rows INT = 0
@@ -4716,7 +4555,7 @@ CREATE OR ALTER PROCEDURE dbo.SP_TA_EXISTING_ONLINE_DATA_INIT_DEALS
 )
 AS
 BEGIN
-	DECLARE @Sql VARCHAR(max) = N''
+	DECLARE @Sql NVARCHAR(max) = N''
 		, @Msg NVARCHAR(max) = N''
 		, @LogBegEndProc INT = 1
 		, @Rows INT = 0
@@ -4779,7 +4618,7 @@ BEGIN
 	/* Prepare deals */
 
 	DROP TABLE IF EXISTS dbo.AGR_TA_EXISTING_ONLINE_DATA_DEALS
-	SET @Sql =
+	SET @Sql = CAST(N'' AS NVARCHAR(MAX)) +
 	N'
 		DECLARE @DealType int = 1
 			,	@DateAcc date = ' + @AccountDateChar + '
@@ -4797,7 +4636,7 @@ BEGIN
 			,	@StsExtDenyManualTaxAssign		int = dbo.SETBIT(cast(0 as binary(4)), 20, 1)	/* STS_EXT_DENY_MANUAL_TAX_ASSIGN (20)*/
 				/* [BLOCKSUM] */
 		
-		WITH [X] AS 
+		;WITH [X] AS 
 		(
 			SELECT	[CUST_CND_SECTOR]
 				,	[DEAL_CND_UI_CURRENCY_CODE]

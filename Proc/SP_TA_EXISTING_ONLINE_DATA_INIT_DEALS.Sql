@@ -14,7 +14,7 @@ CREATE OR ALTER PROCEDURE dbo.SP_TA_EXISTING_ONLINE_DATA_INIT_DEALS
 )
 AS
 BEGIN
-	DECLARE @Sql VARCHAR(max) = N''
+	DECLARE @Sql NVARCHAR(max) = N''
 		, @Msg NVARCHAR(max) = N''
 		, @LogBegEndProc INT = 1
 		, @Rows INT = 0
@@ -77,7 +77,7 @@ BEGIN
 	/* Prepare deals */
 
 	DROP TABLE IF EXISTS dbo.AGR_TA_EXISTING_ONLINE_DATA_DEALS
-	SET @Sql =
+	SET @Sql = CAST(N'' AS NVARCHAR(MAX)) +
 	N'
 		DECLARE @DealType int = 1
 			,	@DateAcc date = ' + @AccountDateChar + '
@@ -95,7 +95,7 @@ BEGIN
 			,	@StsExtDenyManualTaxAssign		int = dbo.SETBIT(cast(0 as binary(4)), 20, 1)	/* STS_EXT_DENY_MANUAL_TAX_ASSIGN (20)*/
 				/* [BLOCKSUM] */
 		
-		WITH [X] AS 
+		;WITH [X] AS 
 		(
 			SELECT	[CUST_CND_SECTOR]
 				,	[DEAL_CND_UI_CURRENCY_CODE]

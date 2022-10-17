@@ -5,6 +5,7 @@
 CREATE OR ALTER PROCEDURE dbo.SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_CLEAR_CURRENT_DATA
 (
 	@TestCaseRowID NVARCHAR(16)
+	, @REGISTER_TYPE NVARCHAR(256)
 )
 AS
 BEGIN
@@ -45,11 +46,11 @@ BEGIN
 		, @RAZPREG_TA_BEN_RowID = IsNull([DEAL_BEN_ROW_ID], - 1)
 	FROM dbo.[VIEW_TA_EXISTING_ONLINE_DATA_CONDITIONS] WITH (NOLOCK)
 	WHERE [ROW_ID] = @TA_RowID
+		AND REGISTER_TYPE = @REGISTER_TYPE
 
 	DECLARE @IsNotFirstCashPaymentWithAccumulatedTax BIT = 0
 
-	IF IsNull(@TYPE_ACTION, '') = 'CashPayment'
-		AND IsNull(@RUNNING_ORDER, - 1) > 1
+	IF IsNull(@TYPE_ACTION, '') = 'CashPayment' AND IsNull(@RUNNING_ORDER, - 1) > 1
 		SELECT @IsNotFirstCashPaymentWithAccumulatedTax = 1
 
 	IF IsNull(@RAZPREG_TA_RowID, 0) <= 0
@@ -145,7 +146,7 @@ BEGIN
 		END
 
 		-- Актуализация данните за документа ( за сега само код на такса и преференция )
-		IF @IsNotFirstCashPaymentWithAccumulatedTax = 0
+		IF @IsNotFirstCashPaymentWithAccumulatedTax = 0 AND @REGISTER_TYPE = 'PREV_COMMON_TA'
 		BEGIN
 			UPDATE [D]
 			SET [TAX_CODE] = 0 /* код на такса */

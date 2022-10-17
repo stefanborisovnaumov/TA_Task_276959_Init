@@ -36,7 +36,7 @@ BEGIN
 	IF @Ret <> 0
 	BEGIN
 		SELECT @Msg = N'Error execute proc, Error code: ' + str(@Ret, len(@Ret), 0) + '  Result: @OnlineSqlServerName = "' + @OnlineSqlServerName + '", @OnlineSqlDataBaseName = "' + @OnlineSqlDataBaseName + '"'
-			, @Sql = N'exec dbo.[SP_SYS_GET_ACCOUNT_DATE_FROM_DB] @DB_TYPE = ' + @DB_TYPE + N', @DB_ALIAS = ' + @DB_ALIAS + N', @OnlineSqlServerName OUT, @OnlineSqlDataBaseName OUT'
+			, @Sql = N'exec dbo.[SP_TA_GET_DATASOURCE] @DB_TYPE = ' + @DB_TYPE + N', @DB_ALIAS = ' + @DB_ALIAS + N', @OnlineSqlServerName OUT, @OnlineSqlDataBaseName OUT'
 
 		EXEC dbo.SP_SYS_LOG_PROC @@PROCID
 			, @Sql
@@ -48,7 +48,7 @@ BEGIN
 	IF @LogTraceInfo = 1
 	BEGIN
 		SELECT @Msg = N'After: exec dbo.[SP_TA_GET_DATASOURCE], @OnlineSqlServerName: ' + @OnlineSqlServerName + ', @OnlineSqlDataBaseName = ' + @OnlineSqlDataBaseName + ' '
-			, @Sql = N'exec dbo.[SP_SYS_GET_ACCOUNT_DATE_FROM_DB] @DB_TYPE = ' + @DB_TYPE + N', @DB_ALIAS = ' + @DB_ALIAS + N', @OnlineSqlServerName OUT, @OnlineSqlDataBaseName OUT'
+			, @Sql = N'exec dbo.[SP_TA_GET_DATASOURCE] @DB_TYPE = ' + @DB_TYPE + N', @DB_ALIAS = ' + @DB_ALIAS + N', @OnlineSqlServerName OUT, @OnlineSqlDataBaseName OUT'
 
 		EXEC dbo.SP_SYS_LOG_PROC @@PROCID
 			, @Sql
@@ -115,7 +115,7 @@ BEGIN
 	IF @LogTraceInfo = 1
 	BEGIN
 		SELECT @Msg = N'After: exec dbo.[SP_TA_EXISTING_ONLINE_DATA_INIT_CUSTOMERS], @DB_TYPE = ' + @DB_TYPE + N', @TestAutomationType = ' + @TestAutomationType + N', @OnlineSqlServerName = ' + @OnlineSqlServerName + N', @OnlineSqlDataBaseName = ' + @OnlineSqlDataBaseName + N', @AccountDateChar = ' + @AccountDateChar
-			, @Sql = N'exec dbo.[SP_SYS_GET_ACCOUNT_DATE_FROM_DB] ' + @DB_TYPE + ', ' + @TestAutomationType + ', ' + @OnlineSqlServerName + N', ' + @OnlineSqlDataBaseName + N', @CurrAccDate OUT'
+			, @Sql = N'exec dbo.[SP_TA_EXISTING_ONLINE_DATA_INIT_CUSTOMERS] ' + @DB_TYPE + ', ' + @TestAutomationType + ', ' + @OnlineSqlServerName + N', ' + @OnlineSqlDataBaseName + N', ' + @AccountDateChar
 
 		EXEC dbo.SP_SYS_LOG_PROC @@PROCID
 			, @Sql
@@ -123,9 +123,9 @@ BEGIN
 	END
 
 	/************************************************************************************************************/
-	/* Init customers data: */
+	/* Init deals data: */
 	BEGIN TRY
-		EXEC dbo.[SP_TA_EXISTING_ONLINE_DATA_INIT_CUSTOMERS] @DB_TYPE
+		EXEC dbo.[SP_TA_EXISTING_ONLINE_DATA_INIT_DEALS] @DB_TYPE
 			, @TestAutomationType
 			, @OnlineSqlServerName
 			, @OnlineSqlDataBaseName
@@ -144,8 +144,8 @@ BEGIN
 
 	IF @LogTraceInfo = 1
 	BEGIN
-		SELECT @Msg = N'After: exec dbo.[SP_TA_EXISTING_ONLINE_DATA_INIT_CUSTOMERS], @DB_TYPE = ' + @DB_TYPE + N', @TestAutomationType = ' + @TestAutomationType + N', @OnlineSqlServerName = ' + @OnlineSqlServerName + N', @OnlineSqlDataBaseName = ' + @OnlineSqlDataBaseName + N', @AccountDateChar = ' + @AccountDateChar
-			, @Sql = N'exec dbo.[SP_SYS_GET_ACCOUNT_DATE_FROM_DB] ' + @DB_TYPE + ', ' + @TestAutomationType + ', ' + @OnlineSqlServerName + N', ' + @OnlineSqlDataBaseName + N', @CurrAccDate OUT'
+		SELECT @Msg = N'After: exec dbo.[SP_TA_EXISTING_ONLINE_DATA_INIT_DEALS], @DB_TYPE = ' + @DB_TYPE + N', @TestAutomationType = ' + @TestAutomationType + N', @OnlineSqlServerName = ' + @OnlineSqlServerName + N', @OnlineSqlDataBaseName = ' + @OnlineSqlDataBaseName + N', @AccountDateChar = ' + @AccountDateChar
+			, @Sql = N'exec dbo.[SP_TA_EXISTING_ONLINE_DATA_INIT_DEALS] ' + @DB_TYPE + ', ' + @TestAutomationType + ', ' + @OnlineSqlServerName + N', ' + @OnlineSqlDataBaseName + N', ' + @AccountDateChar
 
 		EXEC dbo.SP_SYS_LOG_PROC @@PROCID
 			, @Sql

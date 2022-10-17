@@ -5,13 +5,14 @@ GO
 
 CREATE PROCEDURE dbo.[SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_CUSTOMERS]
 (
-	@OnlineSqlServerName	sysname
-,	@OnlineSqlDataBaseName	sysname
-,	@CurrAccountDate		datetime
-,	@TestCaseRowID			nvarchar(16)
-,	@Customer_ID			int
-,	@ProxyCustomer_ID		int
-,	@WithUpdate				int = 0
+	@OnlineSqlServerName		sysname
+	, @OnlineSqlDataBaseName	sysname
+	, @CurrAccountDate			datetime
+	, @TestCaseRowID			nvarchar(16)
+	, @REGISTER_TYPE 			NVARCHAR(256)
+	, @Customer_ID				int
+	, @ProxyCustomer_ID			int
+	, @WithUpdate				int = 0
 )
 AS 
 begin
@@ -49,6 +50,7 @@ begin
 		,	@DEAL_BEN_ROW_ID	= IsNull([DEAL_BEN_ROW_ID],-1)
 	from dbo.[VIEW_TA_EXISTING_ONLINE_DATA_CONDITIONS] with(nolock)
 	where [ROW_ID] = @TA_RowID
+		AND REGISTER_TYPE = @REGISTER_TYPE
 	;
 
 	if IsNull(@CUSTOMER_ROW_ID,-1) <= 0 
@@ -82,15 +84,23 @@ begin
 		begin try 
 
 			select @Sql2 = N'dbo.[SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_CUSTOMERS_ACTIONS] @OnlineSqlServerName = '+@OnlineSqlServerName
-						+', @OnlineSqlDataBaseName = '+@OnlineSqlDataBaseName
-						+', @CurrAccountDate = '+convert(varchar(16), @CurrAccountDate,23)
-						+', @TestCaseRowID = '+@TestCaseRowID
-						+', @OnlineDbCustomer_ID = '+str(@ProxyCustomer_ID,len(@ProxyCustomer_ID),0)
-						+', @TA_CUST_ROW_ID = ' +str(@CUST_PROXY_ROW_ID,len(@CUST_PROXY_ROW_ID),0)+ '/* for Proxy */'
-						+', @WithUpdate = '+str(@WithUpdate,len(@WithUpdate),0)
+						+', @OnlineSqlDataBaseName = ' + @OnlineSqlDataBaseName
+						+', @CurrAccountDate = ' + convert(varchar(16), @CurrAccountDate,23)
+						+', @TestCaseRowID = ' + @TestCaseRowID
+						+', @REGISTER_TYPE = ' + @REGISTER_TYPE
+						+', @OnlineDbCustomer_ID = ' +  str(@ProxyCustomer_ID,len(@ProxyCustomer_ID),0)
+						+', @TA_CUST_ROW_ID = ' + str(@CUST_PROXY_ROW_ID,len(@CUST_PROXY_ROW_ID),0)+ '/* for Proxy */'
+						+', @WithUpdate = ' + str(@WithUpdate,len(@WithUpdate),0)
 
-			exec @Ret = dbo.[SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_CUSTOMERS_ACTIONS] @OnlineSqlServerName, @OnlineSqlDataBaseName
-				, @CurrAccountDate, @TestCaseRowID, @ProxyCustomer_ID, @CUST_PROXY_ROW_ID, @WithUpdate;
+			exec @Ret = dbo.[SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_CUSTOMERS_ACTIONS] 
+				@OnlineSqlServerName
+				, @OnlineSqlDataBaseName
+				, @CurrAccountDate
+				, @TestCaseRowID
+				, @REGISTER_TYPE
+				, @ProxyCustomer_ID
+				, @CUST_PROXY_ROW_ID
+				, @WithUpdate
 
 			if @Ret <> 0
 			begin 
@@ -113,12 +123,20 @@ begin
 					+', @OnlineSqlDataBaseName = '+@OnlineSqlDataBaseName
 					+', @CurrAccountDate = '+convert(varchar(16), @CurrAccountDate,23)
 					+', @TestCaseRowID = '+@TestCaseRowID
+					+', @REGISTER_TYPE = ' + @REGISTER_TYPE
 					+', @OnlineDbCustomer_ID = '+str(@Customer_ID,len(@Customer_ID),0)
 					+', @TA_CUST_ROW_ID = ' +str(@CUSTOMER_ROW_ID,len(@CUSTOMER_ROW_ID),0)+ '/* for Main Customer */'
 					+', @WithUpdate = '+str(@WithUpdate,len(@WithUpdate),0)
 
-		exec @Ret = dbo.[SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_CUSTOMERS_ACTIONS] @OnlineSqlServerName, @OnlineSqlDataBaseName
-			, @CurrAccountDate, @TestCaseRowID, @Customer_ID, @CUSTOMER_ROW_ID, @WithUpdate;
+		exec @Ret = dbo.[SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_CUSTOMERS_ACTIONS]
+			@OnlineSqlServerName
+			, @OnlineSqlDataBaseName
+			, @CurrAccountDate
+			, @TestCaseRowID
+			, @REGISTER_TYPE
+			, @Customer_ID
+			, @CUSTOMER_ROW_ID
+			, @WithUpdate
 
 		if @Ret <> 0
 		begin 
@@ -141,13 +159,21 @@ begin
 						+', @OnlineSqlDataBaseName = '+@OnlineSqlDataBaseName
 						+', @CurrAccountDate = '+convert(varchar(16), @CurrAccountDate,23)
 						+', @TestCaseRowID = '+@TestCaseRowID
+						+', @REGISTER_TYPE = ' + @REGISTER_TYPE
 						+', @OnlineDbCustomer_ID = '+str(@Ben_Customer_ID,len(@Ben_Customer_ID),0)
 						+', @TA_CUST_ROW_ID = ' +str(@CUST_BEN_ROW_ID,len(@CUST_BEN_ROW_ID),0)+ '/* for Beneficiary */'
 						+', @WithUpdate = '+str(@WithUpdate,len(@WithUpdate),0)
 
 
-			exec @Ret = dbo.[SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_CUSTOMERS_ACTIONS] @OnlineSqlServerName, @OnlineSqlDataBaseName
-				, @CurrAccountDate, @TestCaseRowID, @Ben_Customer_ID, @CUST_BEN_ROW_ID, @WithUpdate;
+			exec @Ret = dbo.[SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_CUSTOMERS_ACTIONS]
+				@OnlineSqlServerName
+				, @OnlineSqlDataBaseName
+				, @CurrAccountDate
+				, @TestCaseRowID
+				, @REGISTER_TYPE
+				, @Ben_Customer_ID
+				, @CUST_BEN_ROW_ID
+				, @WithUpdate
 
 			if @Ret <> 0
 			begin 

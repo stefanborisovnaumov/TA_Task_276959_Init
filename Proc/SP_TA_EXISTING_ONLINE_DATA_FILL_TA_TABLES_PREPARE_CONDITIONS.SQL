@@ -7,8 +7,9 @@ GO
 CREATE PROCEDURE dbo.[SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_PREPARE_CONDITIONS]
 (
 	@TestCaseRowID nvarchar(16)
-,	@CurrAccDate datetime
-,	@SaveTAConditions tinyint = 0
+	, @REGISTER_TYPE NVARCHAR(256)
+	,	@CurrAccDate datetime
+	,	@SaveTAConditions tinyint = 0
 )
 AS 
 begin
@@ -108,7 +109,9 @@ begin
 	;
 	select [V].*
 	into dbo.[#TBL_TA_CONDITIONS] 
-	from dbo.[VIEW_TA_EXISTING_ONLINE_DATA_CONDITIONS] [V] with(nolock) where [V].[ROW_ID] = IsNull(@TestCaseRowID, -1)
+	from dbo.[VIEW_TA_EXISTING_ONLINE_DATA_CONDITIONS] [V] with(nolock) 
+	where [V].[ROW_ID] = IsNull(@TestCaseRowID, -1)
+		AND REGISTER_TYPE = @REGISTER_TYPE
 	;
 
 	select top(1) /* Client conditions: */

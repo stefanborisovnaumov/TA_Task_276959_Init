@@ -5,14 +5,15 @@ GO
 
 CREATE PROCEDURE dbo.[SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_DEALS_CORS]
 (
-	@OnlineSqlServerName	sysname
-,	@OnlineSqlDataBaseName	sysname
-,	@TestCaseRowID			nvarchar(16)
-,	@DEAL_TYPE				int 
-,	@DEAL_NUM				int 
-,	@CUSTOMER_ID			int
-,	@PROXY_ID				int
-,	@WithUpdate				int = 0
+	@OnlineSqlServerName		sysname
+	, @OnlineSqlDataBaseName	sysname
+	, @TestCaseRowID			nvarchar(16)
+	, @REGISTER_TYPE 			NVARCHAR(256)
+	, @DEAL_TYPE				int 
+	, @DEAL_NUM					int 
+	, @CUSTOMER_ID				int
+	, @PROXY_ID					int
+	, @WithUpdate				int = 0
 )
 AS 
 begin
@@ -38,6 +39,7 @@ begin
 		,	@TBL_ROW_ID = [CORS_ROW_ID]
 	from dbo.[VIEW_TA_EXISTING_ONLINE_DATA_CONDITIONS] with(nolock)
 	where [ROW_ID] = @TA_RowID
+		AND REGISTER_TYPE = @REGISTER_TYPE
 
 	if IsNull(@TBL_ROW_ID,0) <= 0
 	begin  

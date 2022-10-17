@@ -5,13 +5,14 @@ GO
 
 CREATE PROCEDURE dbo.[SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_RAZPREG]
 (
-	@OnlineSqlServerName	sysname
-,	@OnlineSqlDataBaseName	sysname
-,	@TestCaseRowID			nvarchar(16)
-,	@DEAL_TYPE				int 
-,	@DEAL_NUM				int 
-,	@IS_DEAL_BEN			bit = 0 
-,	@WithUpdate				int = 0
+	@OnlineSqlServerName		sysname
+	, @OnlineSqlDataBaseName	sysname
+	, @TestCaseRowID			nvarchar(16)
+	, @REGISTER_TYPE 			NVARCHAR(256)
+	, @DEAL_TYPE				int 
+	, @DEAL_NUM					int 
+	, @IS_DEAL_BEN				bit = 0 
+	, @WithUpdate				int = 0
 )
 AS 
 begin
@@ -42,6 +43,7 @@ begin
 	select	@TBL_ROW_ID = case when @IS_DEAL_BEN = 1 then [DEAL_BEN_ROW_ID] else [DEAL_ROW_ID] end
 	from dbo.[VIEW_TA_EXISTING_ONLINE_DATA_CONDITIONS] with(nolock)
 	where [ROW_ID] = @TA_RowID
+		AND REGISTER_TYPE = @REGISTER_TYPE
 
 	if IsNull(@TBL_ROW_ID,0) <= 0
 	begin  

@@ -5,13 +5,14 @@ GO
 
 CREATE PROCEDURE dbo.[SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_CUSTOMERS_ACTIONS]
 (
-	@OnlineSqlServerName	sysname
-,	@OnlineSqlDataBaseName	sysname
-,	@CurrAccountDate		datetime
-,	@TestCaseRowID			nvarchar(16)
-,	@OnlineDbCustomer_ID	int
-,	@TA_CUST_ROW_ID			int
-,	@WithUpdate				int = 0
+	@OnlineSqlServerName		sysname
+	, @OnlineSqlDataBaseName	sysname
+	, @CurrAccountDate			datetime
+	, @TestCaseRowID			nvarchar(16)
+	, @REGISTER_TYPE 			NVARCHAR(256)
+	, @OnlineDbCustomer_ID		int
+	, @TA_CUST_ROW_ID			int
+	, @WithUpdate				int = 0
 )
 AS 
 begin

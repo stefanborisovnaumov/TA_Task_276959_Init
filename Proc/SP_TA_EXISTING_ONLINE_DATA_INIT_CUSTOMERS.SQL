@@ -14,7 +14,7 @@ CREATE OR ALTER PROCEDURE dbo.[SP_TA_EXISTING_ONLINE_DATA_INIT_CUSTOMERS]
 )
 AS
 BEGIN
-	DECLARE @Sql VARCHAR(max) = N''
+	DECLARE @Sql NVARCHAR(max) = N''
 		, @Msg NVARCHAR(max) = N''
 		, @LogBegEndProc INT = 1
 		, @Rows INT = 0

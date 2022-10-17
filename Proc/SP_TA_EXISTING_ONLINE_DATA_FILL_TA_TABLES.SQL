@@ -4,6 +4,7 @@
 CREATE OR ALTER PROCEDURE dbo.[SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES]
 (
 	@TestCaseRowID INT
+	, @REGISTER_TYPE NVARCHAR(256)
 )
 AS
 BEGIN
@@ -36,6 +37,7 @@ BEGIN
 			SELECT *
 			FROM dbo.[VIEW_TA_EXISTING_ONLINE_DATA_CONDITIONS] WITH (NOLOCK)
 			WHERE [ROW_ID] = IsNull(@TestCaseRowID, - 1)
+				AND REGISTER_TYPE = @REGISTER_TYPE
 			)
 	BEGIN
 		SELECT @Msg = N'Error not found condition with [ROW_ID] :' + @RowIdStr
@@ -59,11 +61,12 @@ BEGIN
 		, @RUNNING_ORDER = IsNull([RUNNING_ORDER], 1)
 	FROM dbo.[VIEW_TA_EXISTING_ONLINE_DATA_CONDITIONS] WITH (NOLOCK)
 	WHERE [ROW_ID] = IsNull(@TestCaseRowID, - 1)
+		AND REGISTER_TYPE = @REGISTER_TYPE
 
-	IF /* @TYPE_ACTION = 'CashPayment' and */ @RUNNING_ORDER > 1
+	IF @RUNNING_ORDER > 1
 	BEGIN
-		SELECT @Msg = N'Update cash payment with [ROW_ID] ' + @RowIdStr + ' and  [RUNNING_ORDER] <> 1 not allowed.'
-			, @Sql = @TestCaseRowID
+		SELECT @Msg = N'Update with [ROW_ID] ' + @RowIdStr + ' and  [RUNNING_ORDER] <> 1 not allowed.'
+			, @Sql = @TestCaseRowID + ', ' + @REGISTER_TYPE
 
 		EXEC dbo.SP_SYS_LOG_PROC @@PROCID
 			, @Sql
@@ -151,7 +154,7 @@ BEGIN
 	/* Clear data before update table: dbo.DEALS_CORR_TA, dbo.RAZPREG_TA, dbo.DT015_CUSTOMERS_ACTIONS_TA */
 
 	BEGIN TRY
-		EXEC @Ret = dbo.SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_CLEAR_CURRENT_DATA @RowIdStr
+		EXEC @Ret = dbo.SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_CLEAR_CURRENT_DATA @RowIdStr, @REGISTER_TYPE
 	END TRY
 
 	BEGIN CATCH
@@ -179,8 +182,7 @@ BEGIN
 		, [DEAL_NUM_BEN] INT
 		)
 
-	EXEC @Ret = dbo.[SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_PREPARE_CONDITIONS] @RowIdStr
-		, @CurrAccDate
+	EXEC @Ret = dbo.[SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_PREPARE_CONDITIONS] @RowIdStr, @REGISTER_TYPE, @CurrAccDate
 
 	IF @Ret <> 0
 	BEGIN
@@ -238,6 +240,7 @@ BEGIN
 			EXEC @Ret = dbo.[SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_DEALS_CORS] @OnlineSqlServerName
 				, @OnlineSqlDataBaseName
 				, @RowIdStr
+				, @REGISTER_TYPE
 				, 1
 				, @DealNum
 				, @CustomerID
@@ -263,6 +266,7 @@ BEGIN
 		EXEC dbo.[SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_RAZPREG] @OnlineSqlServerName
 			, @OnlineSqlDataBaseName
 			, @RowIdStr
+			, @REGISTER_TYPE
 			, 1
 			, @DealNum
 			, 0
@@ -289,6 +293,7 @@ BEGIN
 			EXEC dbo.[SP_TA_EXISTING_ONLINE_DATA_FILL_TA_TABLES_RAZPREG] @OnlineSqlServerName
 				, @OnlineSqlDataBaseName
 				, @RowIdStr
+				, @REGISTER_TYPE
 				, 1
 				, @DealNumBen
 				, 1
@@ -314,6 +319,7 @@ BEGIN
 			, @OnlineSqlDataBaseName
 			, @CurrAccDate
 			, @RowIdStr
+			, @REGISTER_TYPE
 			, @CustomerID
 			, @ProxyID
 			, @WithUpdate
